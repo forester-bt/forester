@@ -1,0 +1,12 @@
+[package]
+name = "golem"
+description = "Orchestration framework"
+authors = ["BorisZhguchev <zhguchev@hotmail.com>"]
+homepage = "https://github.com/besok/golem"
+repository = "https://github.com/besok/golem"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
