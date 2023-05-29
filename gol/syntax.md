@@ -43,13 +43,13 @@ type : // only the second level counts if it exists otherwise the first.
   - success
   - fail
 - condition
-  - impl
+  - cond
   - equal
   - greater
   - less
-  - test
-  - test_all
-  - test_one
+  - check
+  - check_all
+  - check_one
 
 ---
 

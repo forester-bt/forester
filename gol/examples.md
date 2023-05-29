@@ -56,7 +56,7 @@ fallback handle_door {
     equal(door_state,"open")      
     open_door
     sequence {
-        impl have_key
+        test have_key
         impl unlock_door
         open_door
     }
@@ -64,5 +64,86 @@ fallback handle_door {
 }
 
 impl open_door
+
+```
+
+---
+
+![ball.png](ball.png)
+```
+root ball fallback {
+    try_to_place_to(ball,bin) // the objects in bb that denote ball and bin  
+    impl ask_for_help
+}
+
+sequence try_to_place_to(obj:object, dest:object){
+    fallback {
+       cond ball_found(obj)
+       impl find_ball(obj)       // find and set the coordinates of the ball to bb
+    }
+    fallback {
+        close(obj)
+        approach(obj)
+    }
+    fallback {
+        test grasped(obj)
+        grasp(obj)
+    }
+    fallback {
+        close(dest)
+        approach(dest)
+    }
+    fallback {
+        test placed(obj)
+        impl place(obj, dest)
+    }
+}
+
+cond grasped(obj:object)
+cond close(obj:object)
+impl approach(obj:object)
+impl grasp(obj:object)
+
+```
+
+---
+
+![green_cube_ex.png](green_cube_ex.png)
+```
+impl pick(hand_obj:object)
+impl approach(hand_obj:object)
+impl place(hand_obj:object, target:object)
+cond holding(cube:object)
+cond close_to(obj:object)
+
+sequence check_and_approach(trg:object){
+    cond exists_trajectory(trg)
+    approach(trg)
+}
+
+fallback approach_goal(goal:object){
+    close_to(goal)
+    check_and_approach(goal)
+} 
+
+fallback pick_cube(cube:object) {
+    holding(cube)
+    sequence {
+        cond hands_free
+        approach_goal(cube)
+        pick(cube)
+    }
+}
+
+root fallback {
+    cond cube_on_goal(cube,goal)
+    sequence {
+        pick_cube(cube)
+        approach_goal(goal) 
+        place(cube,goal)
+    }
+}
+
+
 
 ```
