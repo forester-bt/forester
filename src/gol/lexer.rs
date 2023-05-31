@@ -20,22 +20,24 @@ pub enum Token<'a> {
     #[regex(r"-?0x[0-9a-f](([0-9a-f]|[_])*[0-9a-f])?", hex)]
     Digit(Number),
 
-    #[token("(")]
     LParen,
-    #[token(")")]
+    #[token("(")]
     RParen,
-    #[token("{")]
+    #[token(")")]
     LBrace,
-    #[token("}")]
+    #[token("{")]
     RBrace,
-    #[token("[")]
+    #[token("}")]
     LBrack,
+    #[token("[")]
+    RBrack,
     #[token("]")]
-    DColon,
-    #[token(":")]
     Colon,
-    #[token(";")]
+    #[token(":")]
     Semi,
+    #[token(";")]
+
+    Comma,
     #[token(",")]
 
     #[token("false")]
@@ -61,15 +63,13 @@ pub enum Token<'a> {
     #[token("r_fallback")]
     RFallback,
 
-    #[token("tuple")]
-    TupleT,
+    #[token("array")]
+    ArrayT,
 
     #[token("num")]
     NumT,
     #[token("object")]
     ObjectT,
-    #[token("array")]
-    ArrayT,
     #[token("string")]
     StringT,
     #[token("bool")]

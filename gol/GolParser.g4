@@ -5,23 +5,20 @@ definitions
     ;
 
 definition
-    : tree_type id? params? items
+    : tree_type id? params? calls
     | tree_type id params?
     ;
 
-item
-    : tree_call
-    | tree_type id? items
-    ;
-
-items
-    : LBC item* RBC
-    | item
-    ;
-
-tree_call
+call
     : id args?
+    | tree_type id? calls
     ;
+
+calls
+    : LBC call* RBC
+    | call
+    ;
+
 
 arg
     : id (EQ message | EQ id)?
@@ -45,13 +42,13 @@ message
     | num
     | bool
     | array
-    | tuple
     | object
+    | call
     ;
 
 mes_type
-    : TUPLE_T
-    | NUM_T
+    : NUM_T
+    | ARRAY_T
     | OBJECT_T
     | STRING_T
     | BOOL_T
@@ -78,9 +75,6 @@ objectPair
     : string SEMI message
     ;
 
-tuple
-    : LPR (message (COMMA message)* COMMA? )? RPR
-    ;
 
 array
     : LBR (message (COMMA message)* COMMA? )? RBR

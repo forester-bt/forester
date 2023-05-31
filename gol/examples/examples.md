@@ -147,3 +147,9 @@ root fallback {
 
 
 ```
+
+---
+![activity_manager.png](activity_manager.png)
+![modularity_bulgler.png](modularity_bulgler.png)
+
+---

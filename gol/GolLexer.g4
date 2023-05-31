@@ -10,7 +10,7 @@ RSEQUENCE : 'r_sequence';
 FALLBACK: 'fallback';
 RFALLBACK : 'r_fallback';
 
-TUPLE_T: 'tuple';
+ARRAY_T: 'array';
 NUM_T: 'num';
 OBJECT_T: 'object';
 STRING_T: 'string';
