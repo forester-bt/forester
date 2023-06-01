@@ -5,8 +5,7 @@ definitions
     ;
 
 definition
-    : tree_type id? params? calls
-    | tree_type id params?
+    : tree_type id params? calls?
     ;
 
 call
@@ -26,7 +25,7 @@ arg
     ;
 
 args
-    : LPR arg (COMMA arg)* COMMA? RPR
+    : LPR (arg (COMMA arg)* COMMA?)? RPR
     ;
 
 params

@@ -11,3 +11,6 @@ edition = "2021"
 [dependencies]
 parsit = { path = "../parseit" }
 logos = "0.13.0"
+
+strum = "0.24.1"
+strum_macros = "0.24.1"

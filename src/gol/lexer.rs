@@ -20,48 +20,42 @@ pub enum Token<'a> {
     #[regex(r"-?0x[0-9a-f](([0-9a-f]|[_])*[0-9a-f])?", hex)]
     Digit(Number),
 
-    LParen,
     #[token("(")]
-    RParen,
-    #[token(")")]
-    LBrace,
-    #[token("{")]
-    RBrace,
-    #[token("}")]
-    LBrack,
-    #[token("[")]
-    RBrack,
-    #[token("]")]
-    Colon,
-    #[token(":")]
-    Semi,
-    #[token(";")]
+    LParen,
 
-    Comma,
+    #[token(")")]
+    RParen,
+
+    #[token("{")]
+    LBrace,
+
+    #[token("}")]
+    RBrace,
+
+    #[token("=")]
+    Assign,
+
+    #[token("[")]
+    LBrack,
+
+    #[token("]")]
+    RBrack,
+
+    #[token(":")]
+    Colon,
+
+
+    #[token(";")]
+    Semi,
+
     #[token(",")]
+    Comma,
 
     #[token("false")]
     False,
 
     #[token("true")]
     True,
-
-    #[token("root")]
-    Root,
-    #[token("parallel")]
-    Parallel,
-    #[token("sequence")]
-    Sequence,
-
-    #[token("m_sequence")]
-    MSequence,
-
-    #[token("r_sequence")]
-    RSequence,
-    #[token("fallback")]
-    Fallback,
-    #[token("r_fallback")]
-    RFallback,
 
     #[token("array")]
     ArrayT,
