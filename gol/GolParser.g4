@@ -9,8 +9,16 @@ definition
     ;
 
 call
-    : id args?
-    | tree_type id? calls
+    : invocation
+    | lambda
+    ;
+
+invocation
+    : id args
+    ;
+
+lambda
+    : tree_type args? calls
     ;
 
 calls

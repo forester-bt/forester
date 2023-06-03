@@ -10,7 +10,7 @@ pub enum Token<'a> {
     #[regex(r"(?i)(?&letter)((?&letter)|(?&digit))*")]
     Id(&'a str),
 
-    #[regex(r#""([^"\\]|\\t|\\u|\\n|\\")*""#)]
+    #[regex(r#""([^"\\]|\\t|\\u|\\n|\\")*""#,parse_qt_lit)]
     StringLit(&'a str),
 
     #[regex(r"-?(?&digit)", number)]
@@ -104,6 +104,11 @@ fn hex<'a>(lex: &mut Lexer<'a, Token<'a>>) ->  Option<Number> {
     i64::from_str_radix(lex.slice().trim_start_matches("0x"), 16)
         .map(|r| Number::Hex(r))
         .ok()
+}
+
+fn parse_qt_lit<'a>(lexer: &mut Lexer<'a, Token<'a>>) ->  &'a str {
+    let qt_lit: &str = lexer.slice();
+    &qt_lit[1..qt_lit.len() - 1]
 }
 
 #[cfg(test)]

@@ -1,0 +1,32 @@
+root ball fallback {
+    try_to_place_to(ball,bin) // the objects in bb that denote ball and bin
+    impl ask_for_help
+}
+
+sequence try_to_place_to(obj:object, dest:object){
+    fallback {
+       cond ball_found(obj)
+       impl find_ball(obj)       // find and set the coordinates of the ball to bb
+    }
+    fallback {
+        close(obj)
+        approach(obj)
+    }
+    fallback {
+        test grasped(obj)
+        grasp(obj)
+    }
+    fallback {
+        close(dest)
+        approach(dest)
+    }
+    fallback {
+        test placed(obj)
+        impl place(obj, dest)
+    }
+}
+
+cond grasped(obj:object)
+cond close(obj:object)
+impl approach(obj:object)
+impl grasp(obj:object)

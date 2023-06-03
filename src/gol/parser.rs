@@ -1,3 +1,5 @@
+mod tests;
+
 use std::collections::HashMap;
 use std::env::Args;
 use std::str::FromStr;
@@ -5,10 +7,10 @@ use parsit::error::ParseError;
 use parsit::parser::{EmptyToken, ParseIt};
 use parsit::step::Step;
 use parsit::{seq, token, wrap};
-use crate::gol::ast::{Argument, Arguments, Bool, Call, Calls, Id, Message, MesType, Number, Param, Params, StringLit, Tree, Trees, TreeType};
+use crate::gol::ast::{Argument, Arguments, Bool, Call, Calls, Id, Message, MesType, Number, Param, Params, StringLit, Tree, Trees, TreeType, validate_lambda};
 use crate::gol::lexer::Token;
 
-struct Parser<'a> {
+pub struct Parser<'a> {
     inner: ParseIt<'a, Token<'a>>,
 }
 
@@ -81,7 +83,10 @@ impl<'a> Parser<'a> {
                 .then_zip(|p| self.message(p))
         };
 
-        let elems = |p| seq!(pos => pair, comma,).map(|v| HashMap::from_iter(v));
+        let elems = |p|
+            seq!(p => pair, comma,)
+                .map(|v| HashMap::from_iter(v));
+
         let def = HashMap::new();
 
         wrap!(pos => l; elems or def; r)
@@ -99,7 +104,7 @@ impl<'a> Parser<'a> {
         };
 
         let elems = |p| {
-            seq!(pos => param, comma,)
+            seq!(p => param, comma,)
                 .map(|params| Params { params })
         };
         let def = Params { params: vec![] };
@@ -151,7 +156,7 @@ impl<'a> Parser<'a> {
         self.id(pos)
             .flat_map(
                 |p| TreeType::from_str(p.0),
-                |p| Step::Fail(pos),
+                |pe| Step::Fail(pos),
             )
     }
 
@@ -182,14 +187,21 @@ impl<'a> Parser<'a> {
             self.id(p).then_zip(|p| self.args(p))
                 .map(|(id, args)| Call::Invocation(id, args))
         };
+
         let anon = |p| {
             self.tree_type(p)
-                .then_or_none_zip(|p| self.id(p).or_none())
+                .then_or_default_zip(|p| self.args(p))
                 .then_zip(|p| self.calls(p))
-                .map(|((t, id), calls)|
-                    Call::Lambda(t, id, calls)
-                )
+                .validate(|((t, args), calls)| validate_lambda(t,args, calls))
+                .map(|((t, args), calls)| {
+                    if t.is_decorator() {
+                        Call::decorator(t, args, calls.elems[0].clone())
+                    }else {
+                        Call::lambda(t, calls)
+                    }
+                })
         };
+
         anon(pos).or_from(pos).or(inv).into()
     }
     fn calls(&'a self, pos: usize) -> Step<'a, Calls> {
@@ -197,7 +209,7 @@ impl<'a> Parser<'a> {
             let l = |p| { self.l_brc(p) };
             let r = |p| { self.r_brc(p) };
             let calls = |p| self.inner.zero_or_more(p, |p| self.call(p));
-            wrap!(p => l;calls;r).map(|elems| Calls { elems })
+            wrap!(p => l;calls;r).map(Calls::new)
         };
 
         calls(pos)
@@ -213,7 +225,7 @@ impl<'a> Parser<'a> {
             .then_zip(|p| self.id(p))
             .then_or_default_zip(|p| self.params(p))
             .then_or_default_zip(|p| self.calls(p))
-            .map(|((((tpe), name), params), calls)| Tree {
+            .map(|(((tpe, name), params), calls)| Tree {
                 tpe,
                 name,
                 params,
@@ -245,101 +257,3 @@ impl<'a> Parser<'a> {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use parsit::test::parser_test::*;
-    use crate::gol::ast::{Argument, Arguments, Bool, Call, Id, Message, Number, StringLit};
-    use crate::gol::parser::Parser;
-
-
-    #[test]
-    fn smoke_arg() {
-        let parser = Parser::new(r#"ball"#).unwrap();
-        expect(parser.arg(0), Argument::Id(Id("ball")));
-
-        let parser = Parser::new(r#"ball=ball"#).unwrap();
-        expect(parser.arg(0), Argument::AssignedId(Id("ball"), Id("ball")));
-
-        let parser = Parser::new(r#"1"#).unwrap();
-        expect(parser.arg(0), Argument::Mes(Message::Num(Number::Int(1))));
-        let parser = Parser::new(r#""1""#).unwrap();
-        expect(parser.arg(0), Argument::Mes(Message::String(StringLit(r#""1""#))));
-
-        let parser = Parser::new(r#"[true,false]"#).unwrap();
-        expect(parser.arg(0), Argument::Mes(Message::Array(vec![Message::Bool(Bool::True), Message::Bool(Bool::False)])));
-
-        let parser = Parser::new(r#"x = [true,false]"#).unwrap();
-        expect(parser.arg(0), Argument::AssignedMes(Id("x"),
-                                                    Message::Array(vec![Message::Bool(Bool::True), Message::Bool(Bool::False)])));
-
-        let parser = Parser::new(r#"x()"#).unwrap();
-        expect(parser.arg(0), Argument::Mes(Message::Call(Call::Invocation(Id("x"), Arguments::default()))));
-
-        let parser = Parser::new(r#"a = x()"#).unwrap();
-        expect(parser.arg(0),
-               Argument::AssignedMes(
-                   Id("a"),
-                   Message::Call(
-                       Call::Invocation(Id("x"), Arguments::default())
-                   ),
-               ),
-        );
-    }
-
-
-    #[test]
-    fn smoke_args() {
-        let parser = Parser::new(r#"()"#).unwrap();
-        expect(parser.args(0), Arguments::default())
-    }
-
-    #[test]
-    fn smoke_call() {
-        let parser = Parser::new(r#"x()"#).unwrap();
-        expect(parser.call(0), Call::Invocation(Id("x"), Arguments::default()))
-    }
-
-
-    #[test]
-    fn smoke() {
-        let txt = r#"
-        root ball fallback {
-    try_to_place_to(ball,bin) // the objects in bb that denote ball and bin
-    impl ask_for_help
-}
-
-sequence try_to_place_to(obj:object, dest:object){
-    fallback {
-       cond ball_found(obj)
-       impl find_ball(obj)       // find and set the coordinates of the ball to bb
-    }
-    fallback {
-        close(obj)
-        approach(obj)
-    }
-    fallback {
-        test grasped(obj)
-        grasp(obj)
-    }
-    fallback {
-        close(dest)
-        approach(dest)
-    }
-    fallback {
-        test placed(obj)
-        impl place(obj, dest)
-    }
-}
-
-cond grasped(obj:object)
-cond close(obj:object)
-impl approach(obj:object)
-impl grasp(obj:object)
-
-        "#;
-
-        let parser = Parser::new(txt).unwrap();
-        let result = parser.trees(0);
-        println!("{}", parser.inner.env(&result));
-    }
-}
