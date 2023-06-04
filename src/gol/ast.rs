@@ -14,11 +14,11 @@ pub enum Number {
     Binary(isize),
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Hash)]
-pub struct Id<'a>(pub &'a str);
+#[derive(Debug, Clone, PartialEq, Hash)]
+pub struct Id(pub String);
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct StringLit<'a>(pub &'a str);
+pub struct StringLit(pub String);
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Bool {
@@ -27,18 +27,18 @@ pub enum Bool {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum Message<'a> {
+pub enum Message {
     Num(Number),
-    String(StringLit<'a>),
+    String(StringLit),
     Bool(Bool),
-    Array(Vec<Message<'a>>),
-    Object(HashMap<String, Message<'a>>),
-    Call(Call<'a>),
+    Array(Vec<Message>),
+    Object(HashMap<String, Message>),
+    Call(Call),
 }
 
-impl<'a> Message<'a> {
-    pub fn str(v: &'a str) -> Self {
-        Message::String(StringLit(v))
+impl Message {
+    pub fn str(v: &str) -> Self {
+        Message::String(StringLit(v.to_string()))
     }
     pub fn bool(v: bool) -> Self {
         if v {
@@ -53,104 +53,104 @@ impl<'a> Message<'a> {
     pub fn float(v: f64) -> Self {
         Message::Num(Number::Float(v))
     }
-    pub fn object(pairs: Vec<(String, Message<'a>)>) -> Self {
+    pub fn object(pairs: Vec<(String, Message)>) -> Self {
         Message::Object(HashMap::from_iter(pairs))
     }
-    pub fn array(elems: Vec<Message<'a>>) -> Self {
+    pub fn array(elems: Vec<Message>) -> Self {
         Message::Array(elems)
     }
-    pub fn invocation(id: &'a str, args: Arguments<'a>) -> Self {
+    pub fn invocation(id: &str, args: Arguments) -> Self {
         Message::Call(Call::invocation(id, args))
     }
 
-    pub fn lambda(tpe: TreeType, calls: Calls<'a>) -> Self {
+    pub fn lambda(tpe: TreeType, calls: Calls) -> Self {
         Message::Call(Call::lambda(tpe, calls))
     }
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum Call<'a> {
-    Invocation(Id<'a>, Arguments<'a>),
-    Lambda(TreeType, Calls<'a>),
-    Decorator(TreeType, Arguments<'a>, Box<Call<'a>>),
+pub enum Call{
+    Invocation(Id, Arguments),
+    Lambda(TreeType, Calls),
+    Decorator(TreeType, Arguments, Box<Call>),
 }
 
-impl<'a> Call<'a> {
-    pub fn invocation(id: &'a str, args: Arguments<'a>) -> Self {
-        Call::Invocation(Id(id), args)
+impl Call {
+    pub fn invocation(id: &str, args: Arguments) -> Self {
+        Call::Invocation(Id(id.to_string()), args)
     }
-    pub fn lambda(tpe: TreeType, calls: Calls<'a>) -> Self {
+    pub fn lambda(tpe: TreeType, calls: Calls) -> Self {
         Call::Lambda(tpe, calls)
     }
-    pub fn decorator(tpe: TreeType, args: Arguments<'a>, call: Call<'a>) -> Self {
+    pub fn decorator(tpe: TreeType, args: Arguments, call: Call) -> Self {
         Call::Decorator(tpe, args, Box::new(call))
     }
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]
-pub struct Calls<'a> {
-    pub elems: Vec<Call<'a>>,
+pub struct Calls {
+    pub elems: Vec<Call>,
 }
 
-impl<'a> Calls<'a> {
-    pub fn new(elems: Vec<Call<'a>>) -> Self {
+impl Calls {
+    pub fn new(elems: Vec<Call>) -> Self {
         Calls { elems }
     }
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct Param<'a> {
-    pub name: Id<'a>,
+pub struct Param {
+    pub name: Id,
     pub tpe: MesType,
 }
 
-impl<'a> Param<'a> {
-    fn new(id: &'a str, tpe: MesType) -> Self {
-        Param { name: Id(id), tpe }
+impl Param {
+    fn new(id: & str, tpe: MesType) -> Self {
+        Param { name: Id(id.to_string()), tpe }
     }
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]
-pub struct Params<'a> {
-    pub params: Vec<Param<'a>>,
+pub struct Params{
+    pub params: Vec<Param>,
 }
 
-impl<'a> Params<'a> {
-    pub fn new(params: Vec<Param<'a>>) -> Self {
+impl Params {
+    pub fn new(params: Vec<Param>) -> Self {
         Params { params }
     }
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum Argument<'a> {
-    Id(Id<'a>),
-    Mes(Message<'a>),
-    AssignedId(Id<'a>, Id<'a>),
-    AssignedMes(Id<'a>, Message<'a>),
+pub enum Argument {
+    Id(Id),
+    Mes(Message),
+    AssignedId(Id, Id),
+    AssignedMes(Id, Message),
 }
 
-impl<'a> Argument<'a> {
-    pub fn id(v: &'a str) -> Self {
-        Argument::Id(Id(v))
+impl Argument {
+    pub fn id(v: &str) -> Self {
+        Argument::Id(Id(v.to_string()))
     }
-    pub fn mes(v: Message<'a>) -> Self {
+    pub fn mes(v: Message) -> Self {
         Argument::Mes(v)
     }
-    pub fn id_id(lhs: &'a str, rhs: &'a str) -> Self {
-        Argument::AssignedId(Id(lhs), Id(rhs))
+    pub fn id_id(lhs: &str, rhs: &str) -> Self {
+        Argument::AssignedId(Id(lhs.to_string()), Id(rhs.to_string()))
     }
-    pub fn id_mes(lhs: &'a str, rhs: Message<'a>) -> Self {
-        Argument::AssignedMes(Id(lhs), rhs)
+    pub fn id_mes(lhs: &str, rhs: Message) -> Self {
+        Argument::AssignedMes(Id(lhs.to_string()), rhs)
     }
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]
-pub struct Arguments<'a> {
-    pub args: Vec<Argument<'a>>,
+pub struct Arguments {
+    pub args: Vec<Argument>,
 }
 
-impl<'a> Arguments<'a> {
-    pub fn new(args: Vec<Argument<'a>>) -> Self {
+impl<'a> Arguments {
+    pub fn new(args: Vec<Argument>) -> Self {
         Self { args }
     }
 }
@@ -192,7 +192,7 @@ impl TreeType {
 
 
 }
-pub fn validate_lambda<'a,'b>(tpe: &'a TreeType, args: &'a Arguments<'a>, calls: &'a Calls<'a>) -> Result<(), &'b str> {
+pub fn validate_lambda<'a,'b>(tpe: &'a TreeType, args: &'a Arguments, calls: &'a Calls) -> Result<(), &'b str> {
     match tpe{
         TreeType::Impl | TreeType::Cond => Err("the types impl or cond should have declaration and get called by name"),
 
@@ -225,15 +225,33 @@ pub enum MesType {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct Tree<'a> {
+pub struct Tree {
     pub tpe: TreeType,
-    pub name: Id<'a>,
-    pub params: Params<'a>,
-    pub calls: Calls<'a>,
+    pub name: Id,
+    pub params: Params,
+    pub calls: Calls,
 }
 
 #[derive(Clone, Debug)]
-pub struct Trees<'a>(pub HashMap<String, Tree<'a>>);
+pub enum Import{
+    File(String),
+    Names(String, Vec<Id>),
+
+}
+#[derive(Clone, Debug)]
+pub enum FileEntity{
+    Tree(Tree),
+    Import(Import)
+}
+#[derive(Clone, Debug)]
+pub struct AstFile(Vec<FileEntity>);
+
+impl<'a> AstFile {
+    pub fn new(field0: Vec<FileEntity>) -> Self {
+        Self(field0)
+    }
+}
+
 
 #[cfg(test)]
 mod tests {

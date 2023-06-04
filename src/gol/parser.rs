@@ -1,17 +1,21 @@
 mod tests;
 
+use std::borrow::Cow;
 use std::collections::HashMap;
 use std::env::Args;
+use std::fs;
+use std::path::PathBuf;
 use std::str::FromStr;
 use parsit::error::ParseError;
 use parsit::parser::{EmptyToken, ParseIt};
 use parsit::step::Step;
 use parsit::{seq, token, wrap};
-use crate::gol::ast::{Argument, Arguments, Bool, Call, Calls, Id, Message, MesType, Number, Param, Params, StringLit, Tree, Trees, TreeType, validate_lambda};
+use crate::gol::ast::{Argument, Arguments, Bool, Call, Calls, AstFile, FileEntity, Id, Import, Message, MesType, Number, Param, Params, StringLit, Tree, TreeType, validate_lambda};
+use crate::gol::GolError;
 use crate::gol::lexer::Token;
 
 pub struct Parser<'a> {
-    inner: ParseIt<'a, Token<'a>>,
+    inner: ParseIt<'a, Token>,
 }
 
 impl<'a> Parser<'a> {
@@ -43,12 +47,15 @@ impl<'a> Parser<'a> {
     fn colon(&self, pos: usize) -> Step<'a, EmptyToken> {
         token!(self.token(pos) => Token::Colon )
     }
-
-    fn id(&self, pos: usize) -> Step<'a, Id<'a>> {
-        token!(self.token(pos) => Token::Id(v) => Id(v) )
+    fn import_tk(&self, pos: usize) -> Step<'a, EmptyToken> {
+        token!(self.token(pos) => Token::Import )
     }
-    fn str(&self, pos: usize) -> Step<'a, StringLit<'a>> {
-        token!(self.token(pos) => Token::StringLit(v) => StringLit(v) )
+
+    fn id(&self, pos: usize) -> Step<'a, Id> {
+        token!(self.token(pos) => Token::Id(v) => Id(v.clone()) )
+    }
+    fn str(&self, pos: usize) -> Step<'a, StringLit> {
+        token!(self.token(pos) => Token::StringLit(v) => StringLit(v.clone()) )
     }
     fn num(&self, pos: usize) -> Step<'a, Number> {
         token!(self.token(pos) => Token::Digit(n) => n.clone() )
@@ -61,7 +68,7 @@ impl<'a> Parser<'a> {
     }
 
 
-    fn array(&'a self, pos: usize) -> Step<'a, Vec<Message<'a>>> {
+    fn array(&'a self, pos: usize) -> Step<'a, Vec<Message>> {
         let l = |p| self.l_br(p);
         let r = |p| { self.r_br(p) };
         let comma = |p| { self.comma(p) };
@@ -71,7 +78,7 @@ impl<'a> Parser<'a> {
 
         wrap!(pos => l; elems or no_elems; r)
     }
-    fn object(&'a self, pos: usize) -> Step<'a, HashMap<String, Message<'a>>> {
+    fn object(&'a self, pos: usize) -> Step<'a, HashMap<String, Message>> {
         let l = |p| { self.l_brc(p) };
         let r = |p| { self.r_brc(p) };
         let comma = |p| { self.comma(p) };
@@ -91,7 +98,7 @@ impl<'a> Parser<'a> {
 
         wrap!(pos => l; elems or def; r)
     }
-    fn params(&self, pos: usize) -> Step<'a, Params<'a>> {
+    fn params(&self, pos: usize) -> Step<'a, Params> {
         let l = |p| { self.l_pr(p) };
         let r = |p| { self.r_pr(p) };
         let comma = |p| { self.comma(p) };
@@ -112,7 +119,7 @@ impl<'a> Parser<'a> {
         wrap!(pos => l; elems or def; r)
     }
 
-    fn arg(&'a self, pos: usize) -> Step<'a, Argument<'a>> {
+    fn arg(&'a self, pos: usize) -> Step<'a, Argument> {
         let assign = |p| { self.assign(p) };
         let assigned = |p| { self.id(p).then_skip(assign) };
         let assign_id = |p| {
@@ -136,7 +143,7 @@ impl<'a> Parser<'a> {
             .into()
     }
 
-    fn args(&'a self, pos: usize) -> Step<'a, Arguments<'a>> {
+    fn args(&'a self, pos: usize) -> Step<'a, Arguments> {
         let l = |p| { self.l_pr(p) };
         let r = |p| { self.r_pr(p) };
         let comma = |p| { self.comma(p) };
@@ -155,7 +162,7 @@ impl<'a> Parser<'a> {
     fn tree_type(&self, pos: usize) -> Step<'a, TreeType> {
         self.id(pos)
             .flat_map(
-                |p| TreeType::from_str(p.0),
+                |p| TreeType::from_str(&p.0),
                 |pe| Step::Fail(pos),
             )
     }
@@ -171,7 +178,7 @@ impl<'a> Parser<'a> {
         )
     }
 
-    fn message(&'a self, pos: usize) -> Step<'a, Message<'a>> {
+    fn message(&'a self, pos: usize) -> Step<'a, Message> {
         self.str(pos).map(Message::String)
             .or_from(pos)
             .or(|p| self.num(p).map(Message::Num))
@@ -192,11 +199,11 @@ impl<'a> Parser<'a> {
             self.tree_type(p)
                 .then_or_default_zip(|p| self.args(p))
                 .then_zip(|p| self.calls(p))
-                .validate(|((t, args), calls)| validate_lambda(t,args, calls))
+                .validate(|((t, args), calls)| validate_lambda(t, args, calls))
                 .map(|((t, args), calls)| {
                     if t.is_decorator() {
                         Call::decorator(t, args, calls.elems[0].clone())
-                    }else {
+                    } else {
                         Call::lambda(t, calls)
                     }
                 })
@@ -232,28 +239,61 @@ impl<'a> Parser<'a> {
                 calls,
             })
     }
-    fn trees(&'a self, pos: usize) -> Step<'a, Trees> {
-        let make_tree = |elems: Vec<Tree<'a>>| {
-            let it = elems.into_iter().map(|e| (e.name.0.to_string(), e));
-            Trees(HashMap::from_iter(it))
+
+    fn import(&'a self, pos: usize) -> Step<'a, Import> {
+        let l = |p| { self.l_brc(p) };
+        let r = |p| { self.r_brc(p) };
+        let comma = |p| { self.comma(p) };
+        let name = |p| self.id(p);
+        let names = |p| seq!(p => name, comma,);
+
+
+        let part = |p| {
+            let def = vec![];
+            wrap!(p => l;names or def; r ).or_none()
         };
-        self.inner.zero_or_more(pos, |p| self.tree(p)).map(make_tree)
+
+        self.import_tk(pos)
+            .then_zip(|p| self.str(p))
+            .take_right()
+            .then_or_none_zip(part)
+            .map(|(file, parts)| {
+                match parts {
+                    None => Import::File(file.0.to_string()),
+                    Some(names) => Import::Names(file.0.to_string(), names)
+                }
+            })
+    }
+
+    fn file(&'a self, pos: usize) -> Step<'a, AstFile> {
+         let entity = |p|{
+             let entity:Step<FileEntity> = self.tree(p).map(FileEntity::Tree)
+                 .or_from(p)
+                 .or(|p|self.import(p).map(FileEntity::Import))
+                 .into();
+             entity
+         };
+
+        self.inner.zero_or_more(pos,entity).map(AstFile::new)
+
+
     }
 }
 
 impl<'a> Parser<'a> {
-    pub fn new(src: &'a str) -> Result<Self, ParseError> {
+
+    pub fn new(src: &'a str) -> Result<Self, GolError> {
         Ok(Parser {
             inner: ParseIt::new(src)?,
         })
     }
-    fn token(&self, pos: usize) -> Result<(&Token<'a>, usize), ParseError<'a>> {
+
+    fn token(&self, pos: usize) -> Result<(&Token, usize), ParseError<'a>> {
         self.inner.token(pos)
     }
 
-    pub fn parse(&'a self) -> Result<Trees, ParseError<'a>> {
-        self.inner.validate_eof(self.trees(0))
-            .into()
+    pub fn parse(&'a self) -> Result<AstFile, ParseError<'a>> {
+        self.inner.validate_eof(self.file(0)).into()
     }
 }
 

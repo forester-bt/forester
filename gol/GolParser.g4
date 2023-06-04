@@ -1,7 +1,15 @@
 parser grammar GolParser;
 
-definitions
-    : definition* EOF
+file
+    : (definition | importSt) * EOF
+    ;
+
+importCalls
+    : LBC (id (COMMA id)* COMMA?)? RBC
+    ;
+
+importSt
+    : IMPORT string importCalls?
     ;
 
 definition
@@ -37,7 +45,7 @@ args
     ;
 
 params
-    : LPR param (COMMA param)* COMMA? RPR
+    : LPR (param (COMMA param)*)? COMMA? RPR
     ;
 
 param

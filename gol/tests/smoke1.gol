@@ -1,19 +1,22 @@
+
+
+
 root ball fallback {
     try_to_place_to(ball,bin) // the objects in bb that denote ball and bin
-    impl ask_for_help
+    ask_for_help()
 }
 
 sequence try_to_place_to(obj:object, dest:object){
     fallback {
-       cond ball_found(obj)
-       impl find_ball(obj)       // find and set the coordinates of the ball to bb
+        ball_found(obj)
+        find_ball(obj)
     }
     fallback {
         close(obj)
         approach(obj)
     }
     fallback {
-        test grasped(obj)
+        grasped(obj)
         grasp(obj)
     }
     fallback {
@@ -21,12 +24,18 @@ sequence try_to_place_to(obj:object, dest:object){
         approach(dest)
     }
     fallback {
-        test placed(obj)
-        impl place(obj, dest)
+        placed(obj)
+        place(obj, dest)
     }
 }
 
 cond grasped(obj:object)
+cond ball_found(obj:object)
 cond close(obj:object)
+cond placed(obj:object)
+
 impl approach(obj:object)
 impl grasp(obj:object)
+impl find_ball(obj:object)
+impl ask_for_help()
+impl place(obj:object,dest:object)

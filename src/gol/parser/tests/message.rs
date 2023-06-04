@@ -50,7 +50,7 @@ fn object() {
     expect(parser.object(0), HashMap::from_iter(
         vec![
             ("field".to_string(), Message::Num(Number::Int(1))),
-            ("field2".to_string(), Message::String(StringLit("v"))),
+            ("field2".to_string(), Message::String(StringLit("v".to_string()))),
         ]
     ));
 }
