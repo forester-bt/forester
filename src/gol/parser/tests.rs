@@ -4,6 +4,14 @@ mod arguments;
 mod message;
 #[cfg(test)]
 mod call;
+#[cfg(test)]
+mod params;
+#[cfg(test)]
+mod definition;
+#[cfg(test)]
+mod import;
+#[cfg(test)]
+mod file;
 
 #[cfg(test)]
 mod tests {
@@ -30,7 +38,7 @@ mod tests {
 
     #[test]
     fn smoke() {
-        let script = load_file("gol/tests/smoke1.gol");
+        let script = load_file("gol/tests/main.gol");
         let parser = Parser::new(script.as_str()).unwrap();
         let result = parser.parse().unwrap();
 

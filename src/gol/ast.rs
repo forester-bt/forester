@@ -69,7 +69,7 @@ impl Message {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum Call{
+pub enum Call {
     Invocation(Id, Arguments),
     Lambda(TreeType, Calls),
     Decorator(TreeType, Arguments, Box<Call>),
@@ -105,13 +105,13 @@ pub struct Param {
 }
 
 impl Param {
-    fn new(id: & str, tpe: MesType) -> Self {
+    pub fn new(id: &str, tpe: MesType) -> Self {
         Param { name: Id(id.to_string()), tpe }
     }
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]
-pub struct Params{
+pub struct Params {
     pub params: Vec<Param>,
 }
 
@@ -189,11 +189,10 @@ impl TreeType {
             _ => false
         }
     }
-
-
 }
-pub fn validate_lambda<'a,'b>(tpe: &'a TreeType, args: &'a Arguments, calls: &'a Calls) -> Result<(), &'b str> {
-    match tpe{
+
+pub fn validate_lambda<'a, 'b>(tpe: &'a TreeType, args: &'a Arguments, calls: &'a Calls) -> Result<(), &'b str> {
+    match tpe {
         TreeType::Impl | TreeType::Cond => Err("the types impl or cond should have declaration and get called by name"),
 
         _ if tpe.is_decorator() => {
@@ -205,9 +204,9 @@ pub fn validate_lambda<'a,'b>(tpe: &'a TreeType, args: &'a Arguments, calls: &'a
         }
 
         _ => {
-            if args.args.is_empty(){
+            if args.args.is_empty() {
                 Ok(())
-            }else{
+            } else {
                 Err("any lambda invocation should not have arguments")
             }
         }
@@ -232,19 +231,71 @@ pub struct Tree {
     pub calls: Calls,
 }
 
-#[derive(Clone, Debug)]
-pub enum Import{
-    File(String),
-    Names(String, Vec<Id>),
+impl Tree {
+    pub fn is_root(&self) -> bool {
+        match self.tpe {
+            TreeType::Root => true,
+            _ => false
+        }
+    }
+    pub fn new(tpe: TreeType, name: Id, params: Params, calls: Calls) -> Self {
+        Self { tpe, name, params, calls }
+    }
+}
 
+#[derive(Clone, Debug,PartialEq)]
+pub enum Import {
+    File(String),
+    Names(String, Vec<ImportName>),
 }
-#[derive(Clone, Debug)]
-pub enum FileEntity{
+#[derive(Clone, Debug,PartialEq)]
+pub enum ImportName{
+    Id(String),
+    Alias(String,String)
+}
+
+impl ImportName {
+    pub fn id(v:&str) -> Self {
+        ImportName::Id(v.to_string())
+    }
+    pub fn alias(v:&str,alias:&str) -> Self {
+        ImportName::Alias(v.to_string(),alias.to_string())
+    }
+}
+
+
+impl Import {
+    pub fn name(&self) -> &str {
+        match self {
+            Import::File(n) => n,
+            Import::Names(n, _) => n,
+        }
+    }
+    pub fn file(f: &str) -> Self {
+        Import::File(f.to_string())
+    }
+    pub fn names(f: &str, names: Vec<&str>) -> Self {
+        Import::Names(
+            f.to_string(),
+            names.into_iter().map(|v| ImportName::id(v)).collect(),
+        )
+    }
+    pub fn names_mixed(f: &str, names: Vec<ImportName>) -> Self {
+        Import::Names(
+            f.to_string(),
+            names,
+        )
+    }
+}
+
+#[derive(Clone, Debug,PartialEq)]
+pub enum FileEntity {
     Tree(Tree),
-    Import(Import)
+    Import(Import),
 }
-#[derive(Clone, Debug)]
-pub struct AstFile(Vec<FileEntity>);
+
+#[derive(Clone, Debug,PartialEq)]
+pub struct AstFile(pub Vec<FileEntity>);
 
 impl<'a> AstFile {
     pub fn new(field0: Vec<FileEntity>) -> Self {

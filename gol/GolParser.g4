@@ -1,11 +1,15 @@
 parser grammar GolParser;
 
 file
-    : (definition | importSt) * EOF
+    : (definition | importSt)* EOF
+    ;
+
+import_name
+    : id (EQ_A id)?
     ;
 
 importCalls
-    : LBC (id (COMMA id)* COMMA?)? RBC
+    : LBC (import_name (COMMA import_name)* COMMA?)? RBC
     ;
 
 importSt

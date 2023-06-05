@@ -7,15 +7,15 @@ use std::fs;
 use std::path::PathBuf;
 use std::str::FromStr;
 use parsit::error::ParseError;
-use parsit::parser::{EmptyToken, ParseIt};
+use parsit::parser::{EmptyToken, Parsit};
 use parsit::step::Step;
 use parsit::{seq, token, wrap};
-use crate::gol::ast::{Argument, Arguments, Bool, Call, Calls, AstFile, FileEntity, Id, Import, Message, MesType, Number, Param, Params, StringLit, Tree, TreeType, validate_lambda};
+use crate::gol::ast::{Argument, Arguments, Bool, Call, Calls, AstFile, FileEntity, Id, Import, Message, MesType, Number, Param, Params, StringLit, Tree, TreeType, validate_lambda, ImportName};
 use crate::gol::GolError;
 use crate::gol::lexer::Token;
 
 pub struct Parser<'a> {
-    inner: ParseIt<'a, Token>,
+    inner: Parsit<'a, Token>,
 }
 
 impl<'a> Parser<'a> {
@@ -24,6 +24,9 @@ impl<'a> Parser<'a> {
     }
     fn l_pr(&self, pos: usize) -> Step<'a, EmptyToken> {
         token!(self.token(pos) => Token::LParen )
+    }
+    fn a_arr(&self, pos: usize) -> Step<'a, EmptyToken> {
+        token!(self.token(pos) => Token::AssignArr )
     }
     fn r_pr(&self, pos: usize) -> Step<'a, EmptyToken> {
         token!(self.token(pos) => Token::RParen )
@@ -244,7 +247,16 @@ impl<'a> Parser<'a> {
         let l = |p| { self.l_brc(p) };
         let r = |p| { self.r_brc(p) };
         let comma = |p| { self.comma(p) };
-        let name = |p| self.id(p);
+        let name = |p| {
+            self.id(p).then_or_none_zip(|p|{
+                self.a_arr(p).then(|p|self.id(p)).or_none()
+            }).map(|(id,alias)|{
+                match alias {
+                    None => ImportName::Id(id.0),
+                    Some(a) => ImportName::Alias(id.0,a.0),
+                }
+            })
+        };
         let names = |p| seq!(p => name, comma,);
 
 
@@ -259,8 +271,8 @@ impl<'a> Parser<'a> {
             .then_or_none_zip(part)
             .map(|(file, parts)| {
                 match parts {
-                    None => Import::File(file.0.to_string()),
-                    Some(names) => Import::Names(file.0.to_string(), names)
+                    None => Import::File(file.0),
+                    Some(names) => Import::Names(file.0, names)
                 }
             })
     }
@@ -284,7 +296,7 @@ impl<'a> Parser<'a> {
 
     pub fn new(src: &'a str) -> Result<Self, GolError> {
         Ok(Parser {
-            inner: ParseIt::new(src)?,
+            inner: Parsit::new(src)?,
         })
     }
 

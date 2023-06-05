@@ -1,0 +1,18 @@
+
+import "nested/impls.gol"
+import "nested/impls.gol" {
+    id => idx
+}
+
+root ball fallback {
+    try_to_place_to() // the objects in bb that denote ball and bin
+    ask_for_help()
+}
+
+sequence try_to_place_to(obj:object, dest:object){
+    fallback {
+        find_ball(obj)
+    }
+}
+
+cond find_ball(obj:object) {}

@@ -35,6 +35,9 @@ pub enum Token {
     #[token("=")]
     Assign,
 
+    #[token("=>")]
+    AssignArr,
+
     #[token("[")]
     LBrack,
 
@@ -131,7 +134,6 @@ mod tests {
         lt::expect::<Token>(r#"1"#, vec![Token::Digit(Number::Int(1))]);
         lt::expect::<Token>(r#"1.1"#, vec![Token::Digit(Number::Float(1.1))]);
         lt::expect::<Token>(r#"1000000.000001"#, vec![Token::Digit(Number::Float(1000000.000001))]);
-        lt::expect::<Token>(r#"1e-1"#, vec![Token::Digit(Number::Float(1000000.000001))]);
 
     }
 

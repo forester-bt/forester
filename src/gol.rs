@@ -5,10 +5,12 @@ mod ast;
 mod parser;
 mod lexer;
 mod project;
+mod visualizer;
 
 #[derive(Debug)]
 pub enum GolError{
     ParserError(String),
+    VisualizationError(String),
     IOError(String)
 }
 
