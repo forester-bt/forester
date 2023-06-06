@@ -243,58 +243,56 @@ impl Tree {
     }
 }
 
-#[derive(Clone, Debug,PartialEq)]
-pub enum Import {
-    File(String),
-    Names(String, Vec<ImportName>),
-}
-#[derive(Clone, Debug,PartialEq)]
-pub enum ImportName{
+#[derive(Clone, Debug, PartialEq,Eq,Hash)]
+pub struct Import(pub String, pub Vec<ImportName>);
+
+#[derive(Clone, Debug, PartialEq,Hash,Eq)]
+pub enum ImportName {
     Id(String),
-    Alias(String,String)
+    Alias(String, String),
+    WholeFile,
 }
 
 impl ImportName {
-    pub fn id(v:&str) -> Self {
+    pub fn id(v: &str) -> Self {
         ImportName::Id(v.to_string())
     }
-    pub fn alias(v:&str,alias:&str) -> Self {
-        ImportName::Alias(v.to_string(),alias.to_string())
+    pub fn alias(v: &str, alias: &str) -> Self {
+        ImportName::Alias(v.to_string(), alias.to_string())
     }
 }
 
 
 impl Import {
-    pub fn name(&self) -> &str {
+    pub fn f_name(&self) -> &str {
         match self {
-            Import::File(n) => n,
-            Import::Names(n, _) => n,
+            Import(n, _) => n,
         }
     }
     pub fn file(f: &str) -> Self {
-        Import::File(f.to_string())
+        Import(f.to_string(), vec![ImportName::WholeFile])
     }
     pub fn names(f: &str, names: Vec<&str>) -> Self {
-        Import::Names(
+        Import(
             f.to_string(),
             names.into_iter().map(|v| ImportName::id(v)).collect(),
         )
     }
     pub fn names_mixed(f: &str, names: Vec<ImportName>) -> Self {
-        Import::Names(
+        Import(
             f.to_string(),
             names,
         )
     }
 }
 
-#[derive(Clone, Debug,PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum FileEntity {
     Tree(Tree),
     Import(Import),
 }
 
-#[derive(Clone, Debug,PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct AstFile(pub Vec<FileEntity>);
 
 impl<'a> AstFile {

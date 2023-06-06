@@ -51,7 +51,7 @@ impl<'a> Project {
                 let _ = match ent {
                     FileEntity::Tree(t) => file.add_def(t)?,
                     FileEntity::Import(i) => {
-                        let _ = self.parse_file(root.clone(), i.name().to_string())?;
+                        let _ = self.parse_file(root.clone(), i.f_name().to_string())?;
                         file.add_import(i)?
                     }
                 };
@@ -76,52 +76,26 @@ pub fn file_to_str<'a>(root: PathBuf, file: String) -> Result<String, ParseError
 #[derive(Debug, Default, Clone, PartialEq)]
 pub struct File {
     pub name: String,
-    pub import_files: HashMap<String, Import>,
+    pub imports: HashMap<String,HashSet<ImportName>>,
     pub definitions: HashMap<String, Tree>,
 }
 
-pub struct ImportMap {
-    pub files: HashMap<String, Import>,
-    pub names: HashMap<String, String>,
-    pub aliases: HashMap<String, String>,
-}
 
 impl File {
-    fn imports_map(&mut self) {
-        // let imports:Vec<&Import> = self.import_files.values().map(|i|{
-        //     match  { }
-        // }).collect();
-
-        ;
-
-    }
     pub fn new(name: String) -> Self {
         File {
             name,
-            import_files: Default::default(),
+            imports: Default::default(),
             definitions: Default::default(),
         }
     }
 
     pub fn add_import(&mut self, import: Import) -> Result<(), GolError> {
-        let import_name = import.name();
-        match (self.import_files.get(import_name), import.clone()) {
-            (None, _) => {
-                self.import_files.insert(import_name.to_string(), import);
-                Ok(())
-            }
-            (Some(Import::File(_)), _) => Ok(()),
-            (Some(Import::Names(_, _)), f @ Import::File(_)) => {
-                self.import_files.insert(import_name.to_string(), f);
-                Ok(())
-            }
-            (Some(Import::Names(_, saved)), Import::Names(n, unsaved)) => {
-                let records: Vec<ImportName> = unsaved.into_iter().chain(saved.clone()).collect();
-
-                self.import_files.insert(import_name.to_string(), Import::Names(n, records));
-                Ok(())
-            }
-        }
+        self.imports
+            .entry(import.0.clone())
+            .and_modify(|names|names.extend(import.1.clone()))
+            .or_insert(HashSet::from_iter(import.1));
+        Ok(())
     }
     pub fn add_def(&mut self, tree: Tree) -> Result<(), GolError> {
         match self.definitions.get(&tree.name.0) {
@@ -139,10 +113,10 @@ impl File {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashMap;
+    use std::collections::{HashMap, HashSet};
     use std::path::PathBuf;
-    use crate::gol::ast::{Argument, Arguments, Call, Calls, Id, Import, MesType, Param, Params, Tree, TreeType};
-    use crate::gol::project::{File, Project};
+    use crate::gol::ast::{Argument, Arguments, Call, Calls, Id, Import, ImportName, MesType, Param, Params, Tree, TreeType};
+    use crate::gol::project::{File,  Project};
 
     #[test]
     fn smoke() {
@@ -159,8 +133,11 @@ mod tests {
             Some(
                 &File {
                     name: "main.gol".to_string(),
-                    import_files: HashMap::from_iter(vec![
-                        ("nested/impls.gol".to_string(), Import::file("nested/impls.gol"))
+                    imports:
+                    HashMap::from_iter(vec![
+                        ("nested/impls.gol".to_string(), HashSet::from_iter(
+                            vec![ImportName::Alias("id".to_string(),"idx".to_string()),ImportName::WholeFile])),
+
                     ]),
                     definitions: HashMap::from_iter(vec![
                         (
@@ -184,17 +161,10 @@ mod tests {
                                           ]))
                                       ]))
                         ),
+
                         (
-                            "grasped".to_string(),
-                            Tree::new(TreeType::Cond, Id("grasped".to_string()),
-                                      Params::new(vec![
-                                          Param::new("obj", MesType::Object),
-                                      ]),
-                                      Calls::default())
-                        ),
-                        (
-                            "ball_found".to_string(),
-                            Tree::new(TreeType::Cond, Id("ball_found".to_string()),
+                            "find_ball".to_string(),
+                            Tree::new(TreeType::Cond, Id("find_ball".to_string()),
                                       Params::new(vec![
                                           Param::new("obj", MesType::Object),
                                       ]),
@@ -209,7 +179,7 @@ mod tests {
             Some(
                 &File {
                     name: "nested/impls.gol".to_string(),
-                    import_files: HashMap::new(),
+                    imports: Default::default(),
                     definitions: HashMap::from_iter(vec![
                         (
                             "approach".to_string(),

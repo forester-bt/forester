@@ -10,6 +10,7 @@ mod visualizer;
 #[derive(Debug)]
 pub enum GolError{
     ParserError(String),
+    CompileError(String),
     VisualizationError(String),
     IOError(String)
 }

@@ -1,1 +1,2 @@
-impl ask_for_help() {}
+impl approach(obj:object) {}
+impl grasp(obj:object) {}

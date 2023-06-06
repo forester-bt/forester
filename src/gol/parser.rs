@@ -271,8 +271,8 @@ impl<'a> Parser<'a> {
             .then_or_none_zip(part)
             .map(|(file, parts)| {
                 match parts {
-                    None => Import::File(file.0),
-                    Some(names) => Import::Names(file.0, names)
+                    None => Import::file(file.0.as_str()),
+                    Some(names) => Import(file.0, names)
                 }
             })
     }
