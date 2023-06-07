@@ -1,17 +1,16 @@
-
-import "nested/impls.gol"
 import "nested/impls.gol" {
-    id => idx
+    grasp => grasp_ball
 }
 
 root ball fallback {
-    try_to_place_to() // the objects in bb that denote ball and bin
+    try_to_place_to(ball, target)
     ask_for_help()
 }
 
 sequence try_to_place_to(obj:object, dest:object){
     fallback {
         find_ball(obj)
+        grasp_ball(obj)
     }
 }
 

@@ -9,11 +9,14 @@ use crate::gol::GolError;
 use crate::gol::parser::Parser;
 use itertools::Itertools;
 
+type FileName = String;
+type TreeName = String;
+
 #[derive(Debug, Default, Clone)]
 pub struct Project {
-    root: PathBuf,
-    main: String,
-    files: HashMap<String, File>,
+    pub root: PathBuf,
+    pub main: (FileName,TreeName),
+    pub files: HashMap<String, File>,
 }
 
 
@@ -23,24 +26,30 @@ pub fn file_to_string(file_path: PathBuf) -> std::io::Result<String> {
 
 
 impl<'a> Project {
-    pub fn build(main_file: String, root: PathBuf) -> Result<Project, GolError> {
-        let mut project = Project { root: root.clone(), main: "".to_string(), files: Default::default() };
+
+    pub fn build_with_root(main_file: FileName, main_call:TreeName, root: PathBuf) -> Result<Project, GolError>{
+        let mut project = Project { root: root.clone(), main: ("".to_string(),"".to_string()), files: Default::default() };
+        project.main = (main_file.clone(), main_call);
+        let _ = project.parse_file(root.clone(), main_file.clone())?;
+        Ok(project)
+    }
+
+    pub fn build(main_file: FileName, root: PathBuf) -> Result<Project, GolError> {
+        let mut project = Project { root: root.clone(), main: ("".to_string(),"".to_string()), files: Default::default() };
 
         let _ = project.parse_file(root.clone(), main_file.clone())?;
 
-        let find_root =
+        let main_call =
             project
                 .files
                 .get(main_file.as_str())
-                .and_then(|file| {
-                    file.definitions.iter().find(|(name, t)| t.is_root())
-                })
+                .and_then(|file| file.definitions.iter().find(|(name, t)| t.is_root()))
                 .map(|(name, _)| name.to_string())
                 .ok_or(GolError::IOError(format!("no root operation in the file {}", main_file.clone())))?;
-        project.main = find_root;
+        project.main = (main_file, main_call);
         Ok(project)
     }
-    fn parse_file(&mut self, mut root: PathBuf, file: String) -> Result<(), GolError> {
+    fn parse_file(&mut self, mut root: PathBuf, file: FileName) -> Result<(), GolError> {
         let text = file_to_str(root.clone(), file.clone())?;
         let ast_file = Parser::new(text.as_str())?.parse()?;
 
@@ -64,7 +73,7 @@ impl<'a> Project {
 }
 
 
-pub fn file_to_str<'a>(root: PathBuf, file: String) -> Result<String, ParseError<'a>> {
+pub fn file_to_str<'a>(root: PathBuf, file: FileName) -> Result<String, ParseError<'a>> {
     let mut path = root.clone();
     path.push(file);
 
@@ -76,13 +85,13 @@ pub fn file_to_str<'a>(root: PathBuf, file: String) -> Result<String, ParseError
 #[derive(Debug, Default, Clone, PartialEq)]
 pub struct File {
     pub name: String,
-    pub imports: HashMap<String,HashSet<ImportName>>,
-    pub definitions: HashMap<String, Tree>,
+    pub imports: HashMap<FileName,HashSet<ImportName>>,
+    pub definitions: HashMap<TreeName, Tree>,
 }
 
 
 impl File {
-    pub fn new(name: String) -> Self {
+    pub fn new(name: FileName) -> Self {
         File {
             name,
             imports: Default::default(),
@@ -125,7 +134,7 @@ mod tests {
 
         let project = Project::build("main.gol".to_string(), root).unwrap();
         assert_eq!(
-            project.main, "ball".to_string()
+            project.main, ("main.gol".to_string(),"ball".to_string())
         );
 
         assert_eq!(

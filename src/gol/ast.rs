@@ -155,7 +155,7 @@ impl<'a> Arguments {
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, EnumString)]
+#[derive(Display,Debug, Clone, Eq, PartialEq, EnumString)]
 #[strum(serialize_all = "snake_case")]
 pub enum TreeType {
     Root,
