@@ -1,2 +1,3 @@
 impl approach(obj:object) {}
 impl grasp(obj:object) {}
+impl ask_for_help() {}

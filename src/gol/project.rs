@@ -4,19 +4,20 @@ use std::fs;
 use std::iter::Map;
 use std::path::{Path, PathBuf};
 use parsit::error::ParseError;
-use crate::gol::ast::{AstFile, FileEntity, Id, Import, ImportName, Tree};
+use crate::gol::ast::{AstFile, FileEntity, Key, Import, ImportName, Tree};
 use crate::gol::GolError;
 use crate::gol::parser::Parser;
 use itertools::Itertools;
 
-type FileName = String;
-type TreeName = String;
+pub type FileName = String;
+pub type TreeName = String;
+pub type AliasName = String;
 
 #[derive(Debug, Default, Clone)]
 pub struct Project {
     pub root: PathBuf,
     pub main: (FileName,TreeName),
-    pub files: HashMap<String, File>,
+    pub files: HashMap<FileName, File>,
 }
 
 
@@ -26,6 +27,11 @@ pub fn file_to_string(file_path: PathBuf) -> std::io::Result<String> {
 
 
 impl<'a> Project {
+
+    pub fn full_main(&self) -> String {
+        let (_,root) = &self.main;
+        format!("{}",  root)
+    }
 
     pub fn build_with_root(main_file: FileName, main_call:TreeName, root: PathBuf) -> Result<Project, GolError>{
         let mut project = Project { root: root.clone(), main: ("".to_string(),"".to_string()), files: Default::default() };
@@ -124,7 +130,7 @@ impl File {
 mod tests {
     use std::collections::{HashMap, HashSet};
     use std::path::PathBuf;
-    use crate::gol::ast::{Argument, Arguments, Call, Calls, Id, Import, ImportName, MesType, Param, Params, Tree, TreeType};
+    use crate::gol::ast::{Argument, Arguments, Call, Calls, Key, Import, ImportName, MesType, Param, Params, Tree, TreeType};
     use crate::gol::project::{File,  Project};
 
     #[test]
@@ -151,7 +157,7 @@ mod tests {
                     definitions: HashMap::from_iter(vec![
                         (
                             "ball".to_string(),
-                            Tree::new(TreeType::Root, Id("ball".to_string()), Params::default(), Calls::new(vec![
+                            Tree::new(TreeType::Root, Key("ball".to_string()), Params::default(), Calls::new(vec![
                                 Call::lambda(TreeType::Fallback, Calls::new(vec![
                                     Call::invocation("try_to_place_to", Arguments::default()),
                                     Call::invocation("ask_for_help", Arguments::default()),
@@ -160,7 +166,7 @@ mod tests {
                         ),
                         (
                             "try_to_place_to".to_string(),
-                            Tree::new(TreeType::Sequence, Id("try_to_place_to".to_string()),
+                            Tree::new(TreeType::Sequence, Key("try_to_place_to".to_string()),
                                       Params::new(vec![
                                           Param::new("obj", MesType::Object), Param::new("dest", MesType::Object),
                                       ]),
@@ -173,7 +179,7 @@ mod tests {
 
                         (
                             "find_ball".to_string(),
-                            Tree::new(TreeType::Cond, Id("find_ball".to_string()),
+                            Tree::new(TreeType::Cond, Key("find_ball".to_string()),
                                       Params::new(vec![
                                           Param::new("obj", MesType::Object),
                                       ]),
@@ -192,11 +198,11 @@ mod tests {
                     definitions: HashMap::from_iter(vec![
                         (
                             "approach".to_string(),
-                            Tree::new(TreeType::Impl, Id("approach".to_string()), Params::new(vec![Param::new("obj", MesType::Object)]), Calls::default())
+                            Tree::new(TreeType::Impl, Key("approach".to_string()), Params::new(vec![Param::new("obj", MesType::Object)]), Calls::default())
                         ),
                         (
                             "grasp".to_string(),
-                            Tree::new(TreeType::Impl, Id("grasp".to_string()), Params::new(vec![Param::new("obj", MesType::Object)]), Calls::default())
+                            Tree::new(TreeType::Impl, Key("grasp".to_string()), Params::new(vec![Param::new("obj", MesType::Object)]), Calls::default())
                         ),
                     ]),
                 }

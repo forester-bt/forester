@@ -27,20 +27,20 @@ cond grasped(obj:object)
     "#).unwrap();
     expect(parser.file(0), AstFile(vec![
         FileEntity::Import(Import::file("nested/impls.gol")),
-        FileEntity::Tree(Tree::new(TreeType::Root, Id("ball".to_string()),
+        FileEntity::Tree(Tree::new(TreeType::Root, Key("ball".to_string()),
                                    Params::default(), Calls::new(vec![
                 Call::lambda(TreeType::Fallback,Calls::new(vec![
                     Call::invocation("try_to_place_to", Arguments::default()),
                     Call::invocation("ask_for_help", Arguments::default()),
                 ]))
             ]))),
-        FileEntity::Tree(Tree::new(TreeType::Sequence, Id("try_to_place_to".to_string()),
+        FileEntity::Tree(Tree::new(TreeType::Sequence, Key("try_to_place_to".to_string()),
                                    Params::new(vec![Param::new("obj", MesType::Object)]), Calls::new(vec![
                 Call::lambda(TreeType::Fallback, Calls::new(vec![
                     Call::invocation("find_ball", Arguments::new(vec![Argument::id("obj")]))
                 ]))
             ]))),
-        FileEntity::Tree(Tree::new(TreeType::Cond, Id("grasped".to_string()),
+        FileEntity::Tree(Tree::new(TreeType::Cond, Key("grasped".to_string()),
                                    Params::new(vec![Param::new("obj", MesType::Object)]),
                                    Calls::default())),
     ]));
@@ -56,12 +56,12 @@ cond ball_found {}
     expect(parser.file(0), AstFile(vec![
         FileEntity::Tree(Tree::new(
             TreeType::Cond,
-            Id("grasped".to_string()),Params::default(),
+            Key("grasped".to_string()), Params::default(),
             Calls::default()
         )),
         FileEntity::Tree(Tree::new(
             TreeType::Cond,
-            Id("ball_found".to_string()),Params::default(),
+            Key("ball_found".to_string()), Params::default(),
             Calls::default()
         ))
     ]));

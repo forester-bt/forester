@@ -1,4 +1,5 @@
 import "nested/impls.gol" {
+    ask_for_help,
     grasp => grasp_ball
 }
 

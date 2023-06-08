@@ -18,7 +18,7 @@ mod tests {
     use std::fs;
     use std::path::PathBuf;
     use parsit::test::parser_test::*;
-    use crate::gol::ast::{Argument, Arguments, Bool, Call, Id, Message, Number, StringLit};
+    use crate::gol::ast::{Argument, Arguments, Bool, Call, Key, Message, Number, StringLit};
     use crate::gol::parser::Parser;
 
     pub fn load_file(path: &str) -> String {

@@ -4,7 +4,8 @@ use std::str::FromStr;
 use parsit::step::Step;
 use strum::ParseError;
 use strum_macros::EnumString;
-
+use strum_macros::Display;
+use crate::gol::project::{AliasName, TreeName};
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Number {
@@ -15,7 +16,7 @@ pub enum Number {
 }
 
 #[derive(Debug, Clone, PartialEq, Hash)]
-pub struct Id(pub String);
+pub struct Key(pub String);
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct StringLit(pub String);
@@ -70,14 +71,14 @@ impl Message {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Call {
-    Invocation(Id, Arguments),
+    Invocation(Key, Arguments),
     Lambda(TreeType, Calls),
     Decorator(TreeType, Arguments, Box<Call>),
 }
 
 impl Call {
     pub fn invocation(id: &str, args: Arguments) -> Self {
-        Call::Invocation(Id(id.to_string()), args)
+        Call::Invocation(Key(id.to_string()), args)
     }
     pub fn lambda(tpe: TreeType, calls: Calls) -> Self {
         Call::Lambda(tpe, calls)
@@ -100,13 +101,13 @@ impl Calls {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Param {
-    pub name: Id,
+    pub name: Key,
     pub tpe: MesType,
 }
 
 impl Param {
     pub fn new(id: &str, tpe: MesType) -> Self {
-        Param { name: Id(id.to_string()), tpe }
+        Param { name: Key(id.to_string()), tpe }
     }
 }
 
@@ -123,24 +124,24 @@ impl Params {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Argument {
-    Id(Id),
+    Id(Key),
     Mes(Message),
-    AssignedId(Id, Id),
-    AssignedMes(Id, Message),
+    AssignedId(Key, Key),
+    AssignedMes(Key, Message),
 }
 
 impl Argument {
     pub fn id(v: &str) -> Self {
-        Argument::Id(Id(v.to_string()))
+        Argument::Id(Key(v.to_string()))
     }
     pub fn mes(v: Message) -> Self {
         Argument::Mes(v)
     }
     pub fn id_id(lhs: &str, rhs: &str) -> Self {
-        Argument::AssignedId(Id(lhs.to_string()), Id(rhs.to_string()))
+        Argument::AssignedId(Key(lhs.to_string()), Key(rhs.to_string()))
     }
     pub fn id_mes(lhs: &str, rhs: Message) -> Self {
-        Argument::AssignedMes(Id(lhs.to_string()), rhs)
+        Argument::AssignedMes(Key(lhs.to_string()), rhs)
     }
 }
 
@@ -226,7 +227,7 @@ pub enum MesType {
 #[derive(Clone, Debug, PartialEq)]
 pub struct Tree {
     pub tpe: TreeType,
-    pub name: Id,
+    pub name: Key,
     pub params: Params,
     pub calls: Calls,
 }
@@ -238,7 +239,7 @@ impl Tree {
             _ => false
         }
     }
-    pub fn new(tpe: TreeType, name: Id, params: Params, calls: Calls) -> Self {
+    pub fn new(tpe: TreeType, name: Key, params: Params, calls: Calls) -> Self {
         Self { tpe, name, params, calls }
     }
 }
@@ -249,7 +250,7 @@ pub struct Import(pub String, pub Vec<ImportName>);
 #[derive(Clone, Debug, PartialEq,Hash,Eq)]
 pub enum ImportName {
     Id(String),
-    Alias(String, String),
+    Alias(TreeName, AliasName),
     WholeFile,
 }
 

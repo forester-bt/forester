@@ -10,7 +10,7 @@ use parsit::error::ParseError;
 use parsit::parser::{EmptyToken, Parsit};
 use parsit::step::Step;
 use parsit::{seq, token, wrap};
-use crate::gol::ast::{Argument, Arguments, Bool, Call, Calls, AstFile, FileEntity, Id, Import, Message, MesType, Number, Param, Params, StringLit, Tree, TreeType, validate_lambda, ImportName};
+use crate::gol::ast::{Argument, Arguments, Bool, Call, Calls, AstFile, FileEntity, Key, Import, Message, MesType, Number, Param, Params, StringLit, Tree, TreeType, validate_lambda, ImportName};
 use crate::gol::GolError;
 use crate::gol::lexer::Token;
 
@@ -54,8 +54,8 @@ impl<'a> Parser<'a> {
         token!(self.token(pos) => Token::Import )
     }
 
-    fn id(&self, pos: usize) -> Step<'a, Id> {
-        token!(self.token(pos) => Token::Id(v) => Id(v.clone()) )
+    fn id(&self, pos: usize) -> Step<'a, Key> {
+        token!(self.token(pos) => Token::Id(v) => Key(v.clone()) )
     }
     fn str(&self, pos: usize) -> Step<'a, StringLit> {
         token!(self.token(pos) => Token::StringLit(v) => StringLit(v.clone()) )
