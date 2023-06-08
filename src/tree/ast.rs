@@ -5,7 +5,7 @@ use parsit::step::Step;
 use strum::ParseError;
 use strum_macros::EnumString;
 use strum_macros::Display;
-use crate::gol::project::{AliasName, TreeName};
+use crate::tree::project::{AliasName, TreeName};
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Number {
@@ -306,7 +306,7 @@ impl<'a> AstFile {
 #[cfg(test)]
 mod tests {
     use std::str::FromStr;
-    use crate::gol::ast::TreeType;
+    use crate::tree::ast::TreeType;
 
     #[test]
     fn enum_test() {

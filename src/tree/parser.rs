@@ -10,9 +10,9 @@ use parsit::error::ParseError;
 use parsit::parser::{EmptyToken, Parsit};
 use parsit::step::Step;
 use parsit::{seq, token, wrap};
-use crate::gol::ast::{Argument, Arguments, Bool, Call, Calls, AstFile, FileEntity, Key, Import, Message, MesType, Number, Param, Params, StringLit, Tree, TreeType, validate_lambda, ImportName};
-use crate::gol::GolError;
-use crate::gol::lexer::Token;
+use crate::tree::ast::{Argument, Arguments, Bool, Call, Calls, AstFile, FileEntity, Key, Import, Message, MesType, Number, Param, Params, StringLit, Tree, TreeType, validate_lambda, ImportName};
+use crate::tree::GolError;
+use crate::tree::lexer::Token;
 
 pub struct Parser<'a> {
     inner: Parsit<'a, Token>,

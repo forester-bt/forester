@@ -1,6 +1,6 @@
 use parsit::test::parser_test::expect;
-use crate::gol::ast::*;
-use crate::gol::parser::Parser;
+use crate::tree::ast::*;
+use crate::tree::parser::Parser;
 
 #[test]
 fn plain_arg() {

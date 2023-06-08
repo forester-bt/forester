@@ -11,10 +11,10 @@ use graphviz_rust::dot_structures::*;
 use graphviz_rust::exec;
 use graphviz_rust::printer::PrinterContext;
 use itertools::Itertools;
-use crate::gol::ast::{Call, ImportName, Key, Tree};
-use crate::gol::GolError;
-use crate::gol::project::{AliasName, File, FileName, Project, TreeName};
-use crate::gol::visualizer::statements::ToStmt;
+use crate::tree::ast::{Call, ImportName, Key, Tree};
+use crate::tree::GolError;
+use crate::tree::project::{AliasName, File, FileName, Project, TreeName};
+use crate::tree::visualizer::statements::ToStmt;
 
 
 fn err(v: String) -> GolError {

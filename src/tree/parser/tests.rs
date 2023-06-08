@@ -18,8 +18,8 @@ mod tests {
     use std::fs;
     use std::path::PathBuf;
     use parsit::test::parser_test::*;
-    use crate::gol::ast::{Argument, Arguments, Bool, Call, Key, Message, Number, StringLit};
-    use crate::gol::parser::Parser;
+    use crate::tree::ast::{Argument, Arguments, Bool, Call, Key, Message, Number, StringLit};
+    use crate::tree::parser::Parser;
 
     pub fn load_file(path: &str) -> String {
         let mut ex = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
@@ -38,7 +38,7 @@ mod tests {
 
     #[test]
     fn smoke() {
-        let script = load_file("gol/tests/main.gol");
+        let script = load_file("tree/tests/main.tree");
         let parser = Parser::new(script.as_str()).unwrap();
         let result = parser.parse().unwrap();
 

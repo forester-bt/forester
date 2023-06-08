@@ -2,7 +2,7 @@ use graphviz_rust::attributes::NodeAttributes;
 use graphviz_rust::dot_structures::*;
 use graphviz_rust::dot_generator::*;
 use itertools::Itertools;
-use crate::gol::ast::{Argument, Arguments, Key, Tree, TreeType};
+use crate::tree::ast::{Argument, Arguments, Key, Tree, TreeType};
 
 pub trait ToStmt {
     fn to_stmt(&self, id: String) -> Stmt;

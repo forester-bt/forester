@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 use parsit::error::ParseError;
 use parsit::test::parser_test::*;
-use crate::gol::ast::*;
-use crate::gol::parser::Parser;
+use crate::tree::ast::*;
+use crate::tree::parser::Parser;
 
 #[test]
 fn invocation() {

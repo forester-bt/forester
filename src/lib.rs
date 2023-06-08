@@ -1,4 +1,4 @@
 extern crate core;
 
-mod gol;
+mod tree;
 

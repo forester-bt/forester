@@ -1,9 +1,9 @@
 [package]
-name = "golem"
-description = "Orchestration framework"
+name = "forester"
+description = "Workflow framework based on the behaviour trees"
 authors = ["BorisZhguchev <zhguchev@hotmail.com>"]
-homepage = "https://github.com/besok/golem"
-repository = "https://github.com/besok/golem"
+homepage = "https://github.com/besok/forester"
+repository = "https://github.com/besok/forester"
 version = "0.1.0"
 edition = "2021"
 

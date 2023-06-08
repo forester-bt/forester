@@ -1,4 +1,4 @@
-import "nested/impls.gol" {
+import "nested/impls.tree" {
     ask_for_help,
     grasp => grasp_ball
 }

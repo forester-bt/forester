@@ -1,4 +1,4 @@
-lexer grammar GolLexer;
+lexer grammar TreeLexer;
 
 ROOT: 'ROOT';
 PARALLEL : 'parallel';

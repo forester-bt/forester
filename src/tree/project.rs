@@ -4,9 +4,9 @@ use std::fs;
 use std::iter::Map;
 use std::path::{Path, PathBuf};
 use parsit::error::ParseError;
-use crate::gol::ast::{AstFile, FileEntity, Key, Import, ImportName, Tree};
-use crate::gol::GolError;
-use crate::gol::parser::Parser;
+use crate::tree::ast::{AstFile, FileEntity, Key, Import, ImportName, Tree};
+use crate::tree::GolError;
+use crate::tree::parser::Parser;
 use itertools::Itertools;
 
 pub type FileName = String;
@@ -81,10 +81,10 @@ impl<'a> Project {
 
 pub fn file_to_str<'a>(root: PathBuf, file: FileName) -> Result<String, ParseError<'a>> {
     let mut path = root.clone();
-    path.push(file);
+    path.push(file.clone());
 
     file_to_string(path)
-        .map_err(|e| ParseError::ExternalError(e.to_string(), 0))
+        .map_err(|e| ParseError::ExternalError(format!("error:{}, file:{:?}",e.to_string(),file), 0))
 }
 
 
@@ -130,27 +130,26 @@ impl File {
 mod tests {
     use std::collections::{HashMap, HashSet};
     use std::path::PathBuf;
-    use crate::gol::ast::{Argument, Arguments, Call, Calls, Key, Import, ImportName, MesType, Param, Params, Tree, TreeType};
-    use crate::gol::project::{File,  Project};
+    use crate::tree::ast::{Argument, Arguments, Call, Calls, Key, Import, ImportName, MesType, Param, Params, Tree, TreeType};
+    use crate::tree::project::{File, Project};
 
     #[test]
     fn smoke() {
         let mut root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        root.push("gol/tests/plain_project");
-
-        let project = Project::build("main.gol".to_string(), root).unwrap();
+        root.push("tree/tests/plain_project");
+        let project = Project::build("main.tree".to_string(), root).unwrap();
         assert_eq!(
-            project.main, ("main.gol".to_string(),"ball".to_string())
+            project.main, ("main.tree".to_string(),"ball".to_string())
         );
 
         assert_eq!(
-            project.files.get("main.gol"),
+            project.files.get("main.tree"),
             Some(
                 &File {
-                    name: "main.gol".to_string(),
+                    name: "main.tree".to_string(),
                     imports:
                     HashMap::from_iter(vec![
-                        ("nested/impls.gol".to_string(), HashSet::from_iter(
+                        ("nested/impls.tree".to_string(), HashSet::from_iter(
                             vec![ImportName::Alias("id".to_string(),"idx".to_string()),ImportName::WholeFile])),
 
                     ]),
@@ -190,10 +189,10 @@ mod tests {
             )
         );
         assert_eq!(
-            project.files.get("nested/impls.gol"),
+            project.files.get("nested/impls.tree"),
             Some(
                 &File {
-                    name: "nested/impls.gol".to_string(),
+                    name: "nested/impls.tree".to_string(),
                     imports: Default::default(),
                     definitions: HashMap::from_iter(vec![
                         (

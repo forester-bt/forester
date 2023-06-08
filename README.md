@@ -1,12 +1,12 @@
-## Golem
+## Forester
 
 The orchestration engine based on behaviour trees.
 
 Frontend:
-GOL -> Golem Operating Language
+Tree lang -> A dsl language to parse and combine the trees
 
 IR: 
-GSL -> CFG -> Behaviour tree
+Tree lang -> CFG -> Behaviour tree
 
 Runtime:
 Run BT

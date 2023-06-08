@@ -1,4 +1,4 @@
-parser grammar GolParser;
+parser grammar TreeParser;
 
 file
     : (definition | importSt)* EOF

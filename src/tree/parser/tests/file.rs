@@ -1,14 +1,14 @@
 use std::collections::HashMap;
 use parsit::error::ParseError;
 use parsit::test::parser_test::*;
-use crate::gol::ast::*;
-use crate::gol::parser::Parser;
-use crate::gol::project::File;
+use crate::tree::ast::*;
+use crate::tree::parser::Parser;
+use crate::tree::project::File;
 
 #[test]
 fn file() {
     let parser = Parser::new(r#"
-import "nested/impls.gol"
+import "nested/impls.tree"
 
 root ball fallback {
     try_to_place_to() // the objects in bb that denote ball and bin
@@ -26,7 +26,7 @@ cond grasped(obj:object)
 
     "#).unwrap();
     expect(parser.file(0), AstFile(vec![
-        FileEntity::Import(Import::file("nested/impls.gol")),
+        FileEntity::Import(Import::file("nested/impls.tree")),
         FileEntity::Tree(Tree::new(TreeType::Root, Key("ball".to_string()),
                                    Params::default(), Calls::new(vec![
                 Call::lambda(TreeType::Fallback,Calls::new(vec![
