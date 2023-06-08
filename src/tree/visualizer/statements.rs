@@ -2,7 +2,7 @@ use graphviz_rust::attributes::NodeAttributes;
 use graphviz_rust::dot_structures::*;
 use graphviz_rust::dot_generator::*;
 use itertools::Itertools;
-use crate::tree::ast::{Argument, Arguments, Key, Tree, TreeType};
+use crate::tree::parser::ast::{Argument, Arguments, Key, Tree, TreeType};
 
 pub trait ToStmt {
     fn to_stmt(&self, id: String) -> Stmt;
@@ -11,7 +11,7 @@ pub trait ToStmt {
 impl ToStmt for Tree {
     fn to_stmt(&self, id: String) -> Stmt {
         let tree_type = format!("{}", &self.tpe);
-        let name = (&self.name.0).to_string();
+        let name = (&self.name).to_string();
 
 
         let label = NodeAttributes::label(format!("\"{} {}\"", tree_type, name));
@@ -33,10 +33,10 @@ impl ToStmt for (&TreeType, &Arguments) {
         let tpe = format!("{}", &self.0);
         let args = &self.1.args.iter().map(|a| {
             match a {
-                Argument::Id(Key(v)) => v.clone(),
+                Argument::Id(v) => v.clone(),
                 Argument::Mes(m) => format!("{:?}", m),
-                Argument::AssignedId(Key(l), Key(r)) => format!("{}={}", l, r),
-                Argument::AssignedMes(Key(v), m) => format!("{}={:?}", v, m)
+                Argument::AssignedId(l, r) => format!("{}={}", l, r),
+                Argument::AssignedMes(v, m) => format!("{}={:?}", v, m)
             }
         }).join(",");
         let label = format!("{} ({})",tpe,args);
@@ -45,3 +45,4 @@ impl ToStmt for (&TreeType, &Arguments) {
         stmt!(node!(id.as_str(); label))
     }
 }
+

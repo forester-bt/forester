@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use parsit::error::ParseError;
 use parsit::test::parser_test::*;
-use crate::tree::ast::*;
+use crate::tree::parser::ast::*;
 use crate::tree::parser::Parser;
 
 #[test]
@@ -9,7 +9,7 @@ fn definition() {
     let parser = Parser::new(r#"root name {}"#).unwrap();
     expect(parser.tree(0), Tree::new(
         TreeType::Root,
-        Key("name".to_string()),
+        "name".to_string(),
         Params::default(),
         Calls::default(),
     ));
@@ -17,14 +17,14 @@ fn definition() {
     let parser = Parser::new(r#"fallback name() {}"#).unwrap();
     expect(parser.tree(0), Tree::new(
         TreeType::Fallback,
-        Key("name".to_string()),
+        "name".to_string(),
         Params::default(),
         Calls::default(),
     ));
     let parser = Parser::new(r#"sequence name(a:string,b:num) {}"#).unwrap();
     expect(parser.tree(0), Tree::new(
         TreeType::Sequence,
-        Key("name".to_string()),
+        "name".to_string(),
         Params::new(vec![Param::new("a", MesType::String), Param::new("b", MesType::Num)]),
         Calls::default(),
     ));
@@ -36,7 +36,7 @@ fn definition() {
     }"#).unwrap();
     expect(parser.tree(0), Tree::new(
         TreeType::Sequence,
-        Key("name".to_string()),
+        "name".to_string(),
         Params::new(vec![Param::new("a", MesType::String), Param::new("b", MesType::Num)]),
         Calls::new(vec![
             Call::lambda(TreeType::Fallback, Calls::new(vec![
@@ -60,7 +60,7 @@ fn short_definition() {
     "#).unwrap();
     expect(parser.tree(0), Tree::new(
         TreeType::Root,
-        Key("ball".to_string()),
+        "ball".to_string(),
         Params::default(),
         Calls::new(vec![
             Call::lambda(TreeType::Fallback,Calls::new(vec![
@@ -83,7 +83,7 @@ fn impl_definition() {
     "#).unwrap();
     expect(parser.tree(0), Tree::new(
         TreeType::Cond,
-        Key("grasped".to_string()),
+        "grasped".to_string(),
         Params::new(vec![Param::new("obj",MesType::Object)]),
         Calls::default()
     ));

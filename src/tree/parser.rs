@@ -1,4 +1,6 @@
 mod tests;
+pub mod ast;
+mod lexer;
 
 use std::borrow::Cow;
 use std::collections::HashMap;
@@ -10,9 +12,9 @@ use parsit::error::ParseError;
 use parsit::parser::{EmptyToken, Parsit};
 use parsit::step::Step;
 use parsit::{seq, token, wrap};
-use crate::tree::ast::{Argument, Arguments, Bool, Call, Calls, AstFile, FileEntity, Key, Import, Message, MesType, Number, Param, Params, StringLit, Tree, TreeType, validate_lambda, ImportName};
-use crate::tree::GolError;
-use crate::tree::lexer::Token;
+use crate::tree::parser::ast::*;
+use crate::tree::TreeError;
+use crate::tree::parser::lexer::Token;
 
 pub struct Parser<'a> {
     inner: Parsit<'a, Token>,
@@ -55,7 +57,7 @@ impl<'a> Parser<'a> {
     }
 
     fn id(&self, pos: usize) -> Step<'a, Key> {
-        token!(self.token(pos) => Token::Id(v) => Key(v.clone()) )
+        token!(self.token(pos) => Token::Id(v) => v.clone() )
     }
     fn str(&self, pos: usize) -> Step<'a, StringLit> {
         token!(self.token(pos) => Token::StringLit(v) => StringLit(v.clone()) )
@@ -165,7 +167,7 @@ impl<'a> Parser<'a> {
     fn tree_type(&self, pos: usize) -> Step<'a, TreeType> {
         self.id(pos)
             .flat_map(
-                |p| TreeType::from_str(&p.0),
+                |p| TreeType::from_str(&p),
                 |pe| Step::Fail(pos),
             )
     }
@@ -252,8 +254,8 @@ impl<'a> Parser<'a> {
                 self.a_arr(p).then(|p|self.id(p)).or_none()
             }).map(|(id,alias)|{
                 match alias {
-                    None => ImportName::Id(id.0),
-                    Some(a) => ImportName::Alias(id.0,a.0),
+                    None => ImportName::Id(id),
+                    Some(a) => ImportName::Alias(id,a),
                 }
             })
         };
@@ -294,7 +296,7 @@ impl<'a> Parser<'a> {
 
 impl<'a> Parser<'a> {
 
-    pub fn new(src: &'a str) -> Result<Self, GolError> {
+    pub fn new(src: &'a str) -> Result<Self, TreeError> {
         Ok(Parser {
             inner: Parsit::new(src)?,
         })

@@ -15,8 +15,7 @@ pub enum Number {
     Binary(isize),
 }
 
-#[derive(Debug, Clone, PartialEq, Hash)]
-pub struct Key(pub String);
+pub type Key = String;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct StringLit(pub String);
@@ -38,6 +37,18 @@ pub enum Message {
 }
 
 impl Message {
+    pub fn same(&self, mt: &MesType) -> bool {
+        match (&self, mt) {
+            (Message::Num(_), MesType::Num) => true,
+            (Message::String(_), MesType::String) => true,
+            (Message::Bool(_), MesType::Bool) => true,
+            (Message::Array(_), MesType::Array) => true,
+            (Message::Object(_), MesType::Object) => true,
+            (Message::Call(_), MesType::Tree) => true,
+            _ => false
+        }
+    }
+
     pub fn str(v: &str) -> Self {
         Message::String(StringLit(v.to_string()))
     }
@@ -78,7 +89,7 @@ pub enum Call {
 
 impl Call {
     pub fn invocation(id: &str, args: Arguments) -> Self {
-        Call::Invocation(Key(id.to_string()), args)
+        Call::Invocation(id.to_string(), args)
     }
     pub fn lambda(tpe: TreeType, calls: Calls) -> Self {
         Call::Lambda(tpe, calls)
@@ -107,7 +118,7 @@ pub struct Param {
 
 impl Param {
     pub fn new(id: &str, tpe: MesType) -> Self {
-        Param { name: Key(id.to_string()), tpe }
+        Param { name: id.to_string(), tpe }
     }
 }
 
@@ -131,17 +142,25 @@ pub enum Argument {
 }
 
 impl Argument {
+
+    pub fn name(&self) -> Option<&Key>{
+        match self {
+            Argument::Id(_) | Argument::Mes(_) => None,
+            Argument::AssignedId(k, _) | Argument::AssignedMes(k,_)=> Some(k)
+        }
+    }
+
     pub fn id(v: &str) -> Self {
-        Argument::Id(Key(v.to_string()))
+        Argument::Id(v.to_string())
     }
     pub fn mes(v: Message) -> Self {
         Argument::Mes(v)
     }
     pub fn id_id(lhs: &str, rhs: &str) -> Self {
-        Argument::AssignedId(Key(lhs.to_string()), Key(rhs.to_string()))
+        Argument::AssignedId(lhs.to_string(), rhs.to_string())
     }
     pub fn id_mes(lhs: &str, rhs: Message) -> Self {
-        Argument::AssignedMes(Key(lhs.to_string()), rhs)
+        Argument::AssignedMes(lhs.to_string(), rhs)
     }
 }
 
@@ -156,7 +175,7 @@ impl<'a> Arguments {
     }
 }
 
-#[derive(Display,Debug, Clone, Eq, PartialEq, EnumString)]
+#[derive(Display, Debug, Clone, Eq, PartialEq, EnumString)]
 #[strum(serialize_all = "snake_case")]
 pub enum TreeType {
     Root,
@@ -244,10 +263,10 @@ impl Tree {
     }
 }
 
-#[derive(Clone, Debug, PartialEq,Eq,Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Import(pub String, pub Vec<ImportName>);
 
-#[derive(Clone, Debug, PartialEq,Hash,Eq)]
+#[derive(Clone, Debug, PartialEq, Hash, Eq)]
 pub enum ImportName {
     Id(String),
     Alias(TreeName, AliasName),
@@ -306,7 +325,7 @@ impl<'a> AstFile {
 #[cfg(test)]
 mod tests {
     use std::str::FromStr;
-    use crate::tree::ast::TreeType;
+    use crate::tree::parser::ast::TreeType;
 
     #[test]
     fn enum_test() {

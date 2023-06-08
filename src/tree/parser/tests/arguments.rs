@@ -1,5 +1,5 @@
 use parsit::test::parser_test::expect;
-use crate::tree::ast::*;
+use crate::tree::parser::ast::*;
 use crate::tree::parser::Parser;
 
 #[test]

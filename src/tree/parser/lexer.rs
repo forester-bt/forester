@@ -1,6 +1,6 @@
 use logos::Lexer;
 use logos::Logos;
-use crate::tree::ast::Number;
+use crate::tree::parser::ast::Number;
 
 #[derive(Logos, Debug, Clone, PartialEq)]
 #[logos(subpattern digit = r"[0-9]([0-9_]*[0-9])?")]
@@ -124,8 +124,8 @@ fn parse_id(lexer: &mut Lexer<Token>) ->  String {
 #[cfg(test)]
 mod tests {
     use parsit::test::lexer_test as lt;
-    use crate::tree::ast::Number;
-    use crate::tree::lexer::Token;
+    use crate::tree::parser::ast::Number;
+    use crate::tree::parser::lexer::Token;
 
 
 

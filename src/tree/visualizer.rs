@@ -2,7 +2,7 @@ mod statements;
 #[cfg(test)]
 mod tests;
 
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::fmt::format;
 use std::path::PathBuf;
 use graphviz_rust::cmd::{CommandArg, Format};
@@ -11,15 +11,15 @@ use graphviz_rust::dot_structures::*;
 use graphviz_rust::exec;
 use graphviz_rust::printer::PrinterContext;
 use itertools::Itertools;
-use crate::tree::ast::{Call, ImportName, Key, Tree};
-use crate::tree::GolError;
-use crate::tree::project::{AliasName, File, FileName, Project, TreeName};
+use crate::tree::parser::ast::{Call, ImportName, Key, Tree};
+use crate::tree::{cerr, TreeError};
+use crate::tree::project::imports::ImportMap;
+use crate::tree::project::{AliasName, FileName, Project, TreeName};
+use crate::tree::project::file::File;
 use crate::tree::visualizer::statements::ToStmt;
 
 
-fn err(v: String) -> GolError {
-    GolError::CompileError(v)
-}
+
 
 struct VizItem<'a> {
     call: &'a Call,
@@ -30,7 +30,7 @@ struct VizItem<'a> {
 #[derive(Default)]
 struct State<'a> {
     gen: usize,
-    pub stack: Vec<VizItem<'a>>,
+    pub stack: VecDeque<VizItem<'a>>,
 }
 
 impl<'a> State<'a> {
@@ -42,10 +42,10 @@ impl<'a> State<'a> {
         self.gen.to_string()
     }
     fn push(&mut self, call: &'a Call, parent_id: String, file: String) {
-        self.stack.push(VizItem { call, parent_id, file_name: file })
+        self.stack.push_back(VizItem { call, parent_id, file_name: file })
     }
     fn pop(&mut self) -> Option<VizItem<'a>> {
-        self.stack.pop()
+        self.stack.pop_front()
     }
 }
 
@@ -53,61 +53,21 @@ struct Visualizer<'a> {
     project: &'a Project,
 }
 
-#[derive(Default)]
-struct ImportMap {
-    aliases: HashMap<AliasName, TreeName>,
-    trees: HashMap<TreeName, FileName>,
-    files: HashSet<FileName>,
-}
-
-impl ImportMap {
-    fn build(file: &File) -> Result<Self, GolError> {
-        let mut map = ImportMap::default();
-
-        for (file, items) in &file.imports {
-            for item in items {
-                match item {
-                    ImportName::Id(v) => {
-                        if map.trees.get(v).filter(|f| f != &file).is_some() {
-                            return Err(err(format!("the import call {} is presented twice from several different files", v)));
-                        }
-                        if map.aliases.get(v).is_some() {
-                            return Err(err(format!("the import call {} is presented as alias", v)));
-                        }
-                        map.trees.insert(v.to_string(), file.to_string());
-                    }
-                    ImportName::Alias(id, alias) => {
-                        if map.aliases.get(alias).filter(|id| id != id).is_some() {
-                            return Err(err(format!("the import alias {} is already defined for another call ", alias)));
-                        }
-                        map.aliases.insert(alias.to_string(), id.to_string());
-                        map.trees.insert(id.to_string(), file.to_string());
-                    }
-                    ImportName::WholeFile => {
-                        map.files.insert(file.to_string());
-                    }
-                }
-            }
-        }
-
-        Ok(map)
-    }
-}
 
 impl<'a> Visualizer<'a> {
-    fn init_with_root(&self) -> Result<&Tree, GolError> {
+    fn init_with_root(&self) -> Result<&Tree, TreeError> {
         let (main_file, root) = &self.project.main;
 
         self.project.files
             .get(main_file)
-            .ok_or(err(format!("no main file {}", main_file)))?
+            .ok_or(cerr(format!("no main file {}", main_file)))?
             .definitions.get(root)
-            .ok_or(err(format!("no root {} in {}", root, main_file)))
+            .ok_or(cerr(format!("no root {} in {}", root, main_file)))
     }
-    fn get_file(&self, file: &String) -> Result<&File, GolError> {
-        self.project.files.get(file.as_str()).ok_or(err(format!("unexpected error: the file {} not exists", &file)))
+    fn get_file(&self, file: &String) -> Result<&File, TreeError> {
+        self.project.files.get(file.as_str()).ok_or(cerr(format!("unexpected error: the file {} not exists", &file)))
     }
-    fn build_graph(&self) -> Result<Graph, GolError> {
+    fn build_graph(&self) -> Result<Graph, TreeError> {
         let (file, name) = &self.project.main;
         let mut graph = graph!(strict di id!(name));
         let root = self.init_with_root()?;
@@ -132,7 +92,7 @@ impl<'a> Visualizer<'a> {
                     }
                     stmt
                 }
-                Call::Invocation(Key(name), args) => {
+                Call::Invocation(name, args) => {
                     if let Some(tree) = curr_file.definitions.get(name) {
                         let stmt = tree.to_stmt(state.next());
                         for call in &tree.calls.elems {
@@ -143,18 +103,14 @@ impl<'a> Visualizer<'a> {
                         let tree =
                             if let Some(file) = import_map.trees.get(name.as_str()) {
                                 self.project
-                                    .files
-                                    .get(file)
-                                    .and_then(|f| f.definitions.get(name))
-                                    .ok_or(err(format!("the call {} can not be found in the file {} ", name, file)))?
+                                    .find_tree(file, name)
+                                    .ok_or(cerr(format!("the call {} can not be found in the file {} ", name, file)))?
                             } else if let Some(id) = import_map.aliases.get(name.as_str()) {
-                                let file = &import_map.trees.get(id).ok_or(err(format!("the call {} is not presented", id)))?;
+                                let file = import_map.trees.get(id).ok_or(cerr(format!("the call {} is not presented", id)))?;
 
                                 self.project
-                                    .files
-                                    .get(file.as_str())
-                                    .and_then(|f| f.definitions.get(id))
-                                    .ok_or(err(format!("the call {} can not be found in the file {} ", name, file)))?
+                                    .find_tree(file, id)
+                                    .ok_or(cerr(format!("the call {} can not be found in the file {} ", name, file)))?
                             } else {
                                 &import_map
                                     .files
@@ -162,7 +118,7 @@ impl<'a> Visualizer<'a> {
                                     .flat_map(|f| { self.project.files.get(file) })
                                     .find(|f| f.definitions.contains_key(file))
                                     .and_then(|f| f.definitions.get(file.as_str()))
-                                    .ok_or(err(format!("the call {} can not be found", name)))?
+                                    .ok_or(cerr(format!("the call {} can not be found", name)))?
                             };
                         let stmt = tree.to_stmt(state.next());
                         for call in &tree.calls.elems {
@@ -186,7 +142,7 @@ impl<'a> Visualizer<'a> {
         Ok(graph)
     }
 
-    pub fn to_svg_file(&mut self, path: String) -> Result<String, GolError> {
+    pub fn to_svg_file(&mut self, path: String) -> Result<String, TreeError> {
         let mut g = self.build_graph()?;
 
         exec(
@@ -196,7 +152,7 @@ impl<'a> Visualizer<'a> {
                 Format::Svg.into(),
                 CommandArg::Output(path),
             ],
-        ).map_err(|e| GolError::VisualizationError(e.to_string()))
+        ).map_err(|e| TreeError::VisualizationError(e.to_string()))
     }
 }
 

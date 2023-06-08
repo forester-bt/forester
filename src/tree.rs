@@ -1,23 +1,25 @@
 use parsit::error::ParseError;
 use parsit::step::Step;
 
-mod ast;
 mod parser;
-mod lexer;
 mod project;
 mod visualizer;
 
+pub fn cerr(v: String) -> TreeError {
+    TreeError::CompileError(v)
+}
+
 #[derive(Debug)]
-pub enum GolError{
+pub enum TreeError {
     ParserError(String),
     CompileError(String),
     VisualizationError(String),
     IOError(String)
 }
 
-impl From<ParseError<'_>> for GolError {
+impl From<ParseError<'_>> for TreeError {
     fn from(value: ParseError) -> Self {
-        GolError::ParserError(value.to_string())
+        TreeError::ParserError(value.to_string())
     }
 }
 

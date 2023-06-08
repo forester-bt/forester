@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use parsit::test::parser_test::{expect, expect_or_env};
-use crate::tree::ast::*;
+use crate::tree::parser::ast::*;
 use crate::tree::parser::Parser;
 
 #[test]
