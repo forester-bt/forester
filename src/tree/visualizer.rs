@@ -65,7 +65,10 @@ impl<'a> Visualizer<'a> {
             .ok_or(cerr(format!("no root {} in {}", root, main_file)))
     }
     fn get_file(&self, file: &String) -> Result<&File, TreeError> {
-        self.project.files.get(file.as_str()).ok_or(cerr(format!("unexpected error: the file {} not exists", &file)))
+        self.project
+            .files
+            .get(file.as_str())
+            .ok_or(cerr(format!("unexpected error: the file {} not exists", &file)))
     }
     fn build_graph(&self) -> Result<Graph, TreeError> {
         let (file, name) = &self.project.main;
@@ -100,26 +103,7 @@ impl<'a> Visualizer<'a> {
                         }
                         stmt
                     } else {
-                        let tree =
-                            if let Some(file) = import_map.trees.get(name.as_str()) {
-                                self.project
-                                    .find_tree(file, name)
-                                    .ok_or(cerr(format!("the call {} can not be found in the file {} ", name, file)))?
-                            } else if let Some(id) = import_map.aliases.get(name.as_str()) {
-                                let file = import_map.trees.get(id).ok_or(cerr(format!("the call {} is not presented", id)))?;
-
-                                self.project
-                                    .find_tree(file, id)
-                                    .ok_or(cerr(format!("the call {} can not be found in the file {} ", name, file)))?
-                            } else {
-                                &import_map
-                                    .files
-                                    .iter()
-                                    .flat_map(|f| { self.project.files.get(file) })
-                                    .find(|f| f.definitions.contains_key(file))
-                                    .and_then(|f| f.definitions.get(file.as_str()))
-                                    .ok_or(cerr(format!("the call {} can not be found", name)))?
-                            };
+                        let tree = import_map.find(name,self.project)?;
                         let stmt = tree.to_stmt(state.next());
                         for call in &tree.calls.elems {
                             state.push(call, state.curr(), file.clone());

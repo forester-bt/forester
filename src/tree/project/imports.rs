@@ -1,7 +1,7 @@
 use std::collections::{HashMap, HashSet};
-use crate::tree::parser::ast::ImportName;
+use crate::tree::parser::ast::{ImportName, Tree};
 use crate::tree::{cerr, TreeError};
-use crate::tree::project::{AliasName, File, FileName, TreeName};
+use crate::tree::project::{AliasName, File, FileName, Project, TreeName};
 
 #[derive(Default)]
 pub struct ImportMap {
@@ -40,5 +40,27 @@ impl ImportMap {
         }
 
         Ok(map)
+    }
+
+    pub fn find<'a>(&self,key:&TreeName, project:&'a Project) -> Result<&'a Tree,TreeError> {
+        if let Some(file) = self.trees.get(key) {
+            project
+                .find_tree(file, key)
+                .ok_or(cerr(format!("the call {} can not be found in the file {} ", key, file)))
+        } else if let Some(id) = self.aliases.get(key) {
+            let file = self.trees.get(id).ok_or(cerr(format!("the call {} is not presented", id)))?;
+
+            project
+                .find_tree(file, id)
+                .ok_or(cerr(format!("the call {} can not be found in the file {} ", key, file)))
+        } else {
+            self
+                .files
+                .iter()
+                .flat_map(|f| {  project.files.get(f) })
+                .find(|f| f.definitions.contains_key(key))
+                .and_then(|f| f.definitions.get(key))
+                .ok_or(cerr(format!("the call {} can not be found", key)))
+        }
     }
 }
