@@ -1,11 +1,13 @@
 import "nested/impls.tree" {
     ask_for_help,
+    approach,
     grasp => grasp_ball
 }
 
 root ball fallback {
     try_to_place_to(ball, target)
     ask_for_help()
+    retry(5) approach(ball)
 }
 
 sequence try_to_place_to(obj:object, dest:object){

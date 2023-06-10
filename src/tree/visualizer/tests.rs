@@ -11,6 +11,6 @@ fn smoke() {
     let project = Project::build("main.tree".to_string(), project_root).unwrap();
 
     let mut v = Visualizer::new(&project);
-    graph.push("tree/graphs/graph.svg");
+    graph.push("tree/tests/plain_project/main.svg");
     v.to_svg_file(graph.to_str().unwrap().to_string()).unwrap();
 }

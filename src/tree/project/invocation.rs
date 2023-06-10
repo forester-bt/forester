@@ -90,3 +90,9 @@ fn validate_arguments(params: &Params, arguments: &Arguments) -> Result<(), Tree
 
     Ok(())
 }
+
+impl<'a> From<&'a Tree> for Invocation<'a>{
+    fn from(value: &'a Tree) -> Self {
+        Invocation::new(value,Arguments::default())
+    }
+}

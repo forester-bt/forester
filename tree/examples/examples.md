@@ -1,4 +1,4 @@
-![example1.jpg](example1.jpg)
+![example1.jpg](graphs/example1.jpg)
 ```
 root example1 {
   fallback {
@@ -45,7 +45,7 @@ impl plan_arm_move(dest:object)
 ```
 ---
 
-![simple_ex.svg](simple_ex.svg)
+![simple_ex.svg](graphs/simple_ex.svg)
 ```
 root simple_ex sequence {
     handle_door
@@ -69,7 +69,7 @@ impl open_door
 
 ---
 
-![ball.png](ball.png)
+![ball.png](graphs/ball.png)
 ```
 root ball fallback {
     try_to_place_to(ball,bin) // the objects in bb that denote ball and bin  
@@ -108,7 +108,7 @@ impl grasp(obj:object)
 
 ---
 
-![green_cube_ex.png](green_cube_ex.png)
+![green_cube_ex.png](graphs/green_cube_ex.png)
 ```
 impl pick(hand_obj:object)
 impl approach(hand_obj:object)
@@ -149,7 +149,7 @@ root fallback {
 ```
 
 ---
-![activity_manager.png](activity_manager.png)
-![modularity_bulgler.png](modularity_bulgler.png)
+![activity_manager.png](graphs/activity_manager.png)
+![modularity_bulgler.png](graphs/modularity_bulgler.png)
 
 ---

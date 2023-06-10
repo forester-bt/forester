@@ -1,11 +1,12 @@
 use std::collections::HashMap;
-use std::fmt::{Formatter};
+use std::fmt::{Display, Formatter, Write};
 use std::str::FromStr;
 use parsit::step::Step;
 use strum::ParseError;
 use strum_macros::EnumString;
 use strum_macros::Display;
 use crate::tree::project::{AliasName, TreeName};
+use crate::tree::project::invocation::Invocation;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Number {
@@ -14,6 +15,7 @@ pub enum Number {
     Hex(i64),
     Binary(isize),
 }
+
 
 pub type Key = String;
 
@@ -35,6 +37,29 @@ pub enum Message {
     Object(HashMap<String, Message>),
     Call(Call),
 }
+
+impl Display for Message {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Message::Num(v) => {match v {
+                Number::Int(v) => f.write_str(v.to_string().as_str()),
+                Number::Float(v) => f.write_str(v.to_string().as_str()),
+                Number::Hex(v) => f.write_str(v.to_string().as_str()),
+                Number::Binary(v) => f.write_str(v.to_string().as_str()),
+            }}
+            Message::String(v) => f.write_str(v.0.as_str()),
+            Message::Bool(b) => match b {
+                Bool::True => f.write_str("true"),
+                Bool::False => f.write_str("false"),
+            },
+            Message::Array(a) => {
+            }
+            Message::Object(_) => {}
+            Message::Call(_) => {}
+        }
+    }
+}
+
 
 impl Message {
     pub fn same(&self, mt: &MesType) -> bool {
@@ -142,11 +167,10 @@ pub enum Argument {
 }
 
 impl Argument {
-
-    pub fn name(&self) -> Option<&Key>{
+    pub fn name(&self) -> Option<&Key> {
         match self {
             Argument::Id(_) | Argument::Mes(_) => None,
-            Argument::AssignedId(k, _) | Argument::AssignedMes(k,_)=> Some(k)
+            Argument::AssignedId(k, _) | Argument::AssignedMes(k, _) => Some(k)
         }
     }
 
@@ -260,6 +284,12 @@ impl Tree {
     }
     pub fn new(tpe: TreeType, name: Key, params: Params, calls: Calls) -> Self {
         Self { tpe, name, params, calls }
+    }
+    pub fn to_inv(&self) -> Invocation {
+        self.into()
+    }
+    pub fn to_inv_args(&self, args: Arguments) -> Invocation {
+        Invocation::new(self, args)
     }
 }
 

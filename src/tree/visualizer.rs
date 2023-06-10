@@ -16,9 +16,8 @@ use crate::tree::{cerr, TreeError};
 use crate::tree::project::imports::ImportMap;
 use crate::tree::project::{AliasName, FileName, Project, TreeName};
 use crate::tree::project::file::File;
+use crate::tree::project::invocation::Invocation;
 use crate::tree::visualizer::statements::ToStmt;
-
-
 
 
 struct VizItem<'a> {
@@ -74,9 +73,10 @@ impl<'a> Visualizer<'a> {
         let (file, name) = &self.project.main;
         let mut graph = graph!(strict di id!(name));
         let root = self.init_with_root()?;
+
         let mut state = State::default();
 
-        graph.add_stmt(root.to_stmt(state.next()));
+        graph.add_stmt(root.to_inv().to_stmt(state.next()));
 
         for call in &root.calls.elems {
             state.push(call, state.curr(), file.clone());
@@ -97,14 +97,20 @@ impl<'a> Visualizer<'a> {
                 }
                 Call::Invocation(name, args) => {
                     if let Some(tree) = curr_file.definitions.get(name) {
-                        let stmt = tree.to_stmt(state.next());
+                        let stmt = tree.to_inv_args(args.clone()).to_stmt(state.next());
                         for call in &tree.calls.elems {
                             state.push(call, state.curr(), file.clone());
                         }
                         stmt
                     } else {
-                        let tree = import_map.find(name,self.project)?;
-                        let stmt = tree.to_stmt(state.next());
+                        let tree = import_map.find(name, self.project)?;
+                        let stmt = if &tree.name != name {
+                            Invocation::new_with_alias(&tree, name.clone(), args.clone())
+                                .to_stmt(state.next())
+                        } else {
+                            Invocation::new(&tree, args.clone()).to_stmt(state.next())
+                        };
+
                         for call in &tree.calls.elems {
                             state.push(call, state.curr(), file.clone());
                         }
