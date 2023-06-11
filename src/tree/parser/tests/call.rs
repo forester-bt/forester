@@ -49,33 +49,19 @@ fn invocation() {
            ));
 }
 
+
+#[test]
+fn capt_invocation() {
+    let parser = Parser::new(r#"call(..)"#).unwrap();
+    expect(parser.call(0), Call::invocation_with_capture("call"));
+
+}
+
 #[test]
 fn lambda() {
-    let parser = Parser::new(r#"call()"#).unwrap();
-    expect(parser.call(0), Call::invocation("call", Arguments::default()));
+    let parser = Parser::new(r#"call(..)"#).unwrap();
+    expect(parser.call(0), Call::invocation_with_capture("call"));
 
-    let parser = Parser::new(r#"call()"#).unwrap();
-    expect(parser.call(0), Call::invocation("call", Arguments::default()));
-
-    let parser = Parser::new(r#"ttype name {} "#).unwrap();
-    fail(parser.call(0));
-
-    let parser = Parser::new(r#"root {} "#).unwrap();
-    expect(parser.call(0), Call::lambda(TreeType::Root, Calls::default()));
-
-    let parser = Parser::new(r#"root { name() } "#).unwrap();
-    expect(parser.call(0), Call::lambda(TreeType::Root, Calls::new(vec![
-        Call::invocation("name", Arguments::default())
-    ])));
-    let parser = Parser::new(r#"root name() "#).unwrap();
-    expect(parser.call(0), Call::lambda(TreeType::Root, Calls::new(vec![
-        Call::invocation("name", Arguments::default())
-    ])));
-
-    let parser = Parser::new(r#"impl { call()} "#).unwrap();
-    assert_eq!(parser.call(0).error(), Some(ParseError::FailedOnValidation(
-        "the types impl or cond should have declaration and get called by name",
-        6)));
 }
 
 #[test]

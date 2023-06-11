@@ -40,8 +40,10 @@ calls
 
 
 arg
-    : id (EQ message | EQ id)?
+    : id (EQ (message | id (LPR DOT_DOT RPR)?))?
+    | id LPR DOT_DOT RPR
     | message
+    | call
     ;
 
 args
@@ -62,7 +64,6 @@ message
     | bool
     | array
     | object
-    | call
     ;
 
 mes_type

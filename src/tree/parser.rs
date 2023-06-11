@@ -24,8 +24,14 @@ impl<'a> Parser<'a> {
     fn assign(&self, pos: usize) -> Step<'a, EmptyToken> {
         token!(self.token(pos) => Token::Assign )
     }
+    fn semi(&self, pos: usize) -> Step<'a, EmptyToken> {
+        token!(self.token(pos) => Token::Semi )
+    }
     fn l_pr(&self, pos: usize) -> Step<'a, EmptyToken> {
         token!(self.token(pos) => Token::LParen )
+    }
+    fn dot_dot(&self, pos: usize) -> Step<'a, EmptyToken> {
+        token!(self.token(pos) => Token::DotDot )
     }
     fn a_arr(&self, pos: usize) -> Step<'a, EmptyToken> {
         token!(self.token(pos) => Token::AssignArr )
@@ -127,22 +133,34 @@ impl<'a> Parser<'a> {
     fn arg(&'a self, pos: usize) -> Step<'a, Argument> {
         let assign = |p| { self.assign(p) };
         let assigned = |p| { self.id(p).then_skip(assign) };
+
         let assign_id = |p| {
             assigned(p)
-                .then_zip(|p| self.id(p))
-                .map(|(a, b)| Argument::AssignedId(a, b))
+                .then_zip(|p| self.id(p).map(ArgumentRhs::Id))
+                .map(|(a, b)| Argument::Assigned(a, b))
         };
+
         let assign_mes = |p| {
             assigned(p)
-                .then_zip(|p| self.message(p))
-                .map(|(a, b)| Argument::AssignedMes(a, b))
+                .then_zip(|p| self.message(p).map(ArgumentRhs::Mes))
+                .map(|(a, b)| Argument::Assigned(a, b))
         };
-        let mes = |p| self.message(p).map(Argument::Mes);
-        let id = |p| self.id(p).map(Argument::Id);
+        let assign_call = |p| {
+            assigned(p)
+                .then_zip(|p| self.call(p).map(ArgumentRhs::Call))
+                .map(|(a, b)| Argument::Assigned(a, b))
+        };
+
+
+        let mes = |p| self.message(p).map(ArgumentRhs::Mes).map(Argument::Unassigned);
+        let id = |p| self.id(p).map(ArgumentRhs::Id).map(Argument::Unassigned);
+        let call = |p| self.call(p).map(ArgumentRhs::Call).map(Argument::Unassigned);
 
         assign_mes(pos)
             .or_from(pos)
+            .or(assign_call)
             .or(assign_id)
+            .or(call)
             .or(mes)
             .or(id)
             .into()
@@ -190,14 +208,24 @@ impl<'a> Parser<'a> {
             .or(|p| self.bool(p).map(Message::Bool))
             .or(|p| self.array(p).map(Message::Array))
             .or(|p| self.object(p).map(Message::Object))
-            .or(|p| self.call(p).map(Message::Call))
             .into()
+    }
+
+    fn call_partial(&'a self, pos: usize) -> Step<'a, Key> {
+        self
+            .id(pos)
+            .then_skip(|p| self.l_pr(p))
+            .then_skip(|p| self.dot_dot(p))
+            .then_skip(|p| self.r_pr(p))
     }
 
     fn call(&'a self, pos: usize) -> Step<'a, Call> {
         let inv = |p| {
-            self.id(p).then_zip(|p| self.args(p))
+            self.id(p)
+                .then_zip(|p| self.args(p))
                 .map(|(id, args)| Call::Invocation(id, args))
+                .or_from(p)
+                .or(|p|self.call_partial(p).map(Call::InvocationCapturedArgs)).into()
         };
 
         let anon = |p| {
@@ -236,7 +264,7 @@ impl<'a> Parser<'a> {
             .tree_type(pos)
             .then_zip(|p| self.id(p))
             .then_or_default_zip(|p| self.params(p))
-            .then_or_default_zip(|p| self.calls(p))
+            .then_or_default_zip(|p| self.semi(p).map(|_| Calls::default()).or(|p| self.calls(p)))
             .map(|(((tpe, name), params), calls)| Tree {
                 tpe,
                 name,
@@ -250,12 +278,12 @@ impl<'a> Parser<'a> {
         let r = |p| { self.r_brc(p) };
         let comma = |p| { self.comma(p) };
         let name = |p| {
-            self.id(p).then_or_none_zip(|p|{
-                self.a_arr(p).then(|p|self.id(p)).or_none()
-            }).map(|(id,alias)|{
+            self.id(p).then_or_none_zip(|p| {
+                self.a_arr(p).then(|p| self.id(p)).or_none()
+            }).map(|(id, alias)| {
                 match alias {
                     None => ImportName::Id(id),
-                    Some(a) => ImportName::Alias(id,a),
+                    Some(a) => ImportName::Alias(id, a),
                 }
             })
         };
@@ -280,22 +308,19 @@ impl<'a> Parser<'a> {
     }
 
     fn file(&'a self, pos: usize) -> Step<'a, AstFile> {
-         let entity = |p|{
-             let entity:Step<FileEntity> = self.tree(p).map(FileEntity::Tree)
-                 .or_from(p)
-                 .or(|p|self.import(p).map(FileEntity::Import))
-                 .into();
-             entity
-         };
+        let entity = |p| {
+            let entity: Step<FileEntity> = self.tree(p).map(FileEntity::Tree)
+                .or_from(p)
+                .or(|p| self.import(p).map(FileEntity::Import))
+                .into();
+            entity
+        };
 
-        self.inner.zero_or_more(pos,entity).map(AstFile::new)
-
-
+        self.inner.zero_or_more(pos, entity).map(AstFile::new)
     }
 }
 
 impl<'a> Parser<'a> {
-
     pub fn new(src: &'a str) -> Result<Self, TreeError> {
         Ok(Parser {
             inner: Parsit::new(src)?,

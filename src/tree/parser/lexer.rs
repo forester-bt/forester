@@ -54,6 +54,9 @@ pub enum Token {
     #[token(",")]
     Comma,
 
+    #[token("..")]
+    DotDot,
+
     #[token("false")]
     False,
 

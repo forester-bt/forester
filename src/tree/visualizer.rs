@@ -8,7 +8,7 @@ use std::path::PathBuf;
 use graphviz_rust::cmd::{CommandArg, Format};
 use graphviz_rust::dot_generator::*;
 use graphviz_rust::dot_structures::*;
-use graphviz_rust::exec;
+use graphviz_rust::{exec, print};
 use graphviz_rust::printer::PrinterContext;
 use itertools::Itertools;
 use crate::tree::parser::ast::{Call, ImportName, Key, Tree};
@@ -24,12 +24,14 @@ struct VizItem<'a> {
     call: &'a Call,
     parent_id: String,
     file_name: String,
+
 }
 
 #[derive(Default)]
 struct State<'a> {
     gen: usize,
     pub stack: VecDeque<VizItem<'a>>,
+
 }
 
 impl<'a> State<'a> {
@@ -95,6 +97,9 @@ impl<'a> Visualizer<'a> {
                     }
                     stmt
                 }
+                Call::InvocationCapturedArgs(key) => {
+                    return Err(cerr(format!("the arguments for {} are not found",key)));
+                }
                 Call::Invocation(name, args) => {
                     if let Some(tree) = curr_file.definitions.get(name) {
                         let stmt = tree.to_inv_args(args.clone()).to_stmt(state.next());
@@ -122,6 +127,7 @@ impl<'a> Visualizer<'a> {
                     state.push(call.as_ref(), state.curr(), file.clone());
                     stmt
                 }
+
             };
             let edge = stmt!(edge!(node_id!(parent) => node_id!(state.curr())));
             graph.add_stmt(node);
@@ -132,9 +138,10 @@ impl<'a> Visualizer<'a> {
         Ok(graph)
     }
 
+
     pub fn to_svg_file(&mut self, path: String) -> Result<String, TreeError> {
         let mut g = self.build_graph()?;
-
+        println!("{}", print(g.clone(), &mut PrinterContext::default()));
         exec(
             g,
             &mut PrinterContext::default(),

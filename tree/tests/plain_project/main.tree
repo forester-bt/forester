@@ -1,20 +1,37 @@
+import "nested/impls.tree"
 import "nested/impls.tree" {
-    ask_for_help,
-    approach,
-    grasp => grasp_ball
+    grasp => grasp_ball,
 }
 
-root ball fallback {
-    try_to_place_to(ball, target)
-    ask_for_help()
-    retry(5) approach(ball)
+root place_ball_to_target fallback {
+    place_to(
+        obj = {"x":1,"y":2,"z":3},
+        operation = place(where),
+    )
+    retry(5) ask_for_help()
 }
 
-sequence try_to_place_to(obj:object, dest:object){
+sequence place_to(what:object, operation:tree){
     fallback {
-        find_ball(obj)
-        grasp_ball(obj)
+        is_approachable(what)
+        approach(what)
+    }
+    fallback {
+         is_graspable(what)
+         grasp_ball(what)
+    }
+    sequence {
+         savepoint()
+         operation(..)
     }
 }
 
-cond find_ball(obj:object) {}
+sequence place(where:array){
+    is_valid_place(where)
+    savepoint()
+    place_to(where)
+    savepoint()
+}
+
+
+

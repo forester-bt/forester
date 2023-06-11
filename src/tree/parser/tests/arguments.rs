@@ -23,26 +23,35 @@ fn plain_arg() {
                                            Message::array(vec![Message::bool(true), Message::bool(false)])));
 
     let parser = Parser::new(r#"x()"#).unwrap();
-    expect(parser.arg(0), Argument::mes(Message::invocation("x",
-                                                            Arguments::default())),
-    );
+    expect(parser.arg(0), Argument::call(Call::invocation("x",Arguments::default())));
 }
 
 #[test]
 fn call_arg() {
     let parser = Parser::new(r#"a = x()"#).unwrap();
     expect(parser.arg(0),
-           Argument::id_mes(
+           Argument::id_call(
                "a",
-               Message::invocation("x", Arguments::default()),
+               Call::invocation("x", Arguments::default()),
            ),
     );
     let parser = Parser::new(r#"a = sequence { action() }"#).unwrap();
     expect(parser.arg(0),
-           Argument::id_mes(
+           Argument::id_call(
                "a",
-               Message::lambda(TreeType::Sequence, Calls::new(vec![Call::invocation("action", Arguments::default())])),
+               Call::lambda(TreeType::Sequence, Calls::new(vec![Call::invocation("action", Arguments::default())])),
            ),
     );
+}
+#[test]
+fn call_arg_part() {
+    let parser = Parser::new(r#"a = x(..)"#).unwrap();
+    expect(parser.arg(0),
+           Argument::id_call(
+               "a",
+               Call::invocation_with_capture("x"),
+           ),
+    );
+
 }
 

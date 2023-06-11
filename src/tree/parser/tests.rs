@@ -23,7 +23,7 @@ mod tests {
 
     pub fn load_file(path: &str) -> String {
         let mut ex = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        for next in path.split("//") {
+        for next in path.split("/") {
             match next {
                 ".." => ex = ex.parent().unwrap().into(),
                 n => ex.push(n),
@@ -38,7 +38,7 @@ mod tests {
 
     #[test]
     fn smoke() {
-        let script = load_file("tree/tests/main.tree");
+        let script = load_file("tree/tests/plain_project/main.tree");
         let parser = Parser::new(script.as_str()).unwrap();
         let result = parser.parse().unwrap();
 

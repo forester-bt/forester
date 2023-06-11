@@ -1,12 +1,15 @@
 use std::collections::HashMap;
-use std::fmt::{Display, Formatter, Write};
+use std::fmt::{Display, Formatter, Write, write};
 use std::str::FromStr;
+use itertools::Itertools;
 use parsit::step::Step;
 use strum::ParseError;
 use strum_macros::EnumString;
 use strum_macros::Display;
 use crate::tree::project::{AliasName, TreeName};
 use crate::tree::project::invocation::Invocation;
+
+pub type Key = String;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Number {
@@ -15,9 +18,6 @@ pub enum Number {
     Hex(i64),
     Binary(isize),
 }
-
-
-pub type Key = String;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct StringLit(pub String);
@@ -35,27 +35,37 @@ pub enum Message {
     Bool(Bool),
     Array(Vec<Message>),
     Object(HashMap<String, Message>),
-    Call(Call),
+
 }
 
 impl Display for Message {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            Message::Num(v) => {match v {
-                Number::Int(v) => f.write_str(v.to_string().as_str()),
-                Number::Float(v) => f.write_str(v.to_string().as_str()),
-                Number::Hex(v) => f.write_str(v.to_string().as_str()),
-                Number::Binary(v) => f.write_str(v.to_string().as_str()),
-            }}
-            Message::String(v) => f.write_str(v.0.as_str()),
-            Message::Bool(b) => match b {
-                Bool::True => f.write_str("true"),
-                Bool::False => f.write_str("false"),
-            },
-            Message::Array(a) => {
+            Message::Num(v) => {
+                match v {
+                    Number::Int(v) => write!(f, "{}", v),
+                    Number::Float(v) => write!(f, "{}", v),
+                    Number::Hex(v) => write!(f, "{}", v),
+                    Number::Binary(v) => write!(f, "{}", v),
+                }
             }
-            Message::Object(_) => {}
-            Message::Call(_) => {}
+            Message::String(v) => write!(f, "{}", v.0),
+            Message::Bool(b) => match b {
+                Bool::True => write!(f, "true"),
+                Bool::False => write!(f, "false"),
+            },
+            Message::Array(array) => {
+                let mut list = f.debug_list();
+                let strings: Vec<_> = array.iter().map(|v| format!("{}", v)).collect();
+                list.entries(strings);
+                list.finish()
+            }
+            Message::Object(obj) => {
+                let mut map = f.debug_map();
+                let entries: Vec<_> = obj.iter().map(|(k, v)| (k, format!("{}", v))).collect();
+                map.entries(entries);
+                map.finish()
+            }
         }
     }
 }
@@ -69,7 +79,6 @@ impl Message {
             (Message::Bool(_), MesType::Bool) => true,
             (Message::Array(_), MesType::Array) => true,
             (Message::Object(_), MesType::Object) => true,
-            (Message::Call(_), MesType::Tree) => true,
             _ => false
         }
     }
@@ -96,18 +105,12 @@ impl Message {
     pub fn array(elems: Vec<Message>) -> Self {
         Message::Array(elems)
     }
-    pub fn invocation(id: &str, args: Arguments) -> Self {
-        Message::Call(Call::invocation(id, args))
-    }
-
-    pub fn lambda(tpe: TreeType, calls: Calls) -> Self {
-        Message::Call(Call::lambda(tpe, calls))
-    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Call {
     Invocation(Key, Arguments),
+    InvocationCapturedArgs(Key),
     Lambda(TreeType, Calls),
     Decorator(TreeType, Arguments, Box<Call>),
 }
@@ -115,6 +118,9 @@ pub enum Call {
 impl Call {
     pub fn invocation(id: &str, args: Arguments) -> Self {
         Call::Invocation(id.to_string(), args)
+    }
+    pub fn invocation_with_capture(id: &str) -> Self {
+        Call::InvocationCapturedArgs(id.to_string())
     }
     pub fn lambda(tpe: TreeType, calls: Calls) -> Self {
         Call::Lambda(tpe, calls)
@@ -159,32 +165,75 @@ impl Params {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum Argument {
+pub enum ArgumentRhs {
     Id(Key),
     Mes(Message),
-    AssignedId(Key, Key),
-    AssignedMes(Key, Message),
+    Call(Call)
 }
 
-impl Argument {
-    pub fn name(&self) -> Option<&Key> {
+impl Display for ArgumentRhs {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            Argument::Id(_) | Argument::Mes(_) => None,
-            Argument::AssignedId(k, _) | Argument::AssignedMes(k, _) => Some(k)
+            ArgumentRhs::Id(id) => f.write_str(id),
+            ArgumentRhs::Mes(m) => write!(f,"{}",m),
+            ArgumentRhs::Call(c) => {
+                match c {
+                    Call::Invocation(name, args) => {
+                        write!(f, "{}({})", name, args)
+                    }
+                    Call::InvocationCapturedArgs(name) => {
+                        write!(f, "{}(..)", name)
+                    }
+                    Call::Lambda(tpe, _) => {
+                        write!(f, "{}...", tpe)
+                    }
+                    Call::Decorator(tpe, args, call) => {
+                        write!(f, "{}({})...", tpe, args)
+                    }
+                }
+            }
         }
     }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum Argument {
+    Assigned(Key,ArgumentRhs),
+    Unassigned(ArgumentRhs),
+}
+
+
+
+impl Display for Argument {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Argument::Assigned(k, rhs) => write!(f,"{}={}",k,rhs),
+            Argument::Unassigned(rhs) => write!(f,"{}",rhs)
+        }
+    }
+}
+
+
+
+impl Argument {
 
     pub fn id(v: &str) -> Self {
-        Argument::Id(v.to_string())
+        Argument::Unassigned(ArgumentRhs::Id(v.to_string()))
     }
     pub fn mes(v: Message) -> Self {
-        Argument::Mes(v)
+        Argument::Unassigned(ArgumentRhs::Mes(v))
+    }
+    pub fn call(v: Call) -> Self {
+        Argument::Unassigned(ArgumentRhs::Call(v))
     }
     pub fn id_id(lhs: &str, rhs: &str) -> Self {
-        Argument::AssignedId(lhs.to_string(), rhs.to_string())
+        Argument::Assigned(lhs.to_string(), ArgumentRhs::Id(rhs.to_string()))
     }
     pub fn id_mes(lhs: &str, rhs: Message) -> Self {
-        Argument::AssignedMes(lhs.to_string(), rhs)
+        Argument::Assigned(lhs.to_string(),ArgumentRhs::Mes( rhs))
+    }
+    pub fn id_call(lhs: &str, rhs: Call) -> Self {
+        Argument::Assigned(lhs.to_string(),ArgumentRhs::Call(rhs))
     }
 }
 
@@ -192,6 +241,57 @@ impl Argument {
 pub struct Arguments {
     pub args: Vec<Argument>,
 }
+
+impl Display for Arguments {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let str = &self.args.iter().map(|a| { format!("{}", a) }).join(",");
+        write!(f, "{}", str)
+    }
+}
+
+
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct ShortDisplayArguments(pub Arguments);
+#[derive(Clone, Debug, PartialEq)]
+pub struct ShortDisplayArgument(pub ArgumentRhs);
+
+impl Display for ShortDisplayArgument {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let short_mes = |m: &Message| match m {
+            Message::Array(_) => "[..]".to_string(),
+            Message::Object(_) => "{..}".to_string(),
+            m => format!("{}", m)
+        };
+        match &self.0 {
+            ArgumentRhs::Id(id) => write!(f,"{}",id),
+            ArgumentRhs::Mes(m) => write!(f,"{}",short_mes(m)),
+            ArgumentRhs::Call(c) => {
+                match c {
+                    Call::Invocation(t, _) => write!(f,"{}(..)",t),
+                    Call::InvocationCapturedArgs(t) => write!(f, "{}(..)", t),
+                    Call::Lambda(t, _) => write!(f,"{}..",t),
+                    Call::Decorator(t, _, _) => write!(f,"{}(..)",t),
+                }
+            }
+        }
+    }
+}
+impl Display for ShortDisplayArguments {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let str = &self.0.args.iter().map(|a| {
+            match a {
+                Argument::Assigned(k, rhs) => {
+                    format!("{}={}",k,ShortDisplayArgument(rhs.clone()))
+                }
+                Argument::Unassigned(rhs) => {
+                    format!("{}",ShortDisplayArgument(rhs.clone()))
+                }
+            }
+        }).join(",");
+        write!(f, "{}", str)
+    }
+}
+
 
 impl<'a> Arguments {
     pub fn new(args: Vec<Argument>) -> Self {

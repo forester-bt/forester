@@ -22,6 +22,7 @@ ID : [-_a-zA-Z]+ (INT | [-_a-zA-Z]+)*  ;
 
 COMMA : ',';
 SEMI : ':';
+DOT_DOT : '..';
 
 EQ  : '=';
 EQ_A  : '=>';

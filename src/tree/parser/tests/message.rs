@@ -55,43 +55,5 @@ fn object() {
     ));
 }
 
-#[test]
-fn object_with_call() {
-    let parser =
-        Parser::new(r#"
-            {
-                "field" : x(id=x),
-            }"#).unwrap();
 
-
-    expect(parser.message(0),Message::object(vec![
-        ("field".to_string(),
-         Message::Call(
-             Call::invocation(
-                 "x",
-                 Arguments::new(vec![Argument::id_id("id","x")])
-             )
-         )
-        )
-    ]));
-
-    let parser =
-        Parser::new(r#"
-            {
-                "field" : fallback { call1() sequence call3() },
-            }"#).unwrap();
-
-
-    expect(parser.message(0),Message::object(vec![
-        ("field".to_string(),
-         Message::Call(
-             Call::lambda(TreeType::Fallback,Calls::new(vec![
-                 Call::invocation("call1",Arguments::default()),
-                 Call::Lambda(TreeType::Sequence,
-                              Calls::new(vec![Call::invocation("call3",Arguments::default())]))
-             ]))
-         )
-        )
-    ]));
-}
 
