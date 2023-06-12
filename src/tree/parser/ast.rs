@@ -116,6 +116,23 @@ pub enum Call {
 }
 
 impl Call {
+    pub fn key(&self) -> Option<Key> {
+        match self {
+            Call::Invocation(k, _) => Some(k.clone()),
+            Call::InvocationCapturedArgs(k) => Some(k.clone()),
+            Call::Lambda(_, _) => None,
+            Call::Decorator(_, _, _) => None
+        }
+    }
+    pub fn arguments(&self) -> Arguments{
+        match self {
+            Call::Invocation(_, args) => args.clone(),
+            Call::InvocationCapturedArgs(_) => Arguments::default(),
+            Call::Lambda(_, _) => Arguments::default(),
+            Call::Decorator(_, args, _) => args.clone(),
+        }
+    }
+
     pub fn invocation(id: &str, args: Arguments) -> Self {
         Call::Invocation(id.to_string(), args)
     }
@@ -168,14 +185,23 @@ impl Params {
 pub enum ArgumentRhs {
     Id(Key),
     Mes(Message),
-    Call(Call)
+    Call(Call),
+}
+
+impl ArgumentRhs {
+    pub fn get_call(&self) -> Option<&Call> {
+        match self {
+            ArgumentRhs::Call(call) => Some(call),
+            _ => None
+        }
+    }
 }
 
 impl Display for ArgumentRhs {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             ArgumentRhs::Id(id) => f.write_str(id),
-            ArgumentRhs::Mes(m) => write!(f,"{}",m),
+            ArgumentRhs::Mes(m) => write!(f, "{}", m),
             ArgumentRhs::Call(c) => {
                 match c {
                     Call::Invocation(name, args) => {
@@ -198,25 +224,37 @@ impl Display for ArgumentRhs {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Argument {
-    Assigned(Key,ArgumentRhs),
+    Assigned(Key, ArgumentRhs),
     Unassigned(ArgumentRhs),
 }
 
-
-
-impl Display for Argument {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+impl Argument {
+    pub fn has_name(&self, key: &Key) -> bool {
         match self {
-            Argument::Assigned(k, rhs) => write!(f,"{}={}",k,rhs),
-            Argument::Unassigned(rhs) => write!(f,"{}",rhs)
+            Argument::Assigned(k, _) if k == key => true,
+            _ => false
+        }
+    }
+    pub fn value(&self) -> &ArgumentRhs {
+        match self {
+            Argument::Assigned(_, v)
+            | Argument::Unassigned(v) => v
         }
     }
 }
 
 
+impl Display for Argument {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Argument::Assigned(k, rhs) => write!(f, "{}={}", k, rhs),
+            Argument::Unassigned(rhs) => write!(f, "{}", rhs)
+        }
+    }
+}
+
 
 impl Argument {
-
     pub fn id(v: &str) -> Self {
         Argument::Unassigned(ArgumentRhs::Id(v.to_string()))
     }
@@ -230,10 +268,10 @@ impl Argument {
         Argument::Assigned(lhs.to_string(), ArgumentRhs::Id(rhs.to_string()))
     }
     pub fn id_mes(lhs: &str, rhs: Message) -> Self {
-        Argument::Assigned(lhs.to_string(),ArgumentRhs::Mes( rhs))
+        Argument::Assigned(lhs.to_string(), ArgumentRhs::Mes(rhs))
     }
     pub fn id_call(lhs: &str, rhs: Call) -> Self {
-        Argument::Assigned(lhs.to_string(),ArgumentRhs::Call(rhs))
+        Argument::Assigned(lhs.to_string(), ArgumentRhs::Call(rhs))
     }
 }
 
@@ -252,6 +290,7 @@ impl Display for Arguments {
 
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct ShortDisplayArguments(pub Arguments);
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct ShortDisplayArgument(pub ArgumentRhs);
 
@@ -263,28 +302,29 @@ impl Display for ShortDisplayArgument {
             m => format!("{}", m)
         };
         match &self.0 {
-            ArgumentRhs::Id(id) => write!(f,"{}",id),
-            ArgumentRhs::Mes(m) => write!(f,"{}",short_mes(m)),
+            ArgumentRhs::Id(id) => write!(f, "{}", id),
+            ArgumentRhs::Mes(m) => write!(f, "{}", short_mes(m)),
             ArgumentRhs::Call(c) => {
                 match c {
-                    Call::Invocation(t, _) => write!(f,"{}(..)",t),
+                    Call::Invocation(t, _) => write!(f, "{}(..)", t),
                     Call::InvocationCapturedArgs(t) => write!(f, "{}(..)", t),
-                    Call::Lambda(t, _) => write!(f,"{}..",t),
-                    Call::Decorator(t, _, _) => write!(f,"{}(..)",t),
+                    Call::Lambda(t, _) => write!(f, "{}..", t),
+                    Call::Decorator(t, _, _) => write!(f, "{}(..)", t),
                 }
             }
         }
     }
 }
+
 impl Display for ShortDisplayArguments {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let str = &self.0.args.iter().map(|a| {
             match a {
                 Argument::Assigned(k, rhs) => {
-                    format!("{}={}",k,ShortDisplayArgument(rhs.clone()))
+                    format!("{}={}", k, ShortDisplayArgument(rhs.clone()))
                 }
                 Argument::Unassigned(rhs) => {
-                    format!("{}",ShortDisplayArgument(rhs.clone()))
+                    format!("{}", ShortDisplayArgument(rhs.clone()))
                 }
             }
         }).join(",");

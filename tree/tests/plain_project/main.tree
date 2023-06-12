@@ -6,7 +6,7 @@ import "nested/impls.tree" {
 root place_ball_to_target fallback {
     place_to(
         obj = {"x":1,"y":2,"z":3},
-        operation = place(where),
+        operation = place([10]),
     )
     retry(5) ask_for_help()
 }
@@ -14,11 +14,11 @@ root place_ball_to_target fallback {
 sequence place_to(what:object, operation:tree){
     fallback {
         is_approachable(what)
-        approach(what)
+        do_job(approach(what))
     }
     fallback {
          is_graspable(what)
-         grasp_ball(what)
+         do_job(approach(grasp_ball(what)))
     }
     sequence {
          savepoint()
@@ -28,10 +28,13 @@ sequence place_to(what:object, operation:tree){
 
 sequence place(where:array){
     is_valid_place(where)
-    savepoint()
-    place_to(where)
-    savepoint()
+    do_job(slowly_drop({"cord":1}))
 }
 
+sequence do_job(action:tree){
+    savepoint()
+    action(..)
+    savepoint()
+}
 
 

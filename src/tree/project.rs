@@ -3,6 +3,7 @@ mod tests;
 pub mod file;
 pub mod imports;
 pub mod invocation;
+pub mod params;
 
 use std::borrow::Cow;
 use std::collections::{HashMap, HashSet};

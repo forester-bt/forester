@@ -7,3 +7,5 @@ impl ask_for_help();
 impl place_to(where:array);
 impl savepoint();
 impl rollback(obj:object, params:array);
+
+impl slowly_drop(params:object)

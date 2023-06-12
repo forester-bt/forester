@@ -1,4 +1,4 @@
-use graphviz_rust::attributes::{NodeAttributes, shape};
+use graphviz_rust::attributes::{color_name, NodeAttributes, shape};
 use graphviz_rust::dot_structures::*;
 use graphviz_rust::dot_generator::*;
 use itertools::Itertools;
@@ -22,7 +22,8 @@ impl ToStmt for TreeType {
     fn to_stmt(&self, id: String) -> Stmt {
         let label = NodeAttributes::label(format!("\"{}\"", &self));
         let shape = shape(self);
-        stmt!(node!(id.as_str(); label,shape))
+        let color = color(self);
+        stmt!(node!(id.as_str(); label,shape,color))
     }
 }
 
@@ -47,16 +48,38 @@ fn shape(tpe: &TreeType) -> Attribute {
         TreeType::Cond => NodeAttributes::shape(shape::ellipse)
     }
 }
+fn color(tpe: &TreeType) -> Attribute {
+    match tpe {
+        TreeType::Root => NodeAttributes::color(color_name::black),
+        TreeType::Parallel => NodeAttributes::color(color_name::darkred),
+        TreeType::Sequence => NodeAttributes::color(color_name::darkred),
+        TreeType::MSequence => NodeAttributes::color(color_name::darkred),
+        TreeType::RSequence => NodeAttributes::color(color_name::darkred),
+        TreeType::Fallback => NodeAttributes::color(color_name::blue),
+        TreeType::RFallback => NodeAttributes::color(color_name::blue),
 
-impl ToStmt for (&TreeType, &Arguments) {
+        TreeType::Inverter => NodeAttributes::color(color_name::purple),
+        TreeType::ForceSuccess => NodeAttributes::color(color_name::purple),
+        TreeType::ForceFail => NodeAttributes::color(color_name::purple),
+        TreeType::Repeat => NodeAttributes::color(color_name::purple),
+        TreeType::Retry => NodeAttributes::color(color_name::purple),
+        TreeType::Timeout => NodeAttributes::color(color_name::purple),
+
+        TreeType::Impl => NodeAttributes::color(color_name::green),
+        TreeType::Cond => NodeAttributes::color(color_name::greenyellow),
+    }
+}
+
+impl ToStmt for (TreeType, Arguments) {
     fn to_stmt(&self, id: String) -> Stmt {
         let tpe = format!("{}", &self.0);
         let args = format!("{}",ShortDisplayArguments(self.1.clone()));
         let args = if !args.is_empty() { format!("({})", args) } else { "".to_string() };
         let label = format!("\"{} {}\"", tpe, args);
         let label = NodeAttributes::label(label);
-        let shape = shape(self.0);
-        stmt!(node!(id.as_str(); label,shape))
+        let shape = shape(&self.0);
+        let color = color(&self.0);
+        stmt!(node!(id.as_str(); label,shape,color))
     }
 }
 
@@ -75,7 +98,8 @@ impl<'a> ToStmt for Invocation<'a> {
 
         let label = NodeAttributes::label(label);
         let shape = shape(&self.tree.tpe);
-        stmt!(node!(id.as_str(); label, shape))
+        let color = color(&self.tree.tpe);
+        stmt!(node!(id.as_str(); label,shape,color))
     }
 }
 
