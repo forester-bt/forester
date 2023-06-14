@@ -9,14 +9,7 @@ pub trait ToStmt {
     fn to_stmt(&self, id: String) -> Stmt;
 }
 
-impl ToStmt for Tree {
-    fn to_stmt(&self, id: String) -> Stmt {
-        let tree_type = format!("{}", &self.tpe);
-        let name = (&self.name).to_string();
-        let label = NodeAttributes::label(format!("\"{} {}\"", tree_type, name));
-        stmt!(node!(id; label))
-    }
-}
+
 
 impl ToStmt for TreeType {
     fn to_stmt(&self, id: String) -> Stmt {
@@ -43,6 +36,7 @@ fn shape(tpe: &TreeType) -> Attribute {
         TreeType::Repeat => NodeAttributes::shape(shape::tab),
         TreeType::Retry => NodeAttributes::shape(shape::tab),
         TreeType::Timeout => NodeAttributes::shape(shape::tab),
+        TreeType::Delay => NodeAttributes::shape(shape::tab),
 
         TreeType::Impl => NodeAttributes::shape(shape::component),
         TreeType::Cond => NodeAttributes::shape(shape::ellipse)
@@ -64,6 +58,7 @@ fn color(tpe: &TreeType) -> Attribute {
         TreeType::Repeat => NodeAttributes::color(color_name::purple),
         TreeType::Retry => NodeAttributes::color(color_name::purple),
         TreeType::Timeout => NodeAttributes::color(color_name::purple),
+        TreeType::Delay => NodeAttributes::color(color_name::purple),
 
         TreeType::Impl => NodeAttributes::color(color_name::green),
         TreeType::Cond => NodeAttributes::color(color_name::greenyellow),

@@ -1,0 +1,54 @@
+root main sequence {
+    write_coordinates()
+    fallback {
+        drive_home_if_low(10)
+        place_detail_op()
+    }
+
+}
+
+sequence place_detail_op(){
+    parallel {
+        drive_to(kit_area)
+        locate(kit)
+    }
+    grasp_op()
+    parallel {
+        drive_to(placing_area)
+        move_to(placing_pose)
+    }
+    parallel {
+        place()
+        plan_arm_move_to(arm_home)
+    }
+    move_arm_to(arm_home)
+}
+
+sequence grasp_op(){
+      move_arm_to(observation_pose)
+      plan_pose(grasping_pose)
+      parallel {
+            grasp()
+            plan_arm_move_to(arm_home)
+      }
+      parallel {
+            move_arm_to(arm_home)
+            plan_pose(placing_pose)
+      }
+}
+
+sequence drive_home_if_low(critical_level:num){
+     less(battery_level, critical_level)
+     drive_to(home)
+}
+
+cond less(lhs:num,rhs:num);
+impl write_coordinates();
+impl drive_to(dest:object);
+impl locate(obj:object);
+impl move_arm_to(dest:object);
+impl move_to(dest:object);
+impl plan_arm_move_to(dest:object);
+impl plan_pose(pose:object);
+impl grasp();
+impl place();

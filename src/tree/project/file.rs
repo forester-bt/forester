@@ -35,7 +35,7 @@ impl File {
             }
 
             Some(_) => {
-                Err(TreeError::ParserError(format!("the tree '{}' is already presented", tree.name)))
+                Err(TreeError::ParseError(format!("the tree '{}' is already presented", tree.name)))
             }
         }
     }

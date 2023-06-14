@@ -124,7 +124,7 @@ impl Call {
             Call::Decorator(_, _, _) => None
         }
     }
-    pub fn arguments(&self) -> Arguments{
+    pub fn arguments(&self) -> Arguments {
         match self {
             Call::Invocation(_, args) => args.clone(),
             Call::InvocationCapturedArgs(_) => Arguments::default(),
@@ -356,6 +356,7 @@ pub enum TreeType {
     Repeat,
     Retry,
     Timeout,
+    Delay,
     // actions
     Impl,
     Cond,
@@ -413,6 +414,17 @@ pub struct Tree {
     pub name: Key,
     pub params: Params,
     pub calls: Calls,
+}
+
+impl Tree {
+    pub fn root(name: &str, calls: Vec<Call>) -> Self {
+        Tree::new(
+            TreeType::Root,
+            name.to_string(),
+            Params::default(),
+            Calls::new(calls),
+        )
+    }
 }
 
 impl Tree {

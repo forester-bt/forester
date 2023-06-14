@@ -38,7 +38,7 @@ mod tests {
 
     #[test]
     fn smoke() {
-        let script = load_file("tree/tests/plain_project/main.tree");
+        let script = load_file("tree/tests/plain_project/amr_simple.tree");
         let parser = Parser::new(script.as_str()).unwrap();
         let result = parser.parse().unwrap();
 

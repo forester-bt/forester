@@ -8,7 +8,7 @@ use std::path::PathBuf;
 use graphviz_rust::cmd::{CommandArg, Format};
 use graphviz_rust::dot_generator::*;
 use graphviz_rust::dot_structures::*;
-use graphviz_rust::{exec, print};
+use graphviz_rust::{exec, exec_dot, print};
 use graphviz_rust::printer::PrinterContext;
 use itertools::Itertools;
 use crate::tree::parser::ast::{Arguments, Call, ImportName, Key, Params, Tree};
@@ -37,7 +37,7 @@ struct VizItem {
 #[derive(Default)]
 struct State {
     gen: usize,
-    pub stack: VecDeque<VizItem>,
+    stack: VecDeque<VizItem>,
 
 }
 
@@ -49,7 +49,14 @@ impl State {
     fn curr(&self) -> String {
         self.gen.to_string()
     }
-    fn push(&mut self, call: Call, parent_id: String, params: Params, args: Arguments, file: String) {
+    fn push(
+        &mut self,
+        call: Call,
+        parent_id: String,
+        params: Params,
+        args: Arguments,
+        file: String,
+    ) {
         self.stack.push_back(
             VizItem {
                 call,
@@ -58,7 +65,14 @@ impl State {
             }
         )
     }
-    fn push_front(&mut self, call: Call, parent_id: String, params: Params, args: Arguments, file: String) {
+    fn push_front(
+        &mut self,
+        call: Call,
+        parent_id: String,
+        params: Params, args:
+        Arguments,
+        file: String,
+    ) {
         self.stack.push_front(
             VizItem {
                 call,
@@ -78,15 +92,6 @@ struct Visualizer<'a> {
 
 
 impl<'a> Visualizer<'a> {
-    fn init_with_root(&self) -> Result<&Tree, TreeError> {
-        let (main_file, root) = &self.project.main;
-
-        self.project.files
-            .get(main_file)
-            .ok_or(cerr(format!("no main file {}", main_file)))?
-            .definitions.get(root)
-            .ok_or(cerr(format!("no root {} in {}", root, main_file)))
-    }
     fn get_file(&self, file: &String) -> Result<&File, TreeError> {
         self.project
             .files
@@ -96,7 +101,11 @@ impl<'a> Visualizer<'a> {
     fn build_graph(&self) -> Result<Graph, TreeError> {
         let (file, name) = &self.project.main;
         let mut graph = graph!(strict di id!(name));
-        let root = self.init_with_root()?;
+        let root = self.project.files
+            .get(file)
+            .ok_or(cerr(format!("no main file {}", file)))?
+            .definitions.get(name)
+            .ok_or(cerr(format!("no root {} in {}", name, file)))?;
 
         let mut state = State::default();
 
@@ -141,7 +150,7 @@ impl<'a> Visualizer<'a> {
                             .get_call()
                             .ok_or(cerr(format!("the argument {} should be tree", key)))?;
                     let k = call.key().ok_or(
-                        cerr(format!("the param {} should have a name",key))
+                        cerr(format!("the param {} should have a name", key))
                     )?;
                     state.push_front(Call::Invocation(k, call.arguments()), id, params, args, file_name.clone());
                     continue;
@@ -198,9 +207,12 @@ impl<'a> Visualizer<'a> {
     }
 
 
+    pub fn to_dot(&mut self) -> Result<String, TreeError> {
+        Ok(print(self.build_graph()?, &mut PrinterContext::default()))
+    }
+
     pub fn to_svg_file(&mut self, path: String) -> Result<String, TreeError> {
         let mut g = self.build_graph()?;
-        println!("{}", print(g.clone(), &mut PrinterContext::default()));
         exec(
             g,
             &mut PrinterContext::default(),

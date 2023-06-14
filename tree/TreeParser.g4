@@ -26,8 +26,9 @@ call
     ;
 
 invocation
-    : id args
+    : id (args | LPR DOT_DOT RPR)
     ;
+
 
 lambda
     : tree_type args? calls
@@ -40,8 +41,7 @@ calls
 
 
 arg
-    : id (EQ (message | id (LPR DOT_DOT RPR)?))?
-    | id LPR DOT_DOT RPR
+    : id (EQ (message | id | call))?
     | message
     | call
     ;
@@ -83,7 +83,7 @@ tree_type
     | RSEQUENCE
     | FALLBACK
     | RFALLBACK
-    | id
+    | id          // ambigulty
     ;
 
 
