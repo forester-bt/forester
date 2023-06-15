@@ -1,5 +1,5 @@
 extern crate core;
 
-mod tree;
 mod runtime;
-
+mod tree;
+mod visualizer;

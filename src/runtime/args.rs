@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use crate::runtime::blackboard::BBKey;
 
-pub type RtArgKey = String;
+pub type RtAKey = String;
 
 pub enum RtValueNumber {
     Int(i64),
@@ -19,9 +19,10 @@ pub enum RtValue {
     Pointer(BBKey)
 }
 
+#[derive(Default)]
 pub struct RtArgs(Vec<RtArgument>);
 
 pub struct RtArgument {
-    name: RtArgKey,
+    name: RtAKey,
     value: RtValue,
 }

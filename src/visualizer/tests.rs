@@ -2,7 +2,7 @@ use std::path::PathBuf;
 use graphviz_rust::dot_generator::*;
 use graphviz_rust::dot_structures::*;
 use crate::tree::project::Project;
-use crate::tree::visualizer::Visualizer;
+use crate::visualizer::Visualizer;
 
 #[test]
 fn manual() {

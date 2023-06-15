@@ -1,10 +1,9 @@
+use crate::runtime::RuntimeErrorCause;
 use parsit::error::ParseError;
 use parsit::step::Step;
-use crate::runtime::RuntimeError;
 
 pub mod parser;
 pub mod project;
-pub mod visualizer;
 
 pub fn cerr(v: String) -> TreeError {
     TreeError::CompileError(v)
@@ -14,8 +13,9 @@ pub fn cerr(v: String) -> TreeError {
 pub enum TreeError {
     ParseError(String),
     CompileError(String),
+    RuntimeError(RuntimeErrorCause),
     VisualizationError(String),
-    IOError(String)
+    IOError(String),
 }
 
 impl From<ParseError<'_>> for TreeError {
@@ -23,5 +23,8 @@ impl From<ParseError<'_>> for TreeError {
         TreeError::ParseError(value.to_string())
     }
 }
-
-
+impl From<RuntimeErrorCause> for TreeError {
+    fn from(value: RuntimeErrorCause) -> Self {
+        TreeError::RuntimeError(value)
+    }
+}

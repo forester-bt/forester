@@ -18,7 +18,7 @@ use crate::tree::project::{AliasName, FileName, Project, TreeName};
 use crate::tree::project::file::File;
 use crate::tree::project::invocation::Invocation;
 use crate::tree::project::params::find_arg;
-use crate::tree::visualizer::statements::ToStmt;
+use crate::visualizer::statements::ToStmt;
 
 
 struct VizItemParent {
