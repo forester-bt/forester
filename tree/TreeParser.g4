@@ -17,7 +17,7 @@ importSt
     ;
 
 definition
-    : tree_type id params? calls?
+    : tree_type id params? (calls? | SEMI)
     ;
 
 call
@@ -55,7 +55,7 @@ params
     ;
 
 param
-    : id SEMI mes_type
+    : id COLON mes_type
     ;
 
 message
@@ -92,7 +92,7 @@ object
     ;
 
 objectPair
-    : string SEMI message
+    : string COLON message
     ;
 
 

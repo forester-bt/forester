@@ -21,7 +21,8 @@ IMPORT: 'import';
 ID : [-_a-zA-Z]+ (INT | [-_a-zA-Z]+)*  ;
 
 COMMA : ',';
-SEMI : ':';
+COLON : ':';
+SEMI : ';';
 DOT_DOT : '..';
 
 EQ  : '=';

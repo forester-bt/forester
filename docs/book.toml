@@ -1,0 +1,14 @@
+[book]
+authors = ["Boris Zhguchev"]
+language = "en"
+multilingual = false
+src = "src"
+title = "Documentation"
+
+
+[preprocessor.graphviz]
+command = "mdbook-graphviz"
+output-to-file = false
+
+[output.html]
+additional-js = ["theme/custom-highlight.js"]
