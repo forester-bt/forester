@@ -2,24 +2,23 @@ mod statements;
 #[cfg(test)]
 mod tests;
 
-use std::collections::{HashMap, HashSet, VecDeque};
-use std::fmt::format;
-use std::path::PathBuf;
+use crate::tree::parser::ast::{Arguments, Call, ImportName, Key, Params, Tree};
+use crate::tree::project::file::File;
+use crate::tree::project::imports::ImportMap;
+use crate::tree::project::invocation::Invocation;
+use crate::tree::project::params::find_rhs_arg;
+use crate::tree::project::{AliasName, FileName, Project, TreeName};
+use crate::tree::{cerr, TreeError};
+use crate::visualizer::statements::ToStmt;
 use graphviz_rust::cmd::{CommandArg, Format};
 use graphviz_rust::dot_generator::*;
 use graphviz_rust::dot_structures::*;
-use graphviz_rust::{exec, exec_dot, print};
 use graphviz_rust::printer::PrinterContext;
+use graphviz_rust::{exec, exec_dot, print};
 use itertools::Itertools;
-use crate::tree::parser::ast::{Arguments, Call, ImportName, Key, Params, Tree};
-use crate::tree::{cerr, TreeError};
-use crate::tree::project::imports::ImportMap;
-use crate::tree::project::{AliasName, FileName, Project, TreeName};
-use crate::tree::project::file::File;
-use crate::tree::project::invocation::Invocation;
-use crate::tree::project::params::find_arg;
-use crate::visualizer::statements::ToStmt;
-
+use std::collections::{HashMap, HashSet, VecDeque};
+use std::fmt::format;
+use std::path::PathBuf;
 
 struct VizItemParent {
     id: String,
@@ -31,14 +30,12 @@ struct VizItem {
     call: Call,
     parent: VizItemParent,
     file_name: String,
-
 }
 
 #[derive(Default)]
 struct State {
     gen: usize,
     stack: VecDeque<VizItem>,
-
 }
 
 impl State {
@@ -57,29 +54,33 @@ impl State {
         args: Arguments,
         file: String,
     ) {
-        self.stack.push_back(
-            VizItem {
-                call,
-                parent: VizItemParent { id: parent_id, params, args },
-                file_name: file,
-            }
-        )
+        self.stack.push_back(VizItem {
+            call,
+            parent: VizItemParent {
+                id: parent_id,
+                params,
+                args,
+            },
+            file_name: file,
+        })
     }
     fn push_front(
         &mut self,
         call: Call,
         parent_id: String,
-        params: Params, args:
-        Arguments,
+        params: Params,
+        args: Arguments,
         file: String,
     ) {
-        self.stack.push_front(
-            VizItem {
-                call,
-                parent: VizItemParent { id: parent_id, params, args },
-                file_name: file,
-            }
-        )
+        self.stack.push_front(VizItem {
+            call,
+            parent: VizItemParent {
+                id: parent_id,
+                params,
+                args,
+            },
+            file_name: file,
+        })
     }
     fn pop(&mut self) -> Option<VizItem> {
         self.stack.pop_front()
@@ -90,21 +91,23 @@ struct Visualizer<'a> {
     project: &'a Project,
 }
 
-
 impl<'a> Visualizer<'a> {
     fn get_file(&self, file: &String) -> Result<&File, TreeError> {
-        self.project
-            .files
-            .get(file.as_str())
-            .ok_or(cerr(format!("unexpected error: the file {} not exists", &file)))
+        self.project.files.get(file.as_str()).ok_or(cerr(format!(
+            "unexpected error: the file {} not exists",
+            &file
+        )))
     }
     fn build_graph(&self) -> Result<Graph, TreeError> {
         let (file, name) = &self.project.main;
         let mut graph = graph!(strict di id!(name));
-        let root = self.project.files
+        let root = self
+            .project
+            .files
             .get(file)
             .ok_or(cerr(format!("no main file {}", file)))?
-            .definitions.get(name)
+            .definitions
+            .get(name)
             .ok_or(cerr(format!("no root {} in {}", name, file)))?;
 
         let mut state = State::default();
@@ -117,14 +120,15 @@ impl<'a> Visualizer<'a> {
                 state.curr(),
                 root.params.clone(),
                 Arguments::default(),
-                file.clone());
+                file.clone(),
+            );
         }
 
         while let Some(item) = state.pop() {
             let VizItem {
                 call,
                 parent: VizItemParent { id, params, args },
-                file_name
+                file_name,
             } = item;
 
             let curr_file = &self.get_file(&file_name)?;
@@ -139,20 +143,26 @@ impl<'a> Visualizer<'a> {
                             state.curr(),
                             params.clone(),
                             args.clone(),
-                            file_name.clone());
+                            file_name.clone(),
+                        );
                     }
                     stmt
                 }
                 Call::InvocationCapturedArgs(key) => {
-                    let rhs = find_arg(&key, &params, &args)?;
-                    let call =
-                        rhs
-                            .get_call()
-                            .ok_or(cerr(format!("the argument {} should be tree", key)))?;
-                    let k = call.key().ok_or(
-                        cerr(format!("the param {} should have a name", key))
-                    )?;
-                    state.push_front(Call::Invocation(k, call.arguments()), id, params, args, file_name.clone());
+                    let rhs = find_rhs_arg(&key, &params, &args)?;
+                    let call = rhs
+                        .get_call()
+                        .ok_or(cerr(format!("the argument {} should be tree", key)))?;
+                    let k = call
+                        .key()
+                        .ok_or(cerr(format!("the param {} should have a name", key)))?;
+                    state.push_front(
+                        Call::Invocation(k, call.arguments()),
+                        id,
+                        params,
+                        args,
+                        file_name.clone(),
+                    );
                     continue;
                 }
                 Call::Invocation(name, args) => {
@@ -164,7 +174,8 @@ impl<'a> Visualizer<'a> {
                                 state.curr(),
                                 tree.params.clone(),
                                 args.clone(),
-                                file.clone());
+                                file.clone(),
+                            );
                         }
                         stmt
                     } else {
@@ -177,11 +188,13 @@ impl<'a> Visualizer<'a> {
                         };
 
                         for call in &tree.calls.elems {
-                            state.push(call.clone(),
-                                       state.curr(),
-                                       tree.params.clone(),
-                                       args.clone(),
-                                       file.clone());
+                            state.push(
+                                call.clone(),
+                                state.curr(),
+                                tree.params.clone(),
+                                args.clone(),
+                                file.clone(),
+                            );
                         }
                         stmt
                     }
@@ -193,7 +206,8 @@ impl<'a> Visualizer<'a> {
                         state.curr(),
                         params.clone(),
                         args.clone(),
-                        file.clone());
+                        file.clone(),
+                    );
                     stmt
                 }
             };
@@ -202,10 +216,8 @@ impl<'a> Visualizer<'a> {
             graph.add_stmt(edge);
         }
 
-
         Ok(graph)
     }
-
 
     pub fn to_dot(&mut self) -> Result<String, TreeError> {
         Ok(print(self.build_graph()?, &mut PrinterContext::default()))
@@ -216,18 +228,14 @@ impl<'a> Visualizer<'a> {
         exec(
             g,
             &mut PrinterContext::default(),
-            vec![
-                Format::Svg.into(),
-                CommandArg::Output(path),
-            ],
-        ).map_err(|e| TreeError::VisualizationError(e.to_string()))
+            vec![Format::Svg.into(), CommandArg::Output(path)],
+        )
+        .map_err(|e| TreeError::VisualizationError(e.to_string()))
     }
 }
-
 
 impl<'a> Visualizer<'a> {
     pub fn new(project: &'a Project) -> Self {
         Self { project }
     }
 }
-

@@ -1,12 +1,12 @@
 use crate::runtime::action::{ActionKeeper, ActionName};
-use crate::runtime::args::RtArgs;
+use crate::runtime::args::{decorator_args, invocation_args, RtArgs};
 use crate::runtime::blackboard::BlackBoard;
-use crate::runtime::rnode::{RNode, RNodeId, RNodeState, RNodeType, RTreeType, TreeName};
+use crate::runtime::rnode::{DecoratorType, FlowType, Name, RNode, RNodeId, RNodeState};
 use crate::runtime::RuntimeErrorCause;
 use crate::tree::parser::ast::{Arguments, Call, Calls, Param, Params, Tree};
 use crate::tree::project::file::File;
 use crate::tree::project::imports::ImportMap;
-use crate::tree::project::params::find_arg;
+use crate::tree::project::params::find_rhs_arg;
 use crate::tree::project::{FileName, Project};
 use crate::tree::TreeError;
 use std::collections::{HashMap, HashSet, VecDeque};
@@ -32,7 +32,7 @@ fn find_file<'a>(project: &'a Project, f_name: &str) -> Result<&'a File, Runtime
 }
 fn find_root<'a>(
     project: &'a Project,
-    name: &TreeName,
+    name: &Name,
     file: &FileName,
 ) -> Result<&'a Tree, RuntimeErrorCause> {
     project
@@ -80,28 +80,18 @@ impl RuntimeTree {
 
             match call {
                 Call::Lambda(tpe, calls) => {
-                    let r_tpe: RNodeType = tpe.into();
                     let children = builder.push_vec(calls, params.clone(), args.clone(), f.clone());
-
-                    if let RNodeType::Tree(r_t) = r_tpe {
-                        r_tree.nodes.insert(id, RNode::lambda(r_t, children));
-                    } else {
-                        return Err(
-                            RuntimeErrorCause::un(format!("unexpected type for lambda")).into()
-                        );
-                    }
+                    r_tree
+                        .nodes
+                        .insert(id, RNode::lambda(tpe.try_into()?, children));
                 }
                 Call::InvocationCapturedArgs(key) => {
-                    let rhs = find_arg(&key, &params, &args)?;
-                    let call = rhs.get_call().ok_or(RuntimeErrorCause::un(format!(
-                        "the argument {} should be tree",
-                        key
-                    )))?;
+                    let rhs = find_rhs_arg(&key, &params, &args)?;
+                    let err_cause = format!("the argument {} should be tree", key);
+                    let call = rhs.get_call().ok_or(RuntimeErrorCause::un(err_cause))?;
 
-                    let k = call.key().ok_or(RuntimeErrorCause::un(format!(
-                        "the param {} should have a name",
-                        key
-                    )))?;
+                    let err_cause = format!("the param {} should have a name", key);
+                    let k = call.key().ok_or(RuntimeErrorCause::un(err_cause))?;
 
                     builder.push_front(
                         Call::Invocation(k, call.arguments()),
@@ -111,8 +101,64 @@ impl RuntimeTree {
                     );
                     continue;
                 }
-                Call::Decorator(tpe, decor_args, call) => {}
-                Call::Invocation(_, _) => {}
+                Call::Decorator(tpe, decor_args, call) => {
+                    let child = builder.push(*call, params.clone(), args.clone(), file.clone());
+                    let d_tpe: DecoratorType = tpe.try_into()?;
+                    r_tree.nodes.insert(
+                        id,
+                        RNode::decorator(d_tpe.clone(), decorator_args(&d_tpe, decor_args)?, child),
+                    );
+                }
+                Call::Invocation(name, args) => {
+                    if let Some(tree) = curr_file.definitions.get(&name) {
+                        let children = builder.push_vec(
+                            tree.calls.clone(),
+                            params.clone(),
+                            args.clone(),
+                            f.clone(),
+                        );
+                        r_tree.nodes.insert(
+                            id,
+                            RNode::flow(
+                                tree.tpe.clone().try_into()?,
+                                name,
+                                invocation_args(args.clone(), tree.params.clone())?,
+                                children,
+                            ),
+                        );
+                    } else {
+                        let tree = import_map.find(&name, &project)?;
+                        let children = builder.push_vec(
+                            tree.calls.clone(),
+                            params.clone(),
+                            args.clone(),
+                            f.clone(),
+                        );
+
+                        if &tree.name != &name {
+                            r_tree.nodes.insert(
+                                id,
+                                RNode::flow_alias(
+                                    tree.tpe.clone().try_into()?,
+                                    tree.name.clone(),
+                                    name,
+                                    invocation_args(args.clone(), tree.params.clone())?,
+                                    children,
+                                ),
+                            );
+                        } else {
+                            r_tree.nodes.insert(
+                                id,
+                                RNode::flow(
+                                    tree.tpe.clone().try_into()?,
+                                    name,
+                                    invocation_args(args.clone(), tree.params.clone())?,
+                                    children,
+                                ),
+                            );
+                        };
+                    }
+                }
             }
         }
 

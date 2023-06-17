@@ -1,13 +1,16 @@
 use crate::tree::parser::ast::{Argument, ArgumentRhs, Arguments, Key, Params};
 use crate::tree::{cerr, TreeError};
 
-pub fn find_arg(key: &Key, params: &Params, args: &Arguments) -> Result<ArgumentRhs, TreeError> {
-    let named_arg =
-        args
-            .args
-            .iter()
-            .find(|a| a.has_name(key))
-            .map(Argument::value);
+pub fn find_rhs_arg(
+    key: &Key,
+    params: &Params,
+    args: &Arguments,
+) -> Result<ArgumentRhs, TreeError> {
+    let named_arg = args
+        .args
+        .iter()
+        .find(|a| a.has_name(key))
+        .map(Argument::value);
 
     if named_arg.is_some() {
         Ok(named_arg.unwrap().clone())

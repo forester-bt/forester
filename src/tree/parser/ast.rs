@@ -1,13 +1,17 @@
-use std::collections::HashMap;
-use std::fmt::{Display, Formatter, Write, write};
-use std::str::FromStr;
+use crate::runtime::rnode::Name;
+use crate::runtime::RuntimeErrorCause;
+use crate::tree::parser::ast::ArgumentsType::{Named, Unnamed};
+use crate::tree::project::invocation::Invocation;
+use crate::tree::project::{AliasName, TreeName};
+use crate::tree::TreeError;
 use itertools::Itertools;
 use parsit::step::Step;
+use std::collections::HashMap;
+use std::fmt::{format, write, Display, Formatter, Write};
+use std::str::FromStr;
 use strum::ParseError;
-use strum_macros::EnumString;
 use strum_macros::Display;
-use crate::tree::project::{AliasName, TreeName};
-use crate::tree::project::invocation::Invocation;
+use strum_macros::EnumString;
 
 pub type Key = String;
 
@@ -28,6 +32,15 @@ pub enum Bool {
     False,
 }
 
+impl Into<bool> for Bool {
+    fn into(self) -> bool {
+        match self {
+            Bool::True => true,
+            Bool::False => false,
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum Message {
     Num(Number),
@@ -35,20 +48,17 @@ pub enum Message {
     Bool(Bool),
     Array(Vec<Message>),
     Object(HashMap<String, Message>),
-
 }
 
 impl Display for Message {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            Message::Num(v) => {
-                match v {
-                    Number::Int(v) => write!(f, "{}", v),
-                    Number::Float(v) => write!(f, "{}", v),
-                    Number::Hex(v) => write!(f, "{}", v),
-                    Number::Binary(v) => write!(f, "{}", v),
-                }
-            }
+            Message::Num(v) => match v {
+                Number::Int(v) => write!(f, "{}", v),
+                Number::Float(v) => write!(f, "{}", v),
+                Number::Hex(v) => write!(f, "{}", v),
+                Number::Binary(v) => write!(f, "{}", v),
+            },
             Message::String(v) => write!(f, "{}", v.0),
             Message::Bool(b) => match b {
                 Bool::True => write!(f, "true"),
@@ -70,7 +80,6 @@ impl Display for Message {
     }
 }
 
-
 impl Message {
     pub fn same(&self, mt: &MesType) -> bool {
         match (&self, mt) {
@@ -79,7 +88,7 @@ impl Message {
             (Message::Bool(_), MesType::Bool) => true,
             (Message::Array(_), MesType::Array) => true,
             (Message::Object(_), MesType::Object) => true,
-            _ => false
+            _ => false,
         }
     }
 
@@ -121,7 +130,7 @@ impl Call {
             Call::Invocation(k, _) => Some(k.clone()),
             Call::InvocationCapturedArgs(k) => Some(k.clone()),
             Call::Lambda(_, _) => None,
-            Call::Decorator(_, _, _) => None
+            Call::Decorator(_, _, _) => None,
         }
     }
     pub fn arguments(&self) -> Arguments {
@@ -166,7 +175,10 @@ pub struct Param {
 
 impl Param {
     pub fn new(id: &str, tpe: MesType) -> Self {
-        Param { name: id.to_string(), tpe }
+        Param {
+            name: id.to_string(),
+            tpe,
+        }
     }
 }
 
@@ -181,6 +193,29 @@ impl Params {
     }
 }
 
+pub fn validate_type(arg: ArgumentRhs, param: MesType) -> Result<(), RuntimeErrorCause> {
+    let error = |lhs: &str, rhs: &str| {
+        Err(RuntimeErrorCause::arg(format!(
+            "the type of argument {} does not coincide to the type of the definition {}",
+            lhs, rhs
+        )))
+    };
+
+    match (arg, param) {
+        (ArgumentRhs::Call(_), MesType::Tree) => Ok(()),
+        (ArgumentRhs::Id(_), MesType::Tree) => error("pointer", "call"),
+        (ArgumentRhs::Mes(_), MesType::Tree) => error("message", "call"),
+
+        (ArgumentRhs::Call(_), m) => error("call", format!("{:?}", m).as_str()),
+        (ArgumentRhs::Id(_), _) => Ok(()),
+
+        (ArgumentRhs::Mes(m), m_t) if m.same(&m_t) => Ok(()),
+        (ArgumentRhs::Mes(m), m_t) => {
+            error(format!("{}", m).as_str(), format!("{:?}", m_t).as_str())
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum ArgumentRhs {
     Id(Key),
@@ -192,7 +227,7 @@ impl ArgumentRhs {
     pub fn get_call(&self) -> Option<&Call> {
         match self {
             ArgumentRhs::Call(call) => Some(call),
-            _ => None
+            _ => None,
         }
     }
 }
@@ -202,22 +237,20 @@ impl Display for ArgumentRhs {
         match self {
             ArgumentRhs::Id(id) => f.write_str(id),
             ArgumentRhs::Mes(m) => write!(f, "{}", m),
-            ArgumentRhs::Call(c) => {
-                match c {
-                    Call::Invocation(name, args) => {
-                        write!(f, "{}({})", name, args)
-                    }
-                    Call::InvocationCapturedArgs(name) => {
-                        write!(f, "{}(..)", name)
-                    }
-                    Call::Lambda(tpe, _) => {
-                        write!(f, "{}...", tpe)
-                    }
-                    Call::Decorator(tpe, args, call) => {
-                        write!(f, "{}({})...", tpe, args)
-                    }
+            ArgumentRhs::Call(c) => match c {
+                Call::Invocation(name, args) => {
+                    write!(f, "{}({})", name, args)
                 }
-            }
+                Call::InvocationCapturedArgs(name) => {
+                    write!(f, "{}(..)", name)
+                }
+                Call::Lambda(tpe, _) => {
+                    write!(f, "{}...", tpe)
+                }
+                Call::Decorator(tpe, args, call) => {
+                    write!(f, "{}({})...", tpe, args)
+                }
+            },
         }
     }
 }
@@ -232,27 +265,32 @@ impl Argument {
     pub fn has_name(&self, key: &Key) -> bool {
         match self {
             Argument::Assigned(k, _) if k == key => true,
-            _ => false
+            _ => false,
         }
     }
+
+    pub fn name(&self) -> Option<&Key> {
+        match self {
+            Argument::Assigned(k, _) => Some(k),
+            Argument::Unassigned(_) => None,
+        }
+    }
+
     pub fn value(&self) -> &ArgumentRhs {
         match self {
-            Argument::Assigned(_, v)
-            | Argument::Unassigned(v) => v
+            Argument::Assigned(_, v) | Argument::Unassigned(v) => v,
         }
     }
 }
-
 
 impl Display for Argument {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             Argument::Assigned(k, rhs) => write!(f, "{}={}", k, rhs),
-            Argument::Unassigned(rhs) => write!(f, "{}", rhs)
+            Argument::Unassigned(rhs) => write!(f, "{}", rhs),
         }
     }
 }
-
 
 impl Argument {
     pub fn id(v: &str) -> Self {
@@ -280,13 +318,39 @@ pub struct Arguments {
     pub args: Vec<Argument>,
 }
 
-impl Display for Arguments {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let str = &self.args.iter().map(|a| { format!("{}", a) }).join(",");
-        write!(f, "{}", str)
+pub enum ArgumentsType {
+    Unnamed,
+    Named,
+    Empty,
+}
+
+impl Arguments {
+    pub fn get_type(&self) -> Result<ArgumentsType, RuntimeErrorCause> {
+        let mut curr = None;
+
+        for a in &self.args {
+            match (a, &curr) {
+                (Argument::Assigned(_, _), None) => curr = Some(Named),
+                (Argument::Unassigned(_), None) => curr = Some(Unnamed),
+                (Argument::Assigned(_, _), Some(Named)) => {}
+                (Argument::Unassigned(_), Some(Unnamed)) => {}
+                _ => {
+                    return Err(RuntimeErrorCause::arg(format!(
+                        "the arguments should be either named ot unnamed but not a mix"
+                    )))
+                }
+            }
+        }
+        Ok(curr.unwrap_or(ArgumentsType::Empty))
     }
 }
 
+impl Display for Arguments {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let str = &self.args.iter().map(|a| format!("{}", a)).join(",");
+        write!(f, "{}", str)
+    }
+}
 
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct ShortDisplayArguments(pub Arguments);
@@ -299,39 +363,39 @@ impl Display for ShortDisplayArgument {
         let short_mes = |m: &Message| match m {
             Message::Array(_) => "[..]".to_string(),
             Message::Object(_) => "{..}".to_string(),
-            m => format!("{}", m)
+            m => format!("{}", m),
         };
         match &self.0 {
             ArgumentRhs::Id(id) => write!(f, "{}", id),
             ArgumentRhs::Mes(m) => write!(f, "{}", short_mes(m)),
-            ArgumentRhs::Call(c) => {
-                match c {
-                    Call::Invocation(t, _) => write!(f, "{}(..)", t),
-                    Call::InvocationCapturedArgs(t) => write!(f, "{}(..)", t),
-                    Call::Lambda(t, _) => write!(f, "{}..", t),
-                    Call::Decorator(t, _, _) => write!(f, "{}(..)", t),
-                }
-            }
+            ArgumentRhs::Call(c) => match c {
+                Call::Invocation(t, _) => write!(f, "{}(..)", t),
+                Call::InvocationCapturedArgs(t) => write!(f, "{}(..)", t),
+                Call::Lambda(t, _) => write!(f, "{}..", t),
+                Call::Decorator(t, _, _) => write!(f, "{}(..)", t),
+            },
         }
     }
 }
 
 impl Display for ShortDisplayArguments {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let str = &self.0.args.iter().map(|a| {
-            match a {
+        let str = &self
+            .0
+            .args
+            .iter()
+            .map(|a| match a {
                 Argument::Assigned(k, rhs) => {
                     format!("{}={}", k, ShortDisplayArgument(rhs.clone()))
                 }
                 Argument::Unassigned(rhs) => {
                     format!("{}", ShortDisplayArgument(rhs.clone()))
                 }
-            }
-        }).join(",");
+            })
+            .join(",");
         write!(f, "{}", str)
     }
 }
-
 
 impl<'a> Arguments {
     pub fn new(args: Vec<Argument>) -> Self {
@@ -365,20 +429,26 @@ pub enum TreeType {
 impl TreeType {
     pub fn is_decorator(&self) -> bool {
         match self {
-            TreeType::Inverter |
-            TreeType::ForceSuccess |
-            TreeType::ForceFail |
-            TreeType::Repeat |
-            TreeType::Retry |
-            TreeType::Timeout => true,
-            _ => false
+            TreeType::Inverter
+            | TreeType::ForceSuccess
+            | TreeType::ForceFail
+            | TreeType::Repeat
+            | TreeType::Retry
+            | TreeType::Timeout => true,
+            _ => false,
         }
     }
 }
 
-pub fn validate_lambda<'a, 'b>(tpe: &'a TreeType, args: &'a Arguments, calls: &'a Calls) -> Result<(), &'b str> {
+pub fn validate_lambda<'a, 'b>(
+    tpe: &'a TreeType,
+    args: &'a Arguments,
+    calls: &'a Calls,
+) -> Result<(), &'b str> {
     match tpe {
-        TreeType::Impl | TreeType::Cond => Err("the types impl or cond should have declaration and get called by name"),
+        TreeType::Impl | TreeType::Cond => {
+            Err("the types impl or cond should have declaration and get called by name")
+        }
 
         _ if tpe.is_decorator() => {
             if calls.elems.len() != 1 {
@@ -431,11 +501,16 @@ impl Tree {
     pub fn is_root(&self) -> bool {
         match self.tpe {
             TreeType::Root => true,
-            _ => false
+            _ => false,
         }
     }
     pub fn new(tpe: TreeType, name: Key, params: Params, calls: Calls) -> Self {
-        Self { tpe, name, params, calls }
+        Self {
+            tpe,
+            name,
+            params,
+            calls,
+        }
     }
     pub fn to_inv(&self) -> Invocation {
         self.into()
@@ -464,7 +539,6 @@ impl ImportName {
     }
 }
 
-
 impl Import {
     pub fn f_name(&self) -> &str {
         match self {
@@ -481,10 +555,7 @@ impl Import {
         )
     }
     pub fn names_mixed(f: &str, names: Vec<ImportName>) -> Self {
-        Import(
-            f.to_string(),
-            names,
-        )
+        Import(f.to_string(), names)
     }
 }
 
@@ -503,20 +574,14 @@ impl<'a> AstFile {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
-    use std::str::FromStr;
     use crate::tree::parser::ast::TreeType;
+    use std::str::FromStr;
 
     #[test]
     fn enum_test() {
-        assert_eq!(
-            TreeType::from_str("cond").unwrap(),
-            TreeType::Cond
-        );
-        assert!(
-            TreeType::from_str("bla").is_err()
-        )
+        assert_eq!(TreeType::from_str("cond").unwrap(), TreeType::Cond);
+        assert!(TreeType::from_str("bla").is_err())
     }
 }

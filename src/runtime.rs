@@ -21,13 +21,17 @@ pub enum RuntimeErrorCause {
     BlackBoardError(String),
     IOError(String),
     Unexpected(String),
+    WrongArgument(String),
 }
 
 impl RuntimeErrorCause {
-    fn io(v: String) -> RuntimeErrorCause {
+    pub fn io(v: String) -> RuntimeErrorCause {
         RuntimeErrorCause::IOError(v)
     }
-    fn un(v: String) -> RuntimeErrorCause {
+    pub fn un(v: String) -> RuntimeErrorCause {
         RuntimeErrorCause::Unexpected(v)
+    }
+    pub fn arg(v: String) -> RuntimeErrorCause {
+        RuntimeErrorCause::WrongArgument(v)
     }
 }

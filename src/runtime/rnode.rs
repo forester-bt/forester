@@ -1,7 +1,12 @@
 use crate::runtime::action::ActionName;
 use crate::runtime::args::RtArgs;
-use crate::runtime::TickResult;
+use crate::runtime::{RuntimeErrorCause, TickResult};
 use crate::tree::parser::ast::{Tree, TreeType};
+
+pub type RNodeId = usize;
+pub type Name = String;
+pub type Alias = String;
+
 #[derive(Clone)]
 pub enum DecoratorType {
     Inverter,
@@ -13,7 +18,7 @@ pub enum DecoratorType {
     Delay,
 }
 #[derive(Clone)]
-pub enum RTreeType {
+pub enum FlowType {
     Root,
     Parallel,
     Sequence,
@@ -23,54 +28,85 @@ pub enum RTreeType {
     RFallback,
 }
 
-pub type TreeName = String;
-pub type RNodeId = usize;
+impl TryFrom<TreeType> for DecoratorType {
+    type Error = RuntimeErrorCause;
 
-#[derive(Clone)]
-pub enum RNodeType {
-    Action,
-    Tree(RTreeType),
-    Decorator(DecoratorType),
-}
-
-impl From<TreeType> for RNodeType {
-    fn from(value: TreeType) -> Self {
+    fn try_from(value: TreeType) -> Result<Self, Self::Error> {
         match value {
-            TreeType::Root => RNodeType::Tree(RTreeType::Root),
-            TreeType::Parallel => RNodeType::Tree(RTreeType::Parallel),
-            TreeType::Sequence => RNodeType::Tree(RTreeType::Sequence),
-            TreeType::MSequence => RNodeType::Tree(RTreeType::MSequence),
-            TreeType::RSequence => RNodeType::Tree(RTreeType::RSequence),
-            TreeType::Fallback => RNodeType::Tree(RTreeType::Fallback),
-            TreeType::RFallback => RNodeType::Tree(RTreeType::RFallback),
-            TreeType::Inverter => RNodeType::Decorator(DecoratorType::Inverter),
-            TreeType::ForceSuccess => RNodeType::Decorator(DecoratorType::ForceSuccess),
-            TreeType::ForceFail => RNodeType::Decorator(DecoratorType::ForceFail),
-            TreeType::Repeat => RNodeType::Decorator(DecoratorType::Repeat),
-            TreeType::Retry => RNodeType::Decorator(DecoratorType::Retry),
-            TreeType::Timeout => RNodeType::Decorator(DecoratorType::Timeout),
-            TreeType::Delay => RNodeType::Decorator(DecoratorType::Delay),
-            TreeType::Impl => RNodeType::Action,
-            TreeType::Cond => RNodeType::Action,
+            TreeType::Inverter => Ok(DecoratorType::Inverter),
+            TreeType::ForceSuccess => Ok(DecoratorType::ForceSuccess),
+            TreeType::ForceFail => Ok(DecoratorType::ForceFail),
+            TreeType::Repeat => Ok(DecoratorType::Repeat),
+            TreeType::Retry => Ok(DecoratorType::Retry),
+            TreeType::Timeout => Ok(DecoratorType::Timeout),
+            TreeType::Delay => Ok(DecoratorType::Delay),
+            e => Err(RuntimeErrorCause::un(format!(
+                "unexpected type {} for decorator",
+                e.to_string()
+            ))),
         }
     }
 }
 
+impl TryFrom<TreeType> for FlowType {
+    type Error = RuntimeErrorCause;
+
+    fn try_from(value: TreeType) -> Result<Self, Self::Error> {
+        match value {
+            TreeType::Root => Ok(FlowType::Root),
+            TreeType::Parallel => Ok(FlowType::Parallel),
+            TreeType::Sequence => Ok(FlowType::Sequence),
+            TreeType::MSequence => Ok(FlowType::MSequence),
+            TreeType::RSequence => Ok(FlowType::RSequence),
+            TreeType::Fallback => Ok(FlowType::Fallback),
+            TreeType::RFallback => Ok(FlowType::RFallback),
+            e => Err(RuntimeErrorCause::un(format!(
+                "unexpected type {} for flow",
+                e.to_string()
+            ))),
+        }
+    }
+}
+
+pub enum RNodeName {
+    Lambda,
+    Name(Name),
+    Alias(Name, Alias),
+}
+
 pub enum RNode {
-    Leaf(ActionName, RtArgs),
-    Tree(RTreeType, TreeName, RtArgs, Vec<RNodeId>),
-    Decorator(DecoratorType, TreeName, RtArgs, RNodeId),
+    Leaf(RNodeName, RtArgs),
+    Flow(FlowType, RNodeName, RtArgs, Vec<RNodeId>),
+    Decorator(DecoratorType, RtArgs, RNodeId),
 }
 
 impl RNode {
-    pub fn d_lambda(t: DecoratorType, child: RNodeId) -> Self {
-        RNode::Decorator(t, "_".to_string(), RtArgs::default(), child)
+    pub fn decorator(t: DecoratorType, args: RtArgs, child: RNodeId) -> Self {
+        RNode::Decorator(t, args, child)
     }
-    pub fn lambda(t: RTreeType, children: Vec<RNodeId>) -> Self {
-        RNode::Tree(t, "_".to_string(), RtArgs::default(), children)
+
+    pub fn lambda(t: FlowType, children: Vec<RNodeId>) -> Self {
+        RNode::Flow(t, RNodeName::Lambda, RtArgs::default(), children)
     }
-    pub fn root(name: TreeName, children: Vec<RNodeId>) -> Self {
-        RNode::Tree(RTreeType::Root, name, RtArgs::default(), children)
+    pub fn root(name: Name, children: Vec<RNodeId>) -> Self {
+        RNode::Flow(
+            FlowType::Root,
+            RNodeName::Name(name),
+            RtArgs::default(),
+            children,
+        )
+    }
+    pub fn flow(f: FlowType, name: Name, args: RtArgs, children: Vec<RNodeId>) -> Self {
+        RNode::Flow(f, RNodeName::Name(name), args, children)
+    }
+    pub fn flow_alias(
+        f: FlowType,
+        name: Name,
+        alias: Alias,
+        args: RtArgs,
+        children: Vec<RNodeId>,
+    ) -> Self {
+        RNode::Flow(f, RNodeName::Name(name), args, children)
     }
 }
 
