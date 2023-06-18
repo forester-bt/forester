@@ -352,58 +352,13 @@ impl Display for Arguments {
     }
 }
 
-#[derive(Clone, Debug, Default, PartialEq)]
-pub struct ShortDisplayArguments(pub Arguments);
-
-#[derive(Clone, Debug, PartialEq)]
-pub struct ShortDisplayArgument(pub ArgumentRhs);
-
-impl Display for ShortDisplayArgument {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let short_mes = |m: &Message| match m {
-            Message::Array(_) => "[..]".to_string(),
-            Message::Object(_) => "{..}".to_string(),
-            m => format!("{}", m),
-        };
-        match &self.0 {
-            ArgumentRhs::Id(id) => write!(f, "{}", id),
-            ArgumentRhs::Mes(m) => write!(f, "{}", short_mes(m)),
-            ArgumentRhs::Call(c) => match c {
-                Call::Invocation(t, _) => write!(f, "{}(..)", t),
-                Call::InvocationCapturedArgs(t) => write!(f, "{}(..)", t),
-                Call::Lambda(t, _) => write!(f, "{}..", t),
-                Call::Decorator(t, _, _) => write!(f, "{}(..)", t),
-            },
-        }
-    }
-}
-
-impl Display for ShortDisplayArguments {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let str = &self
-            .0
-            .args
-            .iter()
-            .map(|a| match a {
-                Argument::Assigned(k, rhs) => {
-                    format!("{}={}", k, ShortDisplayArgument(rhs.clone()))
-                }
-                Argument::Unassigned(rhs) => {
-                    format!("{}", ShortDisplayArgument(rhs.clone()))
-                }
-            })
-            .join(",");
-        write!(f, "{}", str)
-    }
-}
-
 impl<'a> Arguments {
     pub fn new(args: Vec<Argument>) -> Self {
         Self { args }
     }
 }
 
-#[derive(Display, Debug, Clone, Eq, PartialEq, EnumString)]
+#[derive(Display, Debug, Clone, Copy, Eq, PartialEq, EnumString)]
 #[strum(serialize_all = "snake_case")]
 pub enum TreeType {
     Root,
@@ -435,6 +390,12 @@ impl TreeType {
             | TreeType::Repeat
             | TreeType::Retry
             | TreeType::Timeout => true,
+            _ => false,
+        }
+    }
+    pub fn is_action(&self) -> bool {
+        match self {
+            TreeType::Impl | TreeType::Cond => true,
             _ => false,
         }
     }

@@ -1,0 +1,14 @@
+fallback perform_op(savepoint:tree, op:tree, recover:tree){
+    wrap_op(op(..), savepoint(..))
+    recover(..)
+}
+
+sequence wrap_op(op:tree, wrapper:tree){
+    wrapper(..) op(..) wrapper(..)
+}
+
+sequence log_op(op:tree){
+    wrap_op(op(..), log("log"))
+}
+
+impl log(mes:string);

@@ -1,0 +1,12 @@
+import "cv/cv.tree"
+import "utils/utils.tree"
+
+root main {
+    log_op(
+        perform_op(
+            save_current_pos(),
+            find(cube,[]),
+            recover_cv()
+        )
+    )
+}

@@ -3,11 +3,15 @@ use crate::runtime::args::RtArgs;
 use crate::runtime::{RuntimeErrorCause, TickResult};
 use crate::tree::parser::ast::{Tree, TreeType};
 
+use strum_macros::Display;
+use strum_macros::EnumString;
+
 pub type RNodeId = usize;
 pub type Name = String;
 pub type Alias = String;
 
-#[derive(Clone)]
+#[derive(Display, Debug, Clone, Copy, Eq, PartialEq, EnumString)]
+#[strum(serialize_all = "snake_case")]
 pub enum DecoratorType {
     Inverter,
     ForceSuccess,
@@ -17,7 +21,8 @@ pub enum DecoratorType {
     Timeout,
     Delay,
 }
-#[derive(Clone)]
+#[derive(Display, Debug, Clone, Copy, Eq, PartialEq, EnumString)]
+#[strum(serialize_all = "snake_case")]
 pub enum FlowType {
     Root,
     Parallel,
@@ -67,13 +72,14 @@ impl TryFrom<TreeType> for FlowType {
         }
     }
 }
-
+#[derive(Debug)]
 pub enum RNodeName {
     Lambda,
     Name(Name),
     Alias(Name, Alias),
 }
 
+#[derive(Debug)]
 pub enum RNode {
     Leaf(RNodeName, RtArgs),
     Flow(FlowType, RNodeName, RtArgs, Vec<RNodeId>),
@@ -99,6 +105,12 @@ impl RNode {
     pub fn flow(f: FlowType, name: Name, args: RtArgs, children: Vec<RNodeId>) -> Self {
         RNode::Flow(f, RNodeName::Name(name), args, children)
     }
+    pub fn action(name: Name, args: RtArgs) -> Self {
+        RNode::Leaf(RNodeName::Name(name), args)
+    }
+    pub fn action_alias(name: Name, alias: Alias, args: RtArgs) -> Self {
+        RNode::Leaf(RNodeName::Alias(name, alias), args)
+    }
     pub fn flow_alias(
         f: FlowType,
         name: Name,
@@ -106,7 +118,7 @@ impl RNode {
         args: RtArgs,
         children: Vec<RNodeId>,
     ) -> Self {
-        RNode::Flow(f, RNodeName::Name(name), args, children)
+        RNode::Flow(f, RNodeName::Alias(name, alias), args, children)
     }
 }
 

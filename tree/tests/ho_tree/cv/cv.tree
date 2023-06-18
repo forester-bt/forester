@@ -1,0 +1,3 @@
+impl find(obj:object, params:array);
+impl recover_cv();
+impl save_current_pos();

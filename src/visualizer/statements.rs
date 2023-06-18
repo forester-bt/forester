@@ -1,100 +1,73 @@
-use graphviz_rust::attributes::{color_name, NodeAttributes, shape};
-use graphviz_rust::dot_structures::*;
-use graphviz_rust::dot_generator::*;
-use itertools::Itertools;
-use crate::tree::parser::ast::{Argument, Arguments, Key, ShortDisplayArguments, Tree, TreeType};
+use crate::runtime::args::ShortDisplayedRtArguments;
+use crate::runtime::rnode::{FlowType, RNode, RNodeName};
+use crate::tree::parser::ast::{Argument, Arguments, Key, Tree, TreeType};
 use crate::tree::project::invocation::Invocation;
+use graphviz_rust::attributes::{color_name, shape, NodeAttributes};
+use graphviz_rust::dot_generator::*;
+use graphviz_rust::dot_structures::*;
+use itertools::Itertools;
+use std::fmt::format;
 
 pub trait ToStmt {
     fn to_stmt(&self, id: String) -> Stmt;
 }
 
-
-
-impl ToStmt for TreeType {
-    fn to_stmt(&self, id: String) -> Stmt {
-        let label = NodeAttributes::label(format!("\"{}\"", &self));
-        let shape = shape(self);
-        let color = color(self);
-        stmt!(node!(id.as_str(); label,shape,color))
+fn name_to_label(name: &RNodeName) -> String {
+    match name {
+        RNodeName::Lambda => "".to_string(),
+        RNodeName::Name(name) => format!("{name}"),
+        RNodeName::Alias(n, a) => format!("{n}[{a}]"),
     }
 }
 
-fn shape(tpe: &TreeType) -> Attribute {
+impl ToStmt for RNode {
+    fn to_stmt(&self, id: String) -> Stmt {
+        match self {
+            RNode::Leaf(name, args) => {
+                let label = NodeAttributes::label(format!(
+                    "\"{} {}\"",
+                    name_to_label(name),
+                    ShortDisplayedRtArguments(args)
+                ));
+                let color = NodeAttributes::color(color_name::green);
+                let shape = NodeAttributes::shape(shape::component);
+
+                stmt!(node!(id.as_str(); label, shape, color))
+            }
+            RNode::Flow(t, name, args, _) => {
+                let color = flow_color(t);
+                let shape = NodeAttributes::shape(shape::rect);
+
+                let name_s = name_to_label(name);
+                let args_s = ShortDisplayedRtArguments(args).to_string();
+
+                let label = if name_s.is_empty() && args_s.is_empty() {
+                    NodeAttributes::label(format!("\"{}\"", t,))
+                } else {
+                    NodeAttributes::label(format!("\"{}\n{} {}\"", t, name_s, args_s))
+                };
+
+                stmt!(node!(id.as_str(); label,shape,color))
+            }
+            RNode::Decorator(t, args, _) => {
+                let label =
+                    NodeAttributes::label(format!("\"{} {}\"", t, ShortDisplayedRtArguments(args)));
+                let color = NodeAttributes::color(color_name::purple);
+                let shape = NodeAttributes::shape(shape::tab);
+                stmt!(node!(id.as_str(); label,shape,color))
+            }
+        }
+    }
+}
+
+fn flow_color(tpe: &FlowType) -> Attribute {
     match tpe {
-        TreeType::Root => NodeAttributes::shape(shape::rect),
-        TreeType::Parallel => NodeAttributes::shape(shape::rect),
-        TreeType::Sequence => NodeAttributes::shape(shape::rect),
-        TreeType::MSequence => NodeAttributes::shape(shape::rect),
-        TreeType::RSequence => NodeAttributes::shape(shape::rect),
-        TreeType::Fallback => NodeAttributes::shape(shape::rect),
-        TreeType::RFallback => NodeAttributes::shape(shape::rect),
-
-        TreeType::Inverter => NodeAttributes::shape(shape::tab),
-        TreeType::ForceSuccess => NodeAttributes::shape(shape::tab),
-        TreeType::ForceFail => NodeAttributes::shape(shape::tab),
-        TreeType::Repeat => NodeAttributes::shape(shape::tab),
-        TreeType::Retry => NodeAttributes::shape(shape::tab),
-        TreeType::Timeout => NodeAttributes::shape(shape::tab),
-        TreeType::Delay => NodeAttributes::shape(shape::tab),
-
-        TreeType::Impl => NodeAttributes::shape(shape::component),
-        TreeType::Cond => NodeAttributes::shape(shape::ellipse)
+        FlowType::Root => NodeAttributes::color(color_name::black),
+        FlowType::Parallel => NodeAttributes::color(color_name::darkred),
+        FlowType::Sequence => NodeAttributes::color(color_name::darkred),
+        FlowType::MSequence => NodeAttributes::color(color_name::darkred),
+        FlowType::RSequence => NodeAttributes::color(color_name::darkred),
+        FlowType::Fallback => NodeAttributes::color(color_name::blue),
+        FlowType::RFallback => NodeAttributes::color(color_name::blue),
     }
 }
-fn color(tpe: &TreeType) -> Attribute {
-    match tpe {
-        TreeType::Root => NodeAttributes::color(color_name::black),
-        TreeType::Parallel => NodeAttributes::color(color_name::darkred),
-        TreeType::Sequence => NodeAttributes::color(color_name::darkred),
-        TreeType::MSequence => NodeAttributes::color(color_name::darkred),
-        TreeType::RSequence => NodeAttributes::color(color_name::darkred),
-        TreeType::Fallback => NodeAttributes::color(color_name::blue),
-        TreeType::RFallback => NodeAttributes::color(color_name::blue),
-
-        TreeType::Inverter => NodeAttributes::color(color_name::purple),
-        TreeType::ForceSuccess => NodeAttributes::color(color_name::purple),
-        TreeType::ForceFail => NodeAttributes::color(color_name::purple),
-        TreeType::Repeat => NodeAttributes::color(color_name::purple),
-        TreeType::Retry => NodeAttributes::color(color_name::purple),
-        TreeType::Timeout => NodeAttributes::color(color_name::purple),
-        TreeType::Delay => NodeAttributes::color(color_name::purple),
-
-        TreeType::Impl => NodeAttributes::color(color_name::green),
-        TreeType::Cond => NodeAttributes::color(color_name::greenyellow),
-    }
-}
-
-impl ToStmt for (TreeType, Arguments) {
-    fn to_stmt(&self, id: String) -> Stmt {
-        let tpe = format!("{}", &self.0);
-        let args = format!("{}",ShortDisplayArguments(self.1.clone()));
-        let args = if !args.is_empty() { format!("({})", args) } else { "".to_string() };
-        let label = format!("\"{} {}\"", tpe, args);
-        let label = NodeAttributes::label(label);
-        let shape = shape(&self.0);
-        let color = color(&self.0);
-        stmt!(node!(id.as_str(); label,shape,color))
-    }
-}
-
-
-impl<'a> ToStmt for Invocation<'a> {
-    fn to_stmt(&self, id: String) -> Stmt {
-        let tpe = format!("{}", &self.tree.tpe);
-        let name = (&self.tree.name).to_string();
-        let alias = self.alias.clone().unwrap_or("".to_string());
-        let args = format!("{}",ShortDisplayArguments(self.arguments.clone()));
-        let args = if !args.is_empty() { format!("({})", args) } else { "".to_string() };
-
-        let full_name = if alias.is_empty() {name} else {format!("{}[{}]",alias,name)};
-
-        let label = format!("\"{}\n{} {}\"", tpe, full_name, args);
-
-        let label = NodeAttributes::label(label);
-        let shape = shape(&self.tree.tpe);
-        let color = color(&self.tree.tpe);
-        stmt!(node!(id.as_str(); label,shape,color))
-    }
-}
-

@@ -2,6 +2,8 @@ mod statements;
 #[cfg(test)]
 mod tests;
 
+use crate::runtime::rnode::{RNode, RNodeId};
+use crate::runtime::rtree::RuntimeTree;
 use crate::tree::parser::ast::{Arguments, Call, ImportName, Key, Params, Tree};
 use crate::tree::project::file::File;
 use crate::tree::project::imports::ImportMap;
@@ -20,222 +22,54 @@ use std::collections::{HashMap, HashSet, VecDeque};
 use std::fmt::format;
 use std::path::PathBuf;
 
-struct VizItemParent {
-    id: String,
-    params: Params,
-    args: Arguments,
-}
+struct Visualizer;
 
-struct VizItem {
-    call: Call,
-    parent: VizItemParent,
-    file_name: String,
-}
+impl<'a> Visualizer {
+    fn build_graph(runtime_tree: RuntimeTree) -> Result<Graph, TreeError> {
+        let mut graph = graph!(strict di id!(""));
+        let mut stack: VecDeque<RNodeId> = VecDeque::new();
+        stack.push_back(runtime_tree.root);
 
-#[derive(Default)]
-struct State {
-    gen: usize,
-    stack: VecDeque<VizItem>,
-}
-
-impl State {
-    fn next(&mut self) -> String {
-        self.gen += 1;
-        self.curr()
-    }
-    fn curr(&self) -> String {
-        self.gen.to_string()
-    }
-    fn push(
-        &mut self,
-        call: Call,
-        parent_id: String,
-        params: Params,
-        args: Arguments,
-        file: String,
-    ) {
-        self.stack.push_back(VizItem {
-            call,
-            parent: VizItemParent {
-                id: parent_id,
-                params,
-                args,
-            },
-            file_name: file,
-        })
-    }
-    fn push_front(
-        &mut self,
-        call: Call,
-        parent_id: String,
-        params: Params,
-        args: Arguments,
-        file: String,
-    ) {
-        self.stack.push_front(VizItem {
-            call,
-            parent: VizItemParent {
-                id: parent_id,
-                params,
-                args,
-            },
-            file_name: file,
-        })
-    }
-    fn pop(&mut self) -> Option<VizItem> {
-        self.stack.pop_front()
-    }
-}
-
-struct Visualizer<'a> {
-    project: &'a Project,
-}
-
-impl<'a> Visualizer<'a> {
-    fn get_file(&self, file: &String) -> Result<&File, TreeError> {
-        self.project.files.get(file.as_str()).ok_or(cerr(format!(
-            "unexpected error: the file {} not exists",
-            &file
-        )))
-    }
-    fn build_graph(&self) -> Result<Graph, TreeError> {
-        let (file, name) = &self.project.main;
-        let mut graph = graph!(strict di id!(name));
-        let root = self
-            .project
-            .files
-            .get(file)
-            .ok_or(cerr(format!("no main file {}", file)))?
-            .definitions
-            .get(name)
-            .ok_or(cerr(format!("no root {} in {}", name, file)))?;
-
-        let mut state = State::default();
-
-        graph.add_stmt(root.to_inv().to_stmt(state.next()));
-
-        for call in &root.calls.elems {
-            state.push(
-                call.clone(),
-                state.curr(),
-                root.params.clone(),
-                Arguments::default(),
-                file.clone(),
-            );
-        }
-
-        while let Some(item) = state.pop() {
-            let VizItem {
-                call,
-                parent: VizItemParent { id, params, args },
-                file_name,
-            } = item;
-
-            let curr_file = &self.get_file(&file_name)?;
-            let import_map = ImportMap::build(curr_file)?;
-
-            let node = match call {
-                Call::Lambda(tpe, calls) => {
-                    let stmt = tpe.to_stmt(state.next());
-                    for call in &calls.elems {
-                        state.push(
-                            call.clone(),
-                            state.curr(),
-                            params.clone(),
-                            args.clone(),
-                            file_name.clone(),
-                        );
+        while let Some(id) = stack.pop_front() {
+            if let Some(node) = runtime_tree.nodes.get(&id) {
+                graph.add_stmt(node.to_stmt(id.to_string()));
+                match node {
+                    RNode::Leaf(_, _) => {}
+                    RNode::Flow(_, _, _, children) => {
+                        for c in children {
+                            graph.add_stmt(stmt!(edge!(node_id!(id) => node_id!(c))));
+                            stack.push_back(*c);
+                        }
                     }
-                    stmt
-                }
-                Call::InvocationCapturedArgs(key) => {
-                    let rhs = find_rhs_arg(&key, &params, &args)?;
-                    let call = rhs
-                        .get_call()
-                        .ok_or(cerr(format!("the argument {} should be tree", key)))?;
-                    let k = call
-                        .key()
-                        .ok_or(cerr(format!("the param {} should have a name", key)))?;
-                    state.push_front(
-                        Call::Invocation(k, call.arguments()),
-                        id,
-                        params,
-                        args,
-                        file_name.clone(),
-                    );
-                    continue;
-                }
-                Call::Invocation(name, args) => {
-                    if let Some(tree) = curr_file.definitions.get(&name) {
-                        let stmt = tree.to_inv_args(args.clone()).to_stmt(state.next());
-                        for call in &tree.calls.elems {
-                            state.push(
-                                call.clone(),
-                                state.curr(),
-                                tree.params.clone(),
-                                args.clone(),
-                                file.clone(),
-                            );
-                        }
-                        stmt
-                    } else {
-                        let tree = import_map.find(&name, self.project)?;
-                        let stmt = if &tree.name != &name {
-                            Invocation::new_with_alias(&tree, name.clone(), args.clone())
-                                .to_stmt(state.next())
-                        } else {
-                            Invocation::new(&tree, args.clone()).to_stmt(state.next())
-                        };
-
-                        for call in &tree.calls.elems {
-                            state.push(
-                                call.clone(),
-                                state.curr(),
-                                tree.params.clone(),
-                                args.clone(),
-                                file.clone(),
-                            );
-                        }
-                        stmt
+                    RNode::Decorator(_, _, child) => {
+                        graph.add_stmt(stmt!(edge!(node_id!(id) => node_id!(child))));
+                        stack.push_back(*child);
                     }
                 }
-                Call::Decorator(tpe, decor_args, call) => {
-                    let stmt = (tpe, decor_args).to_stmt(state.next());
-                    state.push(
-                        *call,
-                        state.curr(),
-                        params.clone(),
-                        args.clone(),
-                        file.clone(),
-                    );
-                    stmt
-                }
-            };
-            let edge = stmt!(edge!(node_id!(id) => node_id!(state.curr())));
-            graph.add_stmt(node);
-            graph.add_stmt(edge);
+            } else {
+                return Err(TreeError::VisualizationError(format!(
+                    "the node with id {id} is not in the tree"
+                )));
+            }
         }
 
         Ok(graph)
     }
 
-    pub fn to_dot(&mut self) -> Result<String, TreeError> {
-        Ok(print(self.build_graph()?, &mut PrinterContext::default()))
+    pub fn dot(runtime_tree: RuntimeTree) -> Result<String, TreeError> {
+        Ok(print(
+            Visualizer::build_graph(runtime_tree)?,
+            &mut PrinterContext::default(),
+        ))
     }
 
-    pub fn to_svg_file(&mut self, path: String) -> Result<String, TreeError> {
-        let mut g = self.build_graph()?;
+    pub fn svg_file(runtime_tree: RuntimeTree, path: String) -> Result<String, TreeError> {
+        let mut g = Visualizer::build_graph(runtime_tree)?;
         exec(
             g,
             &mut PrinterContext::default(),
             vec![Format::Svg.into(), CommandArg::Output(path)],
         )
         .map_err(|e| TreeError::VisualizationError(e.to_string()))
-    }
-}
-
-impl<'a> Visualizer<'a> {
-    pub fn new(project: &'a Project) -> Self {
-        Self { project }
     }
 }

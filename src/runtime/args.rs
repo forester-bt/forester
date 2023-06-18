@@ -2,13 +2,14 @@ use crate::runtime::blackboard::BBKey;
 use crate::runtime::rnode::DecoratorType;
 use crate::runtime::RuntimeErrorCause;
 use crate::tree::parser::ast::{
-    validate_type, Argument, ArgumentRhs, Arguments, ArgumentsType, MesType, Message, Number,
+    validate_type, Argument, ArgumentRhs, Arguments, ArgumentsType, Call, MesType, Message, Number,
     Param, Params,
 };
+use itertools::Itertools;
 use std::collections::HashMap;
-
+use std::fmt::{Display, Formatter};
 pub type RtAKey = String;
-
+#[derive(Debug)]
 pub enum RtValueNumber {
     Int(i64),
     Float(f64),
@@ -26,7 +27,7 @@ impl From<Number> for RtValueNumber {
         }
     }
 }
-
+#[derive(Debug)]
 pub enum RtValue {
     String(String),
     Bool(bool),
@@ -34,6 +35,7 @@ pub enum RtValue {
     Object(HashMap<String, RtValue>),
     Number(RtValueNumber),
     Pointer(BBKey),
+    Call(Call),
 }
 
 impl From<Message> for RtValue {
@@ -50,9 +52,43 @@ impl From<Message> for RtValue {
     }
 }
 
-#[derive(Default)]
-pub struct RtArgs(Vec<RtArgument>);
+impl Display for RtValue {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            RtValue::Number(v) => match v {
+                RtValueNumber::Int(v) => write!(f, "{}", v),
+                RtValueNumber::Float(v) => write!(f, "{}", v),
+                RtValueNumber::Hex(v) => write!(f, "{}", v),
+                RtValueNumber::Binary(v) => write!(f, "{}", v),
+            },
+            RtValue::String(v) => write!(f, "{}", v),
+            RtValue::Bool(b) => write!(f, "{b}"),
+            RtValue::Array(array) => {
+                let mut list = f.debug_list();
+                let strings: Vec<_> = array.iter().map(|v| format!("{}", v)).collect();
+                list.entries(strings);
+                list.finish()
+            }
+            RtValue::Object(obj) => {
+                let mut map = f.debug_map();
+                let entries: Vec<_> = obj.iter().map(|(k, v)| (k, format!("{}", v))).collect();
+                map.entries(entries);
+                map.finish()
+            }
+            RtValue::Pointer(p) => write!(f, "&{p}"),
+            RtValue::Call(c) => match c {
+                Call::Invocation(t, _) => write!(f, "{}(..)", t),
+                Call::InvocationCapturedArgs(t) => write!(f, "{}(..)", t),
+                Call::Lambda(t, _) => write!(f, "{}..", t),
+                Call::Decorator(t, _, _) => write!(f, "{}(..)", t),
+            },
+        }
+    }
+}
 
+#[derive(Default, Debug)]
+pub struct RtArgs(Vec<RtArgument>);
+#[derive(Debug)]
 pub struct RtArgument {
     name: RtAKey,
     value: RtValue,
@@ -74,7 +110,43 @@ impl RtArgument {
         match &a {
             ArgumentRhs::Id(id) => Ok(Some(RtArgument::new(p.name, RtValue::Pointer(id.clone())))),
             ArgumentRhs::Mes(m) => Ok(Some(RtArgument::new(p.name, m.clone().into()))),
-            ArgumentRhs::Call(_) => Ok(None),
+            ArgumentRhs::Call(c) => Ok(Some(RtArgument::new(p.name, RtValue::Call(c.clone())))),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct ShortDisplayedRtArguments<'a>(pub &'a RtArgs);
+
+#[derive(Debug)]
+pub struct ShortDisplayedRtArgument<'a>(pub &'a RtArgument);
+
+impl<'a> Display for ShortDisplayedRtArgument<'a> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let short_mes = |m: &RtValue| match m {
+            RtValue::Array(_) => "[..]".to_string(),
+            RtValue::Object(_) => "{..}".to_string(),
+            m => format!("{}", m),
+        };
+
+        let RtArgument { name, value } = &self.0;
+        write!(f, "{}={}", name, short_mes(value))
+    }
+}
+
+impl<'a> Display for ShortDisplayedRtArguments<'a> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let str = &self
+            .0
+             .0
+            .iter()
+            .map(|a| ShortDisplayedRtArgument(a))
+            .map(|a| format!("{}", a))
+            .join(",");
+        if str.is_empty() {
+            write!(f, "")
+        } else {
+            write!(f, "({})", str)
         }
     }
 }

@@ -15,7 +15,7 @@ pub struct TreeContext {
     bb: BlackBoard,
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct RuntimeTree {
     pub root: RNodeId,
     pub nodes: HashMap<RNodeId, RNode>,
@@ -35,10 +35,7 @@ fn find_root<'a>(
     name: &Name,
     file: &FileName,
 ) -> Result<&'a Tree, RuntimeErrorCause> {
-    project
-        .files
-        .get(file)
-        .ok_or(RuntimeErrorCause::io(format!("no main file {}", file)))?
+    find_file(project, file)?
         .definitions
         .get(name)
         .ok_or(RuntimeErrorCause::io(format!(
@@ -71,7 +68,11 @@ impl RuntimeTree {
             let Item {
                 id,
                 call,
-                parent: Parent { params, args },
+                parent:
+                    Parent {
+                        params: parent_params,
+                        args: parent_args,
+                    },
                 file_name: f,
             } = item;
 
@@ -80,13 +81,18 @@ impl RuntimeTree {
 
             match call {
                 Call::Lambda(tpe, calls) => {
-                    let children = builder.push_vec(calls, params.clone(), args.clone(), f.clone());
+                    let children = builder.push_vec(
+                        calls,
+                        parent_params.clone(),
+                        parent_args.clone(),
+                        f.clone(),
+                    );
                     r_tree
                         .nodes
                         .insert(id, RNode::lambda(tpe.try_into()?, children));
                 }
                 Call::InvocationCapturedArgs(key) => {
-                    let rhs = find_rhs_arg(&key, &params, &args)?;
+                    let rhs = find_rhs_arg(&key, &parent_params, &parent_args)?;
                     let err_cause = format!("the argument {} should be tree", key);
                     let call = rhs.get_call().ok_or(RuntimeErrorCause::un(err_cause))?;
 
@@ -94,68 +100,104 @@ impl RuntimeTree {
                     let k = call.key().ok_or(RuntimeErrorCause::un(err_cause))?;
 
                     builder.push_front(
+                        id,
                         Call::Invocation(k, call.arguments()),
-                        params,
-                        args,
+                        parent_params,
+                        parent_args,
                         f.clone(),
                     );
-                    continue;
                 }
                 Call::Decorator(tpe, decor_args, call) => {
-                    let child = builder.push(*call, params.clone(), args.clone(), file.clone());
-                    let d_tpe: DecoratorType = tpe.try_into()?;
-                    r_tree.nodes.insert(
-                        id,
-                        RNode::decorator(d_tpe.clone(), decorator_args(&d_tpe, decor_args)?, child),
+                    let child = builder.push(
+                        *call,
+                        parent_params.clone(),
+                        parent_args.clone(),
+                        file.clone(),
                     );
+                    let d_tpe: DecoratorType = tpe.try_into()?;
+                    let rt_args = decorator_args(&d_tpe, decor_args)?;
+                    r_tree
+                        .nodes
+                        .insert(id, RNode::decorator(d_tpe, rt_args, child));
                 }
                 Call::Invocation(name, args) => {
                     if let Some(tree) = curr_file.definitions.get(&name) {
-                        let children = builder.push_vec(
-                            tree.calls.clone(),
-                            params.clone(),
-                            args.clone(),
-                            f.clone(),
-                        );
-                        r_tree.nodes.insert(
-                            id,
-                            RNode::flow(
-                                tree.tpe.clone().try_into()?,
-                                name,
-                                invocation_args(args.clone(), tree.params.clone())?,
-                                children,
-                            ),
-                        );
+                        if tree.tpe.is_action() {
+                            r_tree.nodes.insert(
+                                id,
+                                RNode::action(
+                                    name,
+                                    invocation_args(args.clone(), tree.params.clone())?,
+                                ),
+                            );
+                        } else {
+                            let children = builder.push_vec(
+                                tree.calls.clone(),
+                                tree.params.clone(),
+                                args.clone(),
+                                f.clone(),
+                            );
+                            r_tree.nodes.insert(
+                                id,
+                                RNode::flow(
+                                    tree.tpe.try_into()?,
+                                    name,
+                                    invocation_args(args.clone(), tree.params.clone())?,
+                                    children,
+                                ),
+                            );
+                        }
                     } else {
                         let tree = import_map.find(&name, &project)?;
                         let children = builder.push_vec(
                             tree.calls.clone(),
-                            params.clone(),
+                            tree.params.clone(),
                             args.clone(),
                             f.clone(),
                         );
 
                         if &tree.name != &name {
-                            r_tree.nodes.insert(
-                                id,
-                                RNode::flow_alias(
-                                    tree.tpe.clone().try_into()?,
-                                    tree.name.clone(),
-                                    name,
-                                    invocation_args(args.clone(), tree.params.clone())?,
-                                    children,
-                                ),
-                            );
+                            if tree.tpe.is_action() {
+                                r_tree.nodes.insert(
+                                    id,
+                                    RNode::action_alias(
+                                        tree.name.clone(),
+                                        name,
+                                        invocation_args(args.clone(), tree.params.clone())?,
+                                    ),
+                                );
+                            } else {
+                                r_tree.nodes.insert(
+                                    id,
+                                    RNode::flow_alias(
+                                        tree.tpe.try_into()?,
+                                        tree.name.clone(),
+                                        name,
+                                        invocation_args(args.clone(), tree.params.clone())?,
+                                        children,
+                                    ),
+                                );
+                            }
                         } else {
-                            r_tree.nodes.insert(
-                                id,
-                                RNode::flow(
-                                    tree.tpe.clone().try_into()?,
-                                    name,
-                                    invocation_args(args.clone(), tree.params.clone())?,
-                                    children,
-                                ),
-                            );
+                            if tree.tpe.is_action() {
+                                r_tree.nodes.insert(
+                                    id,
+                                    RNode::action(
+                                        name,
+                                        invocation_args(args.clone(), tree.params.clone())?,
+                                    ),
+                                );
+                            } else {
+                                r_tree.nodes.insert(
+                                    id,
+                                    RNode::flow(
+                                        tree.tpe.try_into()?,
+                                        name,
+                                        invocation_args(args.clone(), tree.params.clone())?,
+                                        children,
+                                    ),
+                                );
+                            }
                         };
                     }
                 }
@@ -220,13 +262,13 @@ impl Builder {
     }
     fn push_front(
         &mut self,
+        id: usize,
         call: Call,
         params: Params,
         args: Arguments,
         file_name: String,
     ) -> usize {
         let parent = Parent { params, args };
-        let id = self.next();
         self.stack.push_front(Item {
             id,
             call,
@@ -237,5 +279,37 @@ impl Builder {
     }
     fn pop(&mut self) -> Option<Item> {
         self.stack.pop_front()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::runtime::rtree::RuntimeTree;
+    use crate::tree::project::Project;
+    use std::path::PathBuf;
+
+    #[test]
+    fn ho_tree() {
+        let mut root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        let mut project_root = root.clone();
+        let mut graph = root.clone();
+        project_root.push("tree/tests/ho_tree");
+        let project = Project::build("main.tree".to_string(), project_root).unwrap();
+
+        let tree = RuntimeTree::build(project).unwrap();
+
+        println!("{:?}", tree);
+    }
+    #[test]
+    fn smoke() {
+        let mut root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        let mut project_root = root.clone();
+        let mut graph = root.clone();
+        project_root.push("tree/tests/plain_project");
+        let project = Project::build("main.tree".to_string(), project_root).unwrap();
+
+        let tree = RuntimeTree::build(project).unwrap();
+
+        println!("{:?}", tree);
     }
 }
