@@ -16,6 +16,7 @@ hljs.registerLanguage("tree", (hljs) => ({
             relevance: 0,
             begin: '"', end: '"'
         },
+
         hljs.C_LINE_COMMENT_MODE, // single-line comments
         hljs.C_BLOCK_COMMENT_MODE, // comment blocks
     ],

@@ -192,11 +192,16 @@ pub fn decorator_args(tpe: &DecoratorType, args: Arguments) -> Result<RtArgs, Ru
     }
 }
 
-pub fn invocation_args(args: Arguments, params: Params) -> Result<RtArgs, RuntimeErrorCause> {
+pub fn to_rt_args(
+    name: &str,
+    args: Arguments,
+    params: Params,
+) -> Result<RtArgs, RuntimeErrorCause> {
     if args.args.len() != params.params.len() {
-        Err(RuntimeErrorCause::arg(
-            "don't match the contract".to_string(),
-        ))
+        Err(RuntimeErrorCause::arg(format!(
+            "the call {} doesn't have the same number of arguments and parameters",
+            name
+        )))
     } else {
         let mut rt_args: Vec<RtArgument> = vec![];
         match args.get_type()? {

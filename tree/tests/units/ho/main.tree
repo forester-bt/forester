@@ -1,0 +1,12 @@
+root main id(say_hi())
+
+sequence id(op:tree){
+    wrapper(op(..))
+}
+sequence wrapper(operation:tree){
+    operation(..)
+}
+
+
+
+impl say_hi();
