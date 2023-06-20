@@ -3,6 +3,7 @@ use crate::tree::project::{AliasName, File, FileName, Project, TreeName};
 use crate::tree::{cerr, TreeError};
 use std::collections::{HashMap, HashSet};
 
+/// reordering by tree definition
 #[derive(Default)]
 pub struct ImportMap {
     pub aliases: HashMap<AliasName, TreeName>,
@@ -11,6 +12,10 @@ pub struct ImportMap {
 }
 
 impl ImportMap {
+    /// processes the imports checking there is no crossing between aliases and definitions
+    /// ## Note
+    /// For now, when the import of the whole file there is no validations on crossings and other things.
+    /// Thus, better off to perform imports only for the used definitions.
     pub fn build(file: &File) -> Result<Self, TreeError> {
         let mut map = ImportMap::default();
         for (file, items) in &file.imports {
@@ -18,21 +23,17 @@ impl ImportMap {
                 match item {
                     ImportName::Id(v) => {
                         if map.trees.get(v).filter(|f| f != &file).is_some() {
-                            return Err(cerr(format!("the import call {} is presented twice from several different files", v)));
+                            return Err(cerr(format!("the import call {v} is presented twice from several different files")));
                         }
                         if map.aliases.get(v).is_some() {
-                            return Err(cerr(format!(
-                                "the import call {} is presented as alias",
-                                v
-                            )));
+                            return Err(cerr(format!("the import call {v} is presented as alias")));
                         }
                         map.trees.insert(v.to_string(), file.to_string());
                     }
                     ImportName::Alias(id, alias) => {
                         if map.aliases.get(alias).filter(|id| id != id).is_some() {
                             return Err(cerr(format!(
-                                "the import alias {} is already defined for another call ",
-                                alias
+                                "the import alias {alias} is already defined for another call "
                             )));
                         }
                         map.aliases.insert(alias.to_string(), id.to_string());
@@ -51,17 +52,15 @@ impl ImportMap {
     pub fn find<'a>(&self, key: &TreeName, project: &'a Project) -> Result<&'a Tree, TreeError> {
         if let Some(file) = self.trees.get(key) {
             project.find_tree(file, key).ok_or(cerr(format!(
-                "the call {} can not be found in the file {} ",
-                key, file
+                "the call {key} can not be found in the file {file} "
             )))
         } else if let Some(id) = self.aliases.get(key) {
             let file = self
                 .trees
                 .get(id)
-                .ok_or(cerr(format!("the call {} is not presented", id)))?;
+                .ok_or(cerr(format!("the call {id} is not presented")))?;
             project.find_tree(file, id).ok_or(cerr(format!(
-                "the call {} can not be found in the file {} ",
-                key, file
+                "the call {key} can not be found in the file {file} "
             )))
         } else {
             self.files
@@ -69,7 +68,9 @@ impl ImportMap {
                 .flat_map(|f| project.files.get(f))
                 .find(|f| f.definitions.contains_key(key))
                 .and_then(|f| f.definitions.get(key))
-                .ok_or(cerr(format!("the call {} can not be found", key)))
+                .ok_or(cerr(format!(
+                    "the call {key} can not be found among the file in the project"
+                )))
         }
     }
 }

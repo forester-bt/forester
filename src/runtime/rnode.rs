@@ -3,6 +3,7 @@ use crate::runtime::args::RtArgs;
 use crate::runtime::{RuntimeErrorCause, TickResult};
 use crate::tree::parser::ast::{Tree, TreeType};
 
+use crate::tree::{cerr, TreeError};
 use strum_macros::Display;
 use strum_macros::EnumString;
 
@@ -34,7 +35,7 @@ pub enum FlowType {
 }
 
 impl TryFrom<TreeType> for DecoratorType {
-    type Error = RuntimeErrorCause;
+    type Error = TreeError;
 
     fn try_from(value: TreeType) -> Result<Self, Self::Error> {
         match value {
@@ -45,16 +46,13 @@ impl TryFrom<TreeType> for DecoratorType {
             TreeType::Retry => Ok(DecoratorType::Retry),
             TreeType::Timeout => Ok(DecoratorType::Timeout),
             TreeType::Delay => Ok(DecoratorType::Delay),
-            e => Err(RuntimeErrorCause::un(format!(
-                "unexpected type {} for decorator",
-                e.to_string()
-            ))),
+            e => Err(cerr(format!("unexpected type {e} for decorator"))),
         }
     }
 }
 
 impl TryFrom<TreeType> for FlowType {
-    type Error = RuntimeErrorCause;
+    type Error = TreeError;
 
     fn try_from(value: TreeType) -> Result<Self, Self::Error> {
         match value {
@@ -65,21 +63,18 @@ impl TryFrom<TreeType> for FlowType {
             TreeType::RSequence => Ok(FlowType::RSequence),
             TreeType::Fallback => Ok(FlowType::Fallback),
             TreeType::RFallback => Ok(FlowType::RFallback),
-            e => Err(RuntimeErrorCause::un(format!(
-                "unexpected type {} for flow",
-                e.to_string()
-            ))),
+            e => Err(cerr(format!("unexpected type {e} for flow"))),
         }
     }
 }
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum RNodeName {
     Lambda,
     Name(Name),
     Alias(Name, Alias),
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum RNode {
     Leaf(RNodeName, RtArgs),
     Flow(FlowType, RNodeName, RtArgs, Vec<RNodeId>),

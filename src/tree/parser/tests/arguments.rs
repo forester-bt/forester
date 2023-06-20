@@ -1,6 +1,9 @@
-use parsit::test::parser_test::expect;
+use crate::tree::parser::ast::arg::{Argument, Arguments};
+use crate::tree::parser::ast::call::{Call, Calls};
+use crate::tree::parser::ast::message::Message;
 use crate::tree::parser::ast::*;
 use crate::tree::parser::Parser;
+use parsit::test::parser_test::expect;
 
 #[test]
 fn plain_arg() {
@@ -16,42 +19,54 @@ fn plain_arg() {
     expect(parser.arg(0), Argument::mes(Message::str("1")));
 
     let parser = Parser::new(r#"[true,false]"#).unwrap();
-    expect(parser.arg(0), Argument::mes(Message::array(vec![Message::bool(true), Message::bool(false)])));
+    expect(
+        parser.arg(0),
+        Argument::mes(Message::array(vec![
+            Message::bool(true),
+            Message::bool(false),
+        ])),
+    );
 
     let parser = Parser::new(r#"x = [true,false]"#).unwrap();
-    expect(parser.arg(0), Argument::id_mes("x",
-                                           Message::array(vec![Message::bool(true), Message::bool(false)])));
+    expect(
+        parser.arg(0),
+        Argument::id_mes(
+            "x",
+            Message::array(vec![Message::bool(true), Message::bool(false)]),
+        ),
+    );
 
     let parser = Parser::new(r#"x()"#).unwrap();
-    expect(parser.arg(0), Argument::call(Call::invocation("x",Arguments::default())));
+    expect(
+        parser.arg(0),
+        Argument::call(Call::invocation("x", Arguments::default())),
+    );
 }
 
 #[test]
 fn call_arg() {
     let parser = Parser::new(r#"a = x()"#).unwrap();
-    expect(parser.arg(0),
-           Argument::id_call(
-               "a",
-               Call::invocation("x", Arguments::default()),
-           ),
+    expect(
+        parser.arg(0),
+        Argument::id_call("a", Call::invocation("x", Arguments::default())),
     );
     let parser = Parser::new(r#"a = sequence { action() }"#).unwrap();
-    expect(parser.arg(0),
-           Argument::id_call(
-               "a",
-               Call::lambda(TreeType::Sequence, Calls::new(vec![Call::invocation("action", Arguments::default())])),
-           ),
+    expect(
+        parser.arg(0),
+        Argument::id_call(
+            "a",
+            Call::lambda(
+                TreeType::Sequence,
+                Calls::new(vec![Call::invocation("action", Arguments::default())]),
+            ),
+        ),
     );
 }
 #[test]
 fn call_arg_part() {
     let parser = Parser::new(r#"a = x(..)"#).unwrap();
-    expect(parser.arg(0),
-           Argument::id_call(
-               "a",
-               Call::invocation_with_capture("x"),
-           ),
+    expect(
+        parser.arg(0),
+        Argument::id_call("a", Call::ho_invocation("x")),
     );
-
 }
-

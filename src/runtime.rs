@@ -23,15 +23,3 @@ pub enum RuntimeErrorCause {
     Unexpected(String),
     WrongArgument(String),
 }
-
-impl RuntimeErrorCause {
-    pub fn io(v: String) -> RuntimeErrorCause {
-        RuntimeErrorCause::IOError(v)
-    }
-    pub fn un(v: String) -> RuntimeErrorCause {
-        RuntimeErrorCause::Unexpected(v)
-    }
-    pub fn arg(v: String) -> RuntimeErrorCause {
-        RuntimeErrorCause::WrongArgument(v)
-    }
-}

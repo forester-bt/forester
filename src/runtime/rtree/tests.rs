@@ -16,6 +16,13 @@ mod tests {
     fn ho_op() {
         let tree = tree("units/ho", "main.tree");
         println!("{:?}", tree);
+        assert_eq!(
+            tree,
+            RuntimeTree {
+                root: 0,
+                nodes: Default::default()
+            }
+        )
     }
 
     #[test]

@@ -1,20 +1,23 @@
-mod tests;
 pub mod ast;
 mod lexer;
+mod tests;
 
+use crate::tree::parser::ast::*;
+use crate::tree::parser::lexer::Token;
+use crate::tree::TreeError;
+use ast::arg::{Argument, ArgumentRhs, Arguments, MesType, Param, Params};
+use ast::call::{Call, Calls};
+use ast::message::{Bool, Message, Number, StringLit};
+use parsit::error::ParseError;
+use parsit::parser::{EmptyToken, Parsit};
+use parsit::step::Step;
+use parsit::{seq, token, wrap};
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::env::Args;
 use std::fs;
 use std::path::PathBuf;
 use std::str::FromStr;
-use parsit::error::ParseError;
-use parsit::parser::{EmptyToken, Parsit};
-use parsit::step::Step;
-use parsit::{seq, token, wrap};
-use crate::tree::parser::ast::*;
-use crate::tree::TreeError;
-use crate::tree::parser::lexer::Token;
 
 pub struct Parser<'a> {
     inner: Parsit<'a, Token>,
@@ -78,21 +81,20 @@ impl<'a> Parser<'a> {
         )
     }
 
-
     fn array(&'a self, pos: usize) -> Step<'a, Vec<Message>> {
         let l = |p| self.l_br(p);
-        let r = |p| { self.r_br(p) };
-        let comma = |p| { self.comma(p) };
-        let message = |p| { self.message(p) };
+        let r = |p| self.r_br(p);
+        let comma = |p| self.comma(p);
+        let message = |p| self.message(p);
         let elems = |p| seq!(p => message, comma,);
         let no_elems = vec![];
 
         wrap!(pos => l; elems or no_elems; r)
     }
     fn object(&'a self, pos: usize) -> Step<'a, HashMap<String, Message>> {
-        let l = |p| { self.l_brc(p) };
-        let r = |p| { self.r_brc(p) };
-        let comma = |p| { self.comma(p) };
+        let l = |p| self.l_brc(p);
+        let r = |p| self.r_brc(p);
+        let comma = |p| self.comma(p);
 
         let pair = |p| {
             self.str(p)
@@ -101,18 +103,16 @@ impl<'a> Parser<'a> {
                 .then_zip(|p| self.message(p))
         };
 
-        let elems = |p|
-            seq!(p => pair, comma,)
-                .map(|v| HashMap::from_iter(v));
+        let elems = |p| seq!(p => pair, comma,).map(|v| HashMap::from_iter(v));
 
         let def = HashMap::new();
 
         wrap!(pos => l; elems or def; r)
     }
     fn params(&self, pos: usize) -> Step<'a, Params> {
-        let l = |p| { self.l_pr(p) };
-        let r = |p| { self.r_pr(p) };
-        let comma = |p| { self.comma(p) };
+        let l = |p| self.l_pr(p);
+        let r = |p| self.r_pr(p);
+        let comma = |p| self.comma(p);
 
         let param = |p| {
             self.id(p)
@@ -121,18 +121,15 @@ impl<'a> Parser<'a> {
                 .map(|(name, tpe)| Param { name, tpe })
         };
 
-        let elems = |p| {
-            seq!(p => param, comma,)
-                .map(|params| Params { params })
-        };
+        let elems = |p| seq!(p => param, comma,).map(|params| Params { params });
         let def = Params { params: vec![] };
 
         wrap!(pos => l; elems or def; r)
     }
 
     fn arg(&'a self, pos: usize) -> Step<'a, Argument> {
-        let assign = |p| { self.assign(p) };
-        let assigned = |p| { self.id(p).then_skip(assign) };
+        let assign = |p| self.assign(p);
+        let assigned = |p| self.id(p).then_skip(assign);
 
         let assign_id = |p| {
             assigned(p)
@@ -151,10 +148,17 @@ impl<'a> Parser<'a> {
                 .map(|(a, b)| Argument::Assigned(a, b))
         };
 
-
-        let mes = |p| self.message(p).map(ArgumentRhs::Mes).map(Argument::Unassigned);
+        let mes = |p| {
+            self.message(p)
+                .map(ArgumentRhs::Mes)
+                .map(Argument::Unassigned)
+        };
         let id = |p| self.id(p).map(ArgumentRhs::Id).map(Argument::Unassigned);
-        let call = |p| self.call(p).map(ArgumentRhs::Call).map(Argument::Unassigned);
+        let call = |p| {
+            self.call(p)
+                .map(ArgumentRhs::Call)
+                .map(Argument::Unassigned)
+        };
 
         assign_mes(pos)
             .or_from(pos)
@@ -167,16 +171,13 @@ impl<'a> Parser<'a> {
     }
 
     fn args(&'a self, pos: usize) -> Step<'a, Arguments> {
-        let l = |p| { self.l_pr(p) };
-        let r = |p| { self.r_pr(p) };
-        let comma = |p| { self.comma(p) };
+        let l = |p| self.l_pr(p);
+        let r = |p| self.r_pr(p);
+        let comma = |p| self.comma(p);
 
         let arg = |p| self.arg(p);
 
-        let elems = |p| {
-            seq!(p => arg, comma,)
-                .map(|args| Arguments { args })
-        };
+        let elems = |p| seq!(p => arg, comma,).map(|args| Arguments { args });
 
         let def = Arguments { args: vec![] };
 
@@ -184,10 +185,7 @@ impl<'a> Parser<'a> {
     }
     fn tree_type(&self, pos: usize) -> Step<'a, TreeType> {
         self.id(pos)
-            .flat_map(
-                |p| TreeType::from_str(&p),
-                |pe| Step::Fail(pos),
-            )
+            .flat_map(|p| TreeType::from_str(&p), |pe| Step::Fail(pos))
     }
 
     fn mes_type(&self, pos: usize) -> Step<'a, MesType> {
@@ -202,7 +200,8 @@ impl<'a> Parser<'a> {
     }
 
     fn message(&'a self, pos: usize) -> Step<'a, Message> {
-        self.str(pos).map(Message::String)
+        self.str(pos)
+            .map(Message::String)
             .or_from(pos)
             .or(|p| self.num(p).map(Message::Num))
             .or(|p| self.bool(p).map(Message::Bool))
@@ -212,8 +211,7 @@ impl<'a> Parser<'a> {
     }
 
     fn call_partial(&'a self, pos: usize) -> Step<'a, Key> {
-        self
-            .id(pos)
+        self.id(pos)
             .then_skip(|p| self.l_pr(p))
             .then_skip(|p| self.dot_dot(p))
             .then_skip(|p| self.r_pr(p))
@@ -225,7 +223,8 @@ impl<'a> Parser<'a> {
                 .then_zip(|p| self.args(p))
                 .map(|(id, args)| Call::Invocation(id, args))
                 .or_from(p)
-                .or(|p|self.call_partial(p).map(Call::InvocationCapturedArgs)).into()
+                .or(|p| self.call_partial(p).map(Call::HoInvocation))
+                .into()
         };
 
         let anon = |p| {
@@ -246,22 +245,20 @@ impl<'a> Parser<'a> {
     }
     fn calls(&'a self, pos: usize) -> Step<'a, Calls> {
         let calls = |p| {
-            let l = |p| { self.l_brc(p) };
-            let r = |p| { self.r_brc(p) };
+            let l = |p| self.l_brc(p);
+            let r = |p| self.r_brc(p);
             let calls = |p| self.inner.zero_or_more(p, |p| self.call(p));
             wrap!(p => l;calls;r).map(Calls::new)
         };
 
         calls(pos)
             .or_from(pos)
-            .or(|p| self.call(p)
-                .map(|c| Calls { elems: vec![c] }))
+            .or(|p| self.call(p).map(|c| Calls { elems: vec![c] }))
             .into()
     }
 
     fn tree(&'a self, pos: usize) -> Step<'a, Tree> {
-        self
-            .tree_type(pos)
+        self.tree_type(pos)
             .then_zip(|p| self.id(p))
             .then_or_default_zip(|p| self.params(p))
             .then_or_default_zip(|p| self.semi(p).map(|_| Calls::default()).or(|p| self.calls(p)))
@@ -274,21 +271,18 @@ impl<'a> Parser<'a> {
     }
 
     fn import(&'a self, pos: usize) -> Step<'a, Import> {
-        let l = |p| { self.l_brc(p) };
-        let r = |p| { self.r_brc(p) };
-        let comma = |p| { self.comma(p) };
+        let l = |p| self.l_brc(p);
+        let r = |p| self.r_brc(p);
+        let comma = |p| self.comma(p);
         let name = |p| {
-            self.id(p).then_or_none_zip(|p| {
-                self.a_arr(p).then(|p| self.id(p)).or_none()
-            }).map(|(id, alias)| {
-                match alias {
+            self.id(p)
+                .then_or_none_zip(|p| self.a_arr(p).then(|p| self.id(p)).or_none())
+                .map(|(id, alias)| match alias {
                     None => ImportName::Id(id),
                     Some(a) => ImportName::Alias(id, a),
-                }
-            })
+                })
         };
         let names = |p| seq!(p => name, comma,);
-
 
         let part = |p| {
             let def = vec![];
@@ -299,17 +293,17 @@ impl<'a> Parser<'a> {
             .then_zip(|p| self.str(p))
             .take_right()
             .then_or_none_zip(part)
-            .map(|(file, parts)| {
-                match parts {
-                    None => Import::file(file.0.as_str()),
-                    Some(names) => Import(file.0, names)
-                }
+            .map(|(file, parts)| match parts {
+                None => Import::file(file.0.as_str()),
+                Some(names) => Import(file.0, names),
             })
     }
 
     fn file(&'a self, pos: usize) -> Step<'a, AstFile> {
         let entity = |p| {
-            let entity: Step<FileEntity> = self.tree(p).map(FileEntity::Tree)
+            let entity: Step<FileEntity> = self
+                .tree(p)
+                .map(FileEntity::Tree)
                 .or_from(p)
                 .or(|p| self.import(p).map(FileEntity::Import))
                 .into();
@@ -335,4 +329,3 @@ impl<'a> Parser<'a> {
         self.inner.validate_eof(self.file(0)).into()
     }
 }
-

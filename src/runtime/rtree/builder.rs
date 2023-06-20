@@ -1,7 +1,15 @@
-use crate::tree::parser::ast::{Arguments, Call, Calls, Params};
-use crate::tree::TreeError;
+use crate::runtime::args::transform::find_arg_value;
+use crate::runtime::RuntimeErrorCause;
+use crate::tree::parser::ast::arg::{Arguments, Params};
+use crate::tree::parser::ast::call::{Call, Calls};
+use crate::tree::parser::ast::Key;
+use crate::tree::{cerr, TreeError};
 use std::collections::{HashMap, VecDeque};
 
+/// The temp struct helps to transform ast to runtime tree
+/// Basically, it needs to keep 2 things
+///  - the bfs iter order stack  
+///  - the stack trace of the calls
 #[derive(Default)]
 pub struct Builder {
     gen: usize,
@@ -16,6 +24,7 @@ pub struct StackItem {
     pub file_name: String,
 }
 
+/// represents a parent of the call in the stack trace
 pub enum ChainItem {
     Tree(usize, Arguments, Params),
     Lambda(usize),
@@ -23,10 +32,10 @@ pub enum ChainItem {
 }
 
 impl ChainItem {
-    pub fn get_args(&self) -> (Arguments, Params) {
+    pub fn get_tree(&self) -> (usize, Arguments, Params) {
         match self {
-            ChainItem::Tree(_, a, p) => (a.clone(), p.clone()),
-            _ => (Arguments::default(), Params::default()),
+            ChainItem::Tree(id, a, p) => (*id, a.clone(), p.clone()),
+            _ => (0, Arguments::default(), Params::default()),
         }
     }
     pub fn is_lambda(&self) -> bool {
@@ -57,13 +66,31 @@ impl Builder {
         } else {
             self.chain_map
                 .get(id)
-                .ok_or(TreeError::CompileError(format!(
-                    "the item {} falls out from the chain",
-                    id
-                )))
+                .ok_or(cerr(format!("the item {id} falls out from the chain")))
         }
     }
 
+    /// The method finds the next higher order of the call.
+    /// ```norun
+    ///  sequence tree_def(op:tree) another(n = op(..))
+    ///  sequence another(n:tree) n(..)  
+    /// ```
+    /// To process `n(..)` in `another` we have to climb up after  `n=op(..)` until the last ho call.
+    pub fn find_ho_call(&self, parent_id: &usize, key: &Key) -> Result<Call, TreeError> {
+        let (mut grand_parent, mut parent_args, mut parent_params) =
+            self.get_chain_skip_lambda(&parent_id)?.get_tree();
+
+        let mut call = find_arg_value(&key, &parent_params, &parent_args)?.get_call();
+
+        while let Some(key) = call.clone().and_then(|c| c.get_ho_invocation()) {
+            (grand_parent, parent_args, parent_params) =
+                self.get_chain_skip_lambda(&grand_parent)?.get_tree();
+            call = find_arg_value(&key, &parent_params, &parent_args)?.get_call();
+        }
+        call.ok_or(cerr(format!("the argument {key} should be a tree")))
+    }
+
+    ///goes up on the stacktrace skipping lambda
     pub fn get_chain_skip_lambda(&self, id: &usize) -> Result<&ChainItem, TreeError> {
         let mut current = self.get_chain(id)?;
 

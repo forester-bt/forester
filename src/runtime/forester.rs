@@ -9,12 +9,3 @@ pub struct Forester {
     pub bb: BlackBoard,
     pub acts: ActionKeeper,
 }
-
-// impl Forester {
-//     pub fn init(project: Project) -> Result<Self, RuntimeError> {
-//
-//
-//
-//
-//     }
-// }

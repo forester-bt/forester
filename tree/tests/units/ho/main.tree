@@ -7,6 +7,4 @@ sequence wrapper(operation:tree){
     operation(..)
 }
 
-
-
 impl say_hi();

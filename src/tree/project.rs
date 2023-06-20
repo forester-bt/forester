@@ -1,14 +1,12 @@
 pub mod file;
 pub mod imports;
-pub mod invocation;
-pub mod params;
 #[cfg(test)]
 mod tests;
 
 use crate::tree::parser::ast::{AstFile, FileEntity, Import, ImportName, Key, Tree};
 use crate::tree::parser::Parser;
 use crate::tree::project::file::File;
-use crate::tree::TreeError;
+use crate::tree::{cerr, TreeError};
 use itertools::Itertools;
 use parsit::error::ParseError;
 use std::borrow::Cow;
@@ -21,6 +19,11 @@ pub type FileName = String;
 pub type TreeName = String;
 pub type AliasName = String;
 
+/// the base structure represents the folder on the disk with some auxiliary info
+/// ## Structure
+///   - `root` is a root of the project. Every import relates to it.
+///   - `main` is a pointer to the file and definition when the tree is started.
+///   - `files` is a map of the files
 #[derive(Debug, Default, Clone)]
 pub struct Project {
     pub root: PathBuf,
@@ -30,21 +33,15 @@ pub struct Project {
 
 impl<'a> Project {
     pub fn find_file(&'a self, f_name: &str) -> Result<&'a File, TreeError> {
-        self.files
-            .get(f_name)
-            .ok_or(TreeError::CompileError(format!(
-                "unexpected error: the file {} not exists",
-                f_name
-            )))
+        self.files.get(f_name).ok_or(cerr(format!(
+            "unexpected error: the file {f_name} not exists"
+        )))
     }
     pub fn find_root(&'a self, name: &TreeName, file: &FileName) -> Result<&'a Tree, TreeError> {
         self.find_file(file)?
             .definitions
             .get(name)
-            .ok_or(TreeError::CompileError(format!(
-                "no root {} in {}",
-                name, file
-            )))
+            .ok_or(cerr(format!("no root {name} in {file}")))
     }
 
     pub fn find_tree(&self, file: &FileName, tree: &TreeName) -> Option<&Tree> {

@@ -1,15 +1,21 @@
+pub mod display;
+pub mod transform;
+
 use crate::runtime::blackboard::BBKey;
 use crate::runtime::rnode::DecoratorType;
-use crate::runtime::RuntimeErrorCause;
-use crate::tree::parser::ast::{
-    validate_type, Argument, ArgumentRhs, Arguments, ArgumentsType, Call, MesType, Message, Number,
-    Param, Params,
+use crate::tree::parser::ast::arg::{
+    Argument, ArgumentRhs, Arguments, ArgumentsType, MesType, Param, Params,
 };
+use crate::tree::parser::ast::call::Call;
+use crate::tree::parser::ast::message::{Message, Number};
+use crate::tree::parser::ast::Key;
+use crate::tree::{cerr, TreeError};
 use itertools::Itertools;
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
+
 pub type RtAKey = String;
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum RtValueNumber {
     Int(i64),
     Float(f64),
@@ -27,7 +33,7 @@ impl From<Number> for RtValueNumber {
         }
     }
 }
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum RtValue {
     String(String),
     Bool(bool),
@@ -52,43 +58,9 @@ impl From<Message> for RtValue {
     }
 }
 
-impl Display for RtValue {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            RtValue::Number(v) => match v {
-                RtValueNumber::Int(v) => write!(f, "{}", v),
-                RtValueNumber::Float(v) => write!(f, "{}", v),
-                RtValueNumber::Hex(v) => write!(f, "{}", v),
-                RtValueNumber::Binary(v) => write!(f, "{}", v),
-            },
-            RtValue::String(v) => write!(f, "{}", v),
-            RtValue::Bool(b) => write!(f, "{b}"),
-            RtValue::Array(array) => {
-                let mut list = f.debug_list();
-                let strings: Vec<_> = array.iter().map(|v| format!("{}", v)).collect();
-                list.entries(strings);
-                list.finish()
-            }
-            RtValue::Object(obj) => {
-                let mut map = f.debug_map();
-                let entries: Vec<_> = obj.iter().map(|(k, v)| (k, format!("{}", v))).collect();
-                map.entries(entries);
-                map.finish()
-            }
-            RtValue::Pointer(p) => write!(f, "&{p}"),
-            RtValue::Call(c) => match c {
-                Call::Invocation(t, _) => write!(f, "{}(..)", t),
-                Call::InvocationCapturedArgs(t) => write!(f, "{}(..)", t),
-                Call::Lambda(t, _) => write!(f, "{}..", t),
-                Call::Decorator(t, _, _) => write!(f, "{}(..)", t),
-            },
-        }
-    }
-}
-
-#[derive(Default, Debug)]
+#[derive(Default, Debug, PartialEq)]
 pub struct RtArgs(Vec<RtArgument>);
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct RtArgument {
     name: RtAKey,
     value: RtValue,
@@ -105,133 +77,33 @@ impl RtArgument {
         }
     }
 
-    pub fn try_from(a: ArgumentRhs, p: Param) -> Result<Option<RtArgument>, RuntimeErrorCause> {
-        let _ = validate_type(a.clone(), p.tpe)?;
+    pub fn try_from(a: ArgumentRhs, p: Param) -> Result<Option<RtArgument>, TreeError> {
+        let _ = RtArgument::validate_type(a.clone(), p.tpe)?;
         match &a {
             ArgumentRhs::Id(id) => Ok(Some(RtArgument::new(p.name, RtValue::Pointer(id.clone())))),
             ArgumentRhs::Mes(m) => Ok(Some(RtArgument::new(p.name, m.clone().into()))),
             ArgumentRhs::Call(c) => Ok(Some(RtArgument::new(p.name, RtValue::Call(c.clone())))),
         }
     }
-}
-
-#[derive(Debug)]
-pub struct ShortDisplayedRtArguments<'a>(pub &'a RtArgs);
-
-#[derive(Debug)]
-pub struct ShortDisplayedRtArgument<'a>(pub &'a RtArgument);
-
-impl<'a> Display for ShortDisplayedRtArgument<'a> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let short_mes = |m: &RtValue| match m {
-            RtValue::Array(_) => "[..]".to_string(),
-            RtValue::Object(_) => "{..}".to_string(),
-            m => format!("{}", m),
+    pub fn validate_type(arg: ArgumentRhs, param: MesType) -> Result<(), TreeError> {
+        let error = |lhs: &str, rhs: &str| {
+            Err(cerr(format!(
+                "the type of argument {lhs} does not coincide to the type of the definition {rhs}",
+            )))
         };
 
-        let RtArgument { name, value } = &self.0;
-        write!(f, "{}={}", name, short_mes(value))
-    }
-}
+        match (arg, param) {
+            (ArgumentRhs::Call(_), MesType::Tree) => Ok(()),
+            (ArgumentRhs::Id(_), MesType::Tree) => error("pointer", "call"),
+            (ArgumentRhs::Mes(_), MesType::Tree) => error("message", "call"),
 
-impl<'a> Display for ShortDisplayedRtArguments<'a> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let str = &self
-            .0
-             .0
-            .iter()
-            .map(|a| ShortDisplayedRtArgument(a))
-            .map(|a| format!("{}", a))
-            .join(",");
-        if str.is_empty() {
-            write!(f, "")
-        } else {
-            write!(f, "({})", str)
-        }
-    }
-}
+            (ArgumentRhs::Call(_), m) => error("call", format!("{:?}", m).as_str()),
+            (ArgumentRhs::Id(_), _) => Ok(()),
 
-pub fn decorator_args(tpe: &DecoratorType, args: Arguments) -> Result<RtArgs, RuntimeErrorCause> {
-    let empty = |args: &Arguments| {
-        if args.args.is_empty() {
-            Ok(RtArgs::default())
-        } else {
-            Err(RuntimeErrorCause::arg(
-                "decorator does not have arguments".to_string(),
-            ))
-        }
-    };
-    let one_num = |args: &Arguments| match args.args.as_slice() {
-        [a] => match a.value() {
-            ArgumentRhs::Id(id) => Ok(RtArgs(vec![RtArgument::new_noname(RtValue::Pointer(
-                id.to_string(),
-            ))])),
-            ArgumentRhs::Mes(Message::Num(n)) => {
-                let r_num: RtValueNumber = (*n).into();
-                Ok(RtArgs(vec![RtArgument::new_noname(RtValue::Number(r_num))]))
+            (ArgumentRhs::Mes(m), m_t) if m.same(&m_t) => Ok(()),
+            (ArgumentRhs::Mes(m), m_t) => {
+                error(format!("{}", m).as_str(), format!("{:?}", m_t).as_str())
             }
-
-            e => Err(RuntimeErrorCause::arg(format!(
-                "decorator has only one argument and it is either id or num but got {}",
-                e
-            ))),
-        },
-        _ => Err(RuntimeErrorCause::arg(
-            "decorator has only one argument".to_string(),
-        )),
-    };
-
-    match tpe {
-        DecoratorType::Inverter => empty(&args),
-        DecoratorType::ForceSuccess => empty(&args),
-        DecoratorType::ForceFail => empty(&args),
-        DecoratorType::Repeat => one_num(&args),
-        DecoratorType::Retry => one_num(&args),
-        DecoratorType::Timeout => one_num(&args),
-        DecoratorType::Delay => one_num(&args),
-    }
-}
-
-pub fn to_rt_args(
-    name: &str,
-    args: Arguments,
-    params: Params,
-) -> Result<RtArgs, RuntimeErrorCause> {
-    if args.args.len() != params.params.len() {
-        Err(RuntimeErrorCause::arg(format!(
-            "the call {} doesn't have the same number of arguments and parameters",
-            name
-        )))
-    } else {
-        let mut rt_args: Vec<RtArgument> = vec![];
-        match args.get_type()? {
-            ArgumentsType::Unnamed => {
-                for (a, p) in args.args.into_iter().zip(params.params) {
-                    if let Some(rt_a) = RtArgument::try_from(a.value().clone(), p)? {
-                        rt_args.push(rt_a);
-                    }
-                }
-                Ok(RtArgs(rt_args))
-            }
-            ArgumentsType::Named => {
-                let param_map: HashMap<String, Param> =
-                    HashMap::from_iter(params.params.into_iter().map(|p| (p.name.clone(), p)));
-
-                for a in args.args {
-                    let p =
-                        a.name()
-                            .and_then(|n| param_map.get(n))
-                            .ok_or(RuntimeErrorCause::arg(format!(
-                                "the argument {} does not correspond to the definition",
-                                a
-                            )))?;
-                    if let Some(rt_a) = RtArgument::try_from(a.value().clone(), p.clone())? {
-                        rt_args.push(rt_a);
-                    }
-                }
-                Ok(RtArgs(rt_args))
-            }
-            ArgumentsType::Empty => Ok(RtArgs(rt_args)),
         }
     }
 }

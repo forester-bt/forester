@@ -1,15 +1,15 @@
-use std::collections::{HashMap, HashSet};
 use crate::tree::parser::ast::{Import, ImportName, Tree};
 use crate::tree::project::{FileName, TreeName};
 use crate::tree::TreeError;
+use std::collections::{HashMap, HashSet};
 
+/// The entity represents a file on the disk
 #[derive(Debug, Default, Clone, PartialEq)]
 pub struct File {
     pub name: String,
     pub imports: HashMap<FileName, HashSet<ImportName>>,
     pub definitions: HashMap<TreeName, Tree>,
 }
-
 
 impl File {
     pub fn new(name: FileName) -> Self {
@@ -34,9 +34,10 @@ impl File {
                 Ok(())
             }
 
-            Some(_) => {
-                Err(TreeError::ParseError(format!("the tree '{}' is already presented", tree.name)))
-            }
+            Some(_) => Err(TreeError::ParseError(format!(
+                "the tree '{}' is already presented",
+                tree.name
+            ))),
         }
     }
 }
