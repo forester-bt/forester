@@ -10,5 +10,8 @@ title = "Documentation"
 command = "mdbook-graphviz"
 output-to-file = false
 
+[preprocessor.mermaid]
+command = "mdbook-mermaid"
+
 [output.html]
-additional-js = ["theme/custom-highlight.js"]
+additional-js = ["theme/custom-highlight.js", "mermaid.min.js", "mermaid-init.js"]

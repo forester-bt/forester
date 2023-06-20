@@ -144,7 +144,52 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="chapter-1"><a class="header" href="#chapter-1">Chapter 1</a></h1>
+                        <p><img src="pics%2Flogo.png" alt="logo.png" /></p>
+<h1 id="forester"><a class="header" href="#forester">Forester</a></h1>
+<p>Forester represents a framework that provides the set of tools to perform the effective orchestration of the set of tasks.<br />
+The tasks can be performed synchronously or asynchronously, locally or remotely.<br />
+Forester takes care of the correct performance and distribution of the tasks.<br />
+the main concept of the framework
+is the flow based on the <a href="https://en.wikipedia.org/wiki/Behavior_tree_(artificial_intelligence,_robotics_and_control)#:~:text=A%20behavior%20tree%20is%20a,tasks%20in%20a%20modular%20fashion.">behavior trees</a><br />
+it can be effectively used in the game, ai, robotic areas, or anywhere where the workflow engine can be applied.</p>
+<h2 id="why-forester"><a class="header" href="#why-forester">Why Forester</a></h2>
+<p>The main idea and the target of Forester is to make the process of chaining a complex logic<br />
+of the different tasks together effective and easy.</p>
+<p>The following set of features is summoned to highlight the framework among the others. </p>
+<h4 id="the-dsl-to-describe-the-logic"><a class="header" href="#the-dsl-to-describe-the-logic">The dsl to describe the logic</a></h4>
+<p>One of the problems that Forester endeavours to solve is to isolate the logic of the orchestration \ 
+from the logic of the tasks implementations and therefore the dsl ('Tree') is provided.<br />
+The Dsl is script based and supports a number of features that can alleviate the writing of the big trees.</p>
+<h4 id="the-framework-provides-the-ability-to-create-async-and-sync-tasks-tbd"><a class="header" href="#the-framework-provides-the-ability-to-create-async-and-sync-tasks-tbd">The framework provides the ability to create async and sync tasks (TBD)</a></h4>
+<p>The tasks (leaves of the tree) can be fulfilled with the asynchronous and synchronous logic.
+The difference here is the async tasks will not block the tree while sync tasks will block the tree.</p>
+<h4 id="the-framework-provides-the-ability-to-create-remote-and-local-tasks-tbd"><a class="header" href="#the-framework-provides-the-ability-to-create-remote-and-local-tasks-tbd">The framework provides the ability to create remote and local tasks (TBD)</a></h4>
+<p>The tasks can represent as a local stateless/stateful blocks of logic as the remote servers or procedures.</p>
+<h4 id="the-tooling-to-visualize-and-trace-the-execution-of-the-tree-tbd"><a class="header" href="#the-tooling-to-visualize-and-trace-the-execution-of-the-tree-tbd">The tooling to visualize and trace the execution of the tree (TBD)</a></h4>
+<p>The tree can be visualized and traced in order to see how it is supposed to be executed.</p>
+<h4 id="the-simulation-mode-is-supposed-to-aid-with-the-design-decisions-tbd"><a class="header" href="#the-simulation-mode-is-supposed-to-aid-with-the-design-decisions-tbd">The simulation mode is supposed to aid with the design decisions (TBD)</a></h4>
+<p>The special simulation mode aims to help, quickly to see how the tree will be unfolding and how it can be designed.</p>
+<h4 id="the-optimizations-and-analysis-of-the-tree-tbd"><a class="header" href="#the-optimizations-and-analysis-of-the-tree-tbd">The optimizations and analysis of the tree (TBD)</a></h4>
+<p>The language provides a set of optimizations and validations to either ensure the logic is correct<br />
+or perform some validations on it.</p>
+<h4 id="the-validations-engine-allows-the-users-to-create-the-manually-defined-validations-tbd"><a class="header" href="#the-validations-engine-allows-the-users-to-create-the-manually-defined-validations-tbd">The validations engine allows the users to create the manually defined validations (TBD)</a></h4>
+<p>The user-defined validations can be useful to restrict some features of the framework.</p>
+<h4 id="integrations-tbd"><a class="header" href="#integrations-tbd">Integrations (TBD)</a></h4>
+<h2 id="why-behaviour-trees"><a class="header" href="#why-behaviour-trees">Why Behaviour trees</a></h2>
+<p>Simple they provide a strong math abstraction over the orchestration logic<br />
+and enables to separate the business logic and the tree logic itself.</p>
+<h3 id="articles-that-introduce-into-the-basics-of-the-behaviour-trees"><a class="header" href="#articles-that-introduce-into-the-basics-of-the-behaviour-trees">Articles that introduce into the basics of the behaviour trees</a></h3>
+<ul>
+<li><a href="https://outforafight.wordpress.com/2014/07/15/behaviour-behavior-trees-for-ai-dudes-part-1/">Chris Simpson’s Behavior trees for AI: How they work</a></li>
+<li><a href="https://robohub.org/introduction-to-behavior-trees/">Introduction to behavior trees</a></li>
+<li><a href="https://www.polymathrobotics.com/blog/state-machines-vs-behavior-trees">State Machines vs Behavior Trees</a></li>
+</ul>
+<h3 id="useful-libraries"><a class="header" href="#useful-libraries">Useful libraries</a></h3>
+<ul>
+<li><a href="https://www.behaviortree.dev/">BehaviorTree.CPP</a> : the brilliant library provides the implementation on CPP.</li>
+<li><a href="https://github.com/bitbrain/beehave">Beehave</a> :  behavior tree AI for Godot Engine.</li>
+<li><a href="https://github.com/Sollimann/bonsai">Bonsai</a> : the great library for behaviour trees in rust. </li>
+</ul>
 
                     </main>
 
@@ -203,6 +248,8 @@
 
         <!-- Custom JS scripts -->
         <script src="theme/custom-highlight.js"></script>
+        <script src="mermaid.min.js"></script>
+        <script src="mermaid-init.js"></script>
 
 
     </div>

@@ -1,6 +1,6 @@
 ## Forester
 
-<img src="logo.png" alt="Forester" width="255"/>
+<img src="docs/src/pics/logo.png" alt="Forester" width="255"/>
 
 The orchestration engine based on behaviour trees.
 
