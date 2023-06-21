@@ -84,7 +84,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="intro.html"><strong aria-hidden="true">1.</strong> Intro</a></li><li class="chapter-item expanded "><a href="struct.html"><strong aria-hidden="true">2.</strong> Structure</a></li><li class="chapter-item expanded "><a href="intro_lang.html"><strong aria-hidden="true">3.</strong> Tree language</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="syntax.html"><strong aria-hidden="true">3.1.</strong> Syntax</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="examples.html"><strong aria-hidden="true">3.1.1.</strong> Examples</a></li><li class="chapter-item expanded "><a href="viz.html"><strong aria-hidden="true">3.1.2.</strong> Visualization</a></li></ol></li><li class="chapter-item expanded "><a href="definitions.html"><strong aria-hidden="true">3.2.</strong> Definitions</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="imports.html"><strong aria-hidden="true">3.2.1.</strong> Imports</a></li><li class="chapter-item expanded "><a href="flow.html"><strong aria-hidden="true">3.2.2.</strong> Control flow</a></li><li class="chapter-item expanded "><a href="decorators.html"><strong aria-hidden="true">3.2.3.</strong> Decorators</a></li><li class="chapter-item expanded "><a href="actions.html"><strong aria-hidden="true">3.2.4.</strong> Actions</a></li></ol></li><li class="chapter-item expanded "><a href="params.html"><strong aria-hidden="true">3.3.</strong> Parameters</a></li><li class="chapter-item expanded "><a href="args.html"><strong aria-hidden="true">3.4.</strong> Arguments</a></li><li class="chapter-item expanded "><a href="antlr.html"><strong aria-hidden="true">3.5.</strong> Antlr grammar</a></li></ol></li><li class="chapter-item expanded "><a href="engine_intro.html"><strong aria-hidden="true">4.</strong> Runtime engine</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="bb.html"><strong aria-hidden="true">4.1.</strong> Blackboard</a></li><li class="chapter-item expanded "><a href="r_actions.html"><strong aria-hidden="true">4.2.</strong> Actions</a></li></ol></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="intro.html"><strong aria-hidden="true">1.</strong> Intro</a></li><li class="chapter-item expanded "><a href="struct.html"><strong aria-hidden="true">2.</strong> Structure</a></li><li class="chapter-item expanded "><a href="intro_lang.html"><strong aria-hidden="true">3.</strong> Tree language</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="syntax.html"><strong aria-hidden="true">3.1.</strong> Syntax</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="examples.html"><strong aria-hidden="true">3.1.1.</strong> Examples</a></li></ol></li><li class="chapter-item expanded "><a href="definitions.html"><strong aria-hidden="true">3.2.</strong> Definitions</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="imports.html"><strong aria-hidden="true">3.2.1.</strong> Imports</a></li><li class="chapter-item expanded "><a href="flow.html"><strong aria-hidden="true">3.2.2.</strong> Control flow</a></li><li class="chapter-item expanded "><a href="decorators.html"><strong aria-hidden="true">3.2.3.</strong> Decorators</a></li><li class="chapter-item expanded "><a href="actions.html"><strong aria-hidden="true">3.2.4.</strong> Actions</a></li></ol></li><li class="chapter-item expanded "><a href="params.html"><strong aria-hidden="true">3.3.</strong> Parameters</a></li><li class="chapter-item expanded "><a href="args.html"><strong aria-hidden="true">3.4.</strong> Arguments</a></li><li class="chapter-item expanded "><a href="validations.html"><strong aria-hidden="true">3.5.</strong> Validations</a></li><li class="chapter-item expanded "><a href="optimizations.html"><strong aria-hidden="true">3.6.</strong> Optimizations</a></li><li class="chapter-item expanded "><a href="antlr.html"><strong aria-hidden="true">3.7.</strong> Antlr grammar</a></li></ol></li><li class="chapter-item expanded "><a href="engine_intro.html"><strong aria-hidden="true">4.</strong> Runtime engine</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="engine.html"><strong aria-hidden="true">4.1.</strong> Engine</a></li><li class="chapter-item expanded "><a href="bb.html"><strong aria-hidden="true">4.2.</strong> Blackboard</a></li><li class="chapter-item expanded "><a href="r_actions.html"><strong aria-hidden="true">4.3.</strong> Actions</a></li></ol></li><li class="chapter-item expanded "><a href="analysis.html"><strong aria-hidden="true">5.</strong> Analysis</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="viz.html"><strong aria-hidden="true">5.1.</strong> Visualization</a></li><li class="chapter-item expanded "><a href="trace.html"><strong aria-hidden="true">5.2.</strong> Tracing</a></li><li class="chapter-item expanded "><a href="sim.html"><strong aria-hidden="true">5.3.</strong> Simulation</a></li></ol></li><li class="chapter-item expanded "><a href="f_examples.html"><strong aria-hidden="true">6.</strong> Examples</a></li><li class="chapter-item expanded "><a href="tools.html"><strong aria-hidden="true">7.</strong> Tools</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -191,14 +191,68 @@ and enables to separate the business logic and the tree logic itself.</p>
 <li><a href="https://github.com/bitbrain/beehave">Beehave</a> :  behavior tree AI for Godot Engine.</li>
 <li><a href="https://github.com/Sollimann/bonsai">Bonsai</a> : the great library for behaviour trees in rust. </li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><pre><code>```mermaid
-graph TD;
-    A--&gt;B;
-    A--&gt;C;
-    B--&gt;D;
-    C--&gt;D;
-```
-</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="structure"><a class="header" href="#structure">Structure</a></h1>
+<p>All in all, the framework provides the following components :</p>
+<pre class="mermaid">flowchart LR   
+    subgraph Analysis
+        direction LR
+        Visualization 
+        Tracing
+        Simulation
+    end
+    subgraph Scripts
+        direction LR
+        Tree_lang &lt;--&gt; Validations 
+        Validations &lt;--&gt; Optimizations
+        Tooling
+    end
+    
+    subgraph Runtime
+        direction BT
+        Engine &lt;--&gt; Blackboard
+        Blackboard &lt;--&gt; ActionKeeper
+    end
+    
+
+Scripts --&gt; Analysis
+Runtime --&gt; Analysis
+Scripts --&gt; Runtime
+
+</pre>
+<h2 id="scripts"><a class="header" href="#scripts">Scripts</a></h2>
+<p>That section describes the language and a way how the users can describe the logic of the trees:</p>
+<h3 id="tree-lang"><a class="header" href="#tree-lang">Tree lang</a></h3>
+<p>The scripts. They are usually can be stored as a folder with one or more <code>root</code> node which will be executed afterwords.
+The syntax of the language takes a vast part of the book and described in the following <a href="./intro_lang.html">chapter</a></p>
+<h3 id="validations-and-optimizations"><a class="header" href="#validations-and-optimizations">Validations and Optimizations</a></h3>
+<p>These parts come with static analyzer and are conducted when the users compile the scripts into the runtime tree.
+They are described in the corresponding sections <a href="./validations.html">Validations</a> and <a href="./optimizations.html">Optimizations</a></p>
+<h3 id="tools"><a class="header" href="#tools">Tools</a></h3>
+<p>There are some number of extensions for ides to alleviate the writing scripts and running the trees. 
+The detailed description is in the chapter <a href="./tools.html">Tools</a></p>
+<h2 id="runtime"><a class="header" href="#runtime">Runtime</a></h2>
+<p>That is the central part of the framework. The runtime orchestrates the tree execution alongside<br />
+with the storing and manipulating some data and actions.</p>
+<h3 id="engine"><a class="header" href="#engine">Engine</a></h3>
+<p>The main orchestrator. It is described in the chapter <a href="./engine.html">Engine</a></p>
+<h3 id="blackboard"><a class="header" href="#blackboard">Blackboard</a></h3>
+<p>The component which is responsible for the storing the intermediate data that can be passing across the tree.
+The mechanism of working is described in that <a href="./bb.html">chapter</a></p>
+<h3 id="actionkeeper"><a class="header" href="#actionkeeper">ActionKeeper</a></h3>
+<p>The component stores and processes the user implemented actions (<em>tasks</em> or <em>conditions</em>).
+The chapter <a href="./actions.html">Action</a> describes how to interact with ActionKeeper.</p>
+<h2 id="analysis"><a class="header" href="#analysis">Analysis</a></h2>
+<p>This component helps to analyse the trees and also interacts with them in an easy way</p>
+<h3 id="visualization"><a class="header" href="#visualization">Visualization</a></h3>
+<p>The users can visualize the tree using graphviz format.
+This <a href="./viz.html">section</a> explains how to do that.</p>
+<h3 id="tracing"><a class="header" href="#tracing">Tracing</a></h3>
+<p>The users can turn on some extra logging that can float up some extra meta information \ 
+helpful to design and debug the trees. This <a href="./trace.html">page</a> explains how to handle the tracing.</p>
+<h3 id="simulation"><a class="header" href="#simulation">Simulation</a></h3>
+<p>The users can run the tree with some stubs instead of the real implementations of the actions. \ 
+It can help swiftly define and correct the behavior of the tree itself.
+This <a href="./sim.html">chapter</a> describes it.</p>
 <div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><pre><code class="language-tree">import &quot;nested/impls.tree&quot;
 import &quot;nested/impls.tree&quot; {
     grasp =&gt; grasp_ball,
@@ -238,7 +292,8 @@ sequence do_job(action:tree){
     savepoint()
 }
 </code></pre>
-<div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div>
+<div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><h1 id="optimizations"><a class="header" href="#optimizations">Optimizations</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div>
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
@@ -289,9 +344,9 @@ sequence do_job(action:tree){
         <script src="book.js"></script>
 
         <!-- Custom JS scripts -->
-        <script src="theme/custom-highlight.js"></script>
-        <script src="mermaid.min.js"></script>
         <script src="mermaid-init.js"></script>
+        <script src="mermaid.min.js"></script>
+        <script src="theme/custom-highlight.js"></script>
 
         <script>
         window.addEventListener('load', function() {

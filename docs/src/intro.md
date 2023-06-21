@@ -42,8 +42,10 @@ The user-defined validations can be useful to restrict some features of the fram
 #### Integrations (TBD)
 
 ## Why Behaviour trees
-Simple they provide a strong math abstraction over the orchestration logic \
+Firstly, they provide a strong math abstraction over the orchestration logic \
 and enables to separate the business logic and the tree logic itself.
+
+On the other hand, they have only a small set of logically conjucted components making the design easier,
 
 ### Articles that introduce into the basics of the behaviour trees
 - [Chris Simpson’s Behavior trees for AI: How they work](https://outforafight.wordpress.com/2014/07/15/behaviour-behavior-trees-for-ai-dudes-part-1/)
