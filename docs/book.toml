@@ -5,13 +5,14 @@ multilingual = false
 src = "src"
 title = "Documentation"
 
-
-[output.html]
-additional-js = ["mermaid-init.js", "mermaid.min.js", "theme/custom-highlight.js",  ]
-
 [preprocessor.graphviz]
 command = "mdbook-graphviz"
 output-to-file = false
 
 [preprocessor.mermaid]
 command = "mdbook-mermaid"
+
+[output.html]
+additional-js = [
+    "mermaid-init.js", "mermaid.min.js",
+]

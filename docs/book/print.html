@@ -177,8 +177,9 @@ or perform some validations on it.</p>
 <p>The user-defined validations can be useful to restrict some features of the framework.</p>
 <h4 id="integrations-tbd"><a class="header" href="#integrations-tbd">Integrations (TBD)</a></h4>
 <h2 id="why-behaviour-trees"><a class="header" href="#why-behaviour-trees">Why Behaviour trees</a></h2>
-<p>Simple they provide a strong math abstraction over the orchestration logic<br />
+<p>Firstly, they provide a strong math abstraction over the orchestration logic<br />
 and enables to separate the business logic and the tree logic itself.</p>
+<p>On the other hand, they have only a small set of logically conjucted components making the design easier,</p>
 <h3 id="articles-that-introduce-into-the-basics-of-the-behaviour-trees"><a class="header" href="#articles-that-introduce-into-the-basics-of-the-behaviour-trees">Articles that introduce into the basics of the behaviour trees</a></h3>
 <ul>
 <li><a href="https://outforafight.wordpress.com/2014/07/15/behaviour-behavior-trees-for-ai-dudes-part-1/">Chris Simpson’s Behavior trees for AI: How they work</a></li>
@@ -253,7 +254,7 @@ helpful to design and debug the trees. This <a href="./trace.html">page</a> expl
 <p>The users can run the tree with some stubs instead of the real implementations of the actions. \ 
 It can help swiftly define and correct the behavior of the tree itself.
 This <a href="./sim.html">chapter</a> describes it.</p>
-<div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><pre><code class="language-tree">import &quot;nested/impls.tree&quot;
+<div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><pre><code class="language-f-tree">import &quot;nested/impls.tree&quot;
 import &quot;nested/impls.tree&quot; {
     grasp =&gt; grasp_ball,
 }
@@ -288,9 +289,18 @@ sequence place(where:array){
 
 sequence do_job(action:tree){
     savepoint()
-    action(..)
+    info_wrapper(action(..))
     savepoint()
 }
+
+sequence info_wrapper(action:tree){
+    log(&quot;before action&quot;)
+    action(..)
+    log(&quot;before action&quot;)
+}
+
+impl log(text:string);
+
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><h1 id="optimizations"><a class="header" href="#optimizations">Optimizations</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div>
@@ -346,7 +356,6 @@ sequence do_job(action:tree){
         <!-- Custom JS scripts -->
         <script src="mermaid-init.js"></script>
         <script src="mermaid.min.js"></script>
-        <script src="theme/custom-highlight.js"></script>
 
         <script>
         window.addEventListener('load', function() {

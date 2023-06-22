@@ -144,7 +144,7 @@
 
                 <div id="content" class="content">
                     <main>
-                        <pre><code class="language-tree">import &quot;nested/impls.tree&quot;
+                        <pre><code class="language-f-tree">import &quot;nested/impls.tree&quot;
 import &quot;nested/impls.tree&quot; {
     grasp =&gt; grasp_ball,
 }
@@ -179,9 +179,18 @@ sequence place(where:array){
 
 sequence do_job(action:tree){
     savepoint()
-    action(..)
+    info_wrapper(action(..))
     savepoint()
 }
+
+sequence info_wrapper(action:tree){
+    log(&quot;before action&quot;)
+    action(..)
+    log(&quot;before action&quot;)
+}
+
+impl log(text:string);
+
 </code></pre>
 
                     </main>
@@ -248,7 +257,6 @@ sequence do_job(action:tree){
         <!-- Custom JS scripts -->
         <script src="mermaid-init.js"></script>
         <script src="mermaid.min.js"></script>
-        <script src="theme/custom-highlight.js"></script>
 
 
     </div>

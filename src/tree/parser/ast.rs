@@ -3,7 +3,7 @@ pub mod call;
 pub mod invocation;
 pub mod message;
 
-use crate::runtime::rnode::Name;
+use crate::runtime::rtree::rnode::Name;
 use crate::runtime::RuntimeErrorCause;
 use crate::tree::parser::ast::invocation::Invocation;
 use crate::tree::project::{AliasName, TreeName};

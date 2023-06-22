@@ -2,7 +2,7 @@ pub mod display;
 pub mod transform;
 
 use crate::runtime::blackboard::BBKey;
-use crate::runtime::rnode::DecoratorType;
+use crate::runtime::rtree::rnode::DecoratorType;
 use crate::tree::parser::ast::arg::{
     Argument, ArgumentRhs, Arguments, ArgumentsType, MesType, Param, Params,
 };
@@ -59,7 +59,7 @@ impl From<Message> for RtValue {
 }
 
 #[derive(Default, Debug, PartialEq)]
-pub struct RtArgs(Vec<RtArgument>);
+pub struct RtArgs(pub Vec<RtArgument>);
 #[derive(Debug, PartialEq)]
 pub struct RtArgument {
     name: RtAKey,

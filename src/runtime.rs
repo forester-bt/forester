@@ -1,14 +1,14 @@
 pub mod action;
-pub mod actions;
 pub mod args;
 pub mod blackboard;
 pub mod forester;
-pub mod rnode;
 pub mod rtree;
 
 use crate::tree::TreeError;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+pub type RtResult<T> = Result<T, RuntimeErrorCause>;
 
 pub enum TickResult {
     Success,

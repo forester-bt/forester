@@ -26,7 +26,7 @@ impl BlackBoard {
     pub fn put<T: Serialize>(&mut self, key: BBKey, value: T) -> Result<(), RuntimeErrorCause> {
         unimplemented!()
     }
-    pub fn put_if_new<T: Serialize>(
+    pub fn put_if_absent<T: Serialize>(
         &mut self,
         key: BBKey,
         value: T,

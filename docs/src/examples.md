@@ -1,4 +1,4 @@
-```tree
+```f-tree
 import "nested/impls.tree"
 import "nested/impls.tree" {
     grasp => grasp_ball,
@@ -34,7 +34,17 @@ sequence place(where:array){
 
 sequence do_job(action:tree){
     savepoint()
-    action(..)
+    info_wrapper(action(..))
     savepoint()
 }
+
+sequence info_wrapper(action:tree){
+    log("before action")
+    action(..)
+    log("before action")
+}
+
+impl log(text:string);
+
 ```
+ 

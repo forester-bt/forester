@@ -1,55 +1,46 @@
+pub mod builtin;
+pub mod keeper;
+
 use crate::runtime::args::RtArgs;
 use crate::runtime::rtree::TreeContext;
-use crate::runtime::{RuntimeErrorCause, TickResult};
+use crate::runtime::{RtResult, RuntimeErrorCause, TickResult};
 use std::collections::HashMap;
 
 pub type ActionName = String;
+pub type Tick = RtResult<TickResult>;
 
-#[derive(Default)]
-pub struct ActionKeeper {
-    actions: HashMap<ActionName, Box<dyn Impl>>,
-    async_actions: HashMap<ActionName, Box<dyn AsyncImpl>>,
+pub enum Action {
+    Impl(Box<dyn Impl>),
+    Mut(Box<dyn ImplMut>),
+    Async(Box<dyn ImplAsync>),
 }
 
-impl ActionKeeper {
-    pub fn register_sync<T>(&mut self, name: ActionName, action: T) -> Result<(), RuntimeErrorCause>
-    where
-        T: Impl + 'static,
-    {
-        &self.actions.insert(name, Box::new(action));
-        Ok(())
-    }
-
-    pub fn register_async<T>(
-        &mut self,
-        name: ActionName,
-        action: T,
-    ) -> Result<(), RuntimeErrorCause>
-    where
-        T: AsyncImpl + 'static,
-    {
-        &self.async_actions.insert(name, Box::new(action));
-        Ok(())
-    }
+pub trait ImplMut {
+    fn tick(&mut self, args: RtArgs, ctx: &mut TreeContext) -> Tick;
 }
 
 pub trait Impl {
-    fn action_on_tick(
-        &mut self,
-        args: RtArgs,
-        ctx: &mut TreeContext,
-    ) -> Result<TickResult, RuntimeErrorCause>;
+    fn tick(&self, args: RtArgs, ctx: &mut TreeContext) -> Tick;
 }
 
-pub trait AsyncImpl {
-    fn start(
-        &mut self,
-        args: RtArgs,
-        ctx: &mut TreeContext,
-    ) -> Result<TickResult, RuntimeErrorCause>;
-    fn poll(
-        &mut self,
-        args: RtArgs,
-        ctx: &mut TreeContext,
-    ) -> Result<TickResult, RuntimeErrorCause>;
+pub trait ImplAsync {
+    fn tick(&mut self, args: RtArgs, ctx: &mut TreeContext) -> Tick;
+    fn poll(&mut self, ctx: &mut TreeContext) -> Tick;
+    fn halt(&mut self, ctx: &mut TreeContext) -> Tick;
+}
+
+impl From<Box<dyn Impl>> for Action {
+    fn from(value: Box<dyn Impl>) -> Self {
+        Action::Impl(value)
+    }
+}
+impl From<Box<dyn ImplMut>> for Action {
+    fn from(value: Box<dyn ImplMut>) -> Self {
+        Action::Mut(value)
+    }
+}
+impl From<Box<dyn ImplAsync>> for Action {
+    fn from(value: Box<dyn ImplAsync>) -> Self {
+        Action::Async(value)
+    }
 }

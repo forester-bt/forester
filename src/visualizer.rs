@@ -2,7 +2,7 @@ mod statements;
 #[cfg(test)]
 mod tests;
 
-use crate::runtime::rnode::{RNode, RNodeId};
+use crate::runtime::rtree::rnode::{RNode, RNodeId};
 use crate::runtime::rtree::RuntimeTree;
 use crate::tree::parser::ast::arg::{Arguments, Params};
 use crate::tree::parser::ast::call::Call;

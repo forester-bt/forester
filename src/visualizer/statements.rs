@@ -1,5 +1,5 @@
 use crate::runtime::args::display::ShortDisplayedRtArguments;
-use crate::runtime::rnode::{FlowType, RNode, RNodeName};
+use crate::runtime::rtree::rnode::{FlowType, RNode, RNodeName};
 use crate::tree::parser::ast::arg::{Argument, Arguments};
 use crate::tree::parser::ast::{Key, Tree, TreeType};
 use graphviz_rust::attributes::{color_name, shape, NodeAttributes};
