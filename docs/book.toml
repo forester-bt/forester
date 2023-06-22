@@ -3,7 +3,12 @@ authors = ["Boris Zhguchev"]
 language = "en"
 multilingual = false
 src = "src"
-title = "Documentation"
+title = "Documentation for Forester"
+
+[output.html]
+additional-js = [
+    "mermaid-init.js", "mermaid.min.js",
+]
 
 [preprocessor.graphviz]
 command = "mdbook-graphviz"
@@ -11,8 +16,3 @@ output-to-file = false
 
 [preprocessor.mermaid]
 command = "mdbook-mermaid"
-
-[output.html]
-additional-js = [
-    "mermaid-init.js", "mermaid.min.js",
-]
