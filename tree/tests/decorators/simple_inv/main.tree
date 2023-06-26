@@ -1,0 +1,3 @@
+impl fail(reason:string);
+
+root main inverter fail("expected fail")

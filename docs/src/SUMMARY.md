@@ -1,12 +1,11 @@
 # Summary
 
 - [Intro](./intro.md)
-- [Structure](./struct.md)
+- [Components](./components.md)
 - [Tree language](./intro_lang.md)
   - [Syntax](./syntax.md)
-    - [Examples](./examples.md)
+  - [Imports](./imports.md)
   - [Definitions](./definitions.md)
-    - [Imports](./imports.md)
     - [Control flow](flow.md)
     - [Decorators](./decorators.md)
     - [Actions](./actions.md)
@@ -23,5 +22,6 @@
   - [Visualization](./viz.md)
   - [Tracing](./trace.md)
   - [Simulation](./sim.md)
+- [How to run](./api.md)
 - [Examples](./f_examples.md)
 - [Tools](./tools.md)

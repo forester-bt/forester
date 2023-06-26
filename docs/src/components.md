@@ -1,4 +1,4 @@
-# Structure 
+# Components 
 
 All in all, the framework provides the following components :
 

@@ -18,9 +18,9 @@
 <!-- 2 -->
 <g id="node2" class="node">
 <title>2</title>
-<polygon fill="none" stroke="darkred" points="140.88,-187 25.88,-187 25.88,-147.5 140.88,-147.5 140.88,-187"/>
+<polygon fill="none" stroke="darkred" points="145.38,-187 21.38,-187 21.38,-147.5 145.38,-147.5 145.38,-187"/>
 <text text-anchor="middle" x="83.38" y="-169.7" font-family="Times New Roman,serif" font-size="14.00">sequence</text>
-<text text-anchor="middle" x="83.38" y="-153.95" font-family="Times New Roman,serif" font-size="14.00">id (op=say_hi(..))</text>
+<text text-anchor="middle" x="83.38" y="-153.95" font-family="Times New Roman,serif" font-size="14.00">id (op=say_hi(&lt;&gt;))</text>
 </g>
 <!-- 1&#45;&gt;2 -->
 <g id="edge1" class="edge">

@@ -1,6 +1,5 @@
 /target
-/.idea/**
-.idea/**
+**/node_modules
 .idea
 *.iml
 **/gen

@@ -8,7 +8,7 @@ use crate::runtime::args::transform::{to_dec_rt_args, to_rt_args};
 use crate::runtime::blackboard::BlackBoard;
 use crate::runtime::rtree::builder::{Builder, StackItem};
 use crate::runtime::rtree::rnode::{DecoratorType, RNode, RNodeId};
-use crate::runtime::RuntimeErrorCause;
+use crate::runtime::{RtResult, RuntimeError};
 use crate::tree::parser::ast::arg::{Argument, Arguments, Param, Params};
 use crate::tree::parser::ast::call::{Call, Calls};
 use crate::tree::parser::ast::Tree;
@@ -17,10 +17,6 @@ use crate::tree::project::imports::ImportMap;
 use crate::tree::project::{FileName, Project};
 use crate::tree::{cerr, TreeError};
 use std::collections::{HashMap, HashSet, VecDeque};
-
-pub struct TreeContext {
-    bb: BlackBoard,
-}
 
 #[derive(Default, Debug, PartialEq)]
 pub struct RuntimeTree {
@@ -149,5 +145,11 @@ impl RuntimeTree {
         }
 
         Ok(r_tree)
+    }
+
+    pub fn node(&self, id: &RNodeId) -> RtResult<&RNode> {
+        self.nodes.get(id).ok_or(RuntimeError::uex(format!(
+            "the node {id} is not found in the rt tree"
+        )))
     }
 }

@@ -1,5 +1,5 @@
 use crate::runtime::args::transform::find_arg_value;
-use crate::runtime::RuntimeErrorCause;
+use crate::runtime::RuntimeError;
 use crate::tree::parser::ast::arg::{Arguments, Params};
 use crate::tree::parser::ast::call::{Call, Calls};
 use crate::tree::parser::ast::Key;

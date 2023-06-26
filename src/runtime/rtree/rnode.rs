@@ -1,6 +1,6 @@
 use crate::runtime::action::ActionName;
 use crate::runtime::args::RtArgs;
-use crate::runtime::{RuntimeErrorCause, TickResult};
+use crate::runtime::{RtResult, RuntimeError, TickResult};
 use crate::tree::parser::ast::{Tree, TreeType};
 
 use crate::tree::{cerr, TreeError};
@@ -72,6 +72,18 @@ pub enum RNodeName {
     Lambda,
     Name(Name),
     Alias(Name, Alias),
+}
+
+impl RNodeName {
+    pub fn name(&self) -> RtResult<&Name> {
+        match self {
+            RNodeName::Lambda => Err(RuntimeError::uex(format!(
+                "unexpected: lambda is in the unexpected place, the named tree is supposed to be."
+            ))),
+            RNodeName::Name(n) => Ok(n),
+            RNodeName::Alias(n, _) => Ok(n),
+        }
+    }
 }
 
 #[derive(Debug, PartialEq)]

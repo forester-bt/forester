@@ -1,8 +1,9 @@
 pub mod display;
 pub mod transform;
 
-use crate::runtime::blackboard::BBKey;
+use crate::runtime::blackboard::{BBKey, BlackBoard};
 use crate::runtime::rtree::rnode::DecoratorType;
+use crate::runtime::RtResult;
 use crate::tree::parser::ast::arg::{
     Argument, ArgumentRhs, Arguments, ArgumentsType, MesType, Param, Params,
 };
@@ -15,7 +16,7 @@ use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 
 pub type RtAKey = String;
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum RtValueNumber {
     Int(i64),
     Float(f64),
@@ -33,7 +34,7 @@ impl From<Number> for RtValueNumber {
         }
     }
 }
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum RtValue {
     String(String),
     Bool(bool),
@@ -42,6 +43,73 @@ pub enum RtValue {
     Number(RtValueNumber),
     Pointer(BBKey),
     Call(Call),
+}
+
+impl RtValue {
+    pub fn as_string(self) -> Option<String> {
+        match self {
+            RtValue::String(v) => Some(v),
+            _ => None,
+        }
+    }
+    pub fn as_bool(self) -> Option<bool> {
+        match self {
+            RtValue::Bool(v) => Some(v),
+            _ => None,
+        }
+    }
+    pub fn as_vec<Map, To>(self, map: Map) -> Option<Vec<To>>
+    where
+        Map: Fn(RtValue) -> To,
+    {
+        match self {
+            RtValue::Array(elems) => Some(elems.into_iter().map(|v| map(v)).collect()),
+            _ => None,
+        }
+    }
+    pub fn as_map<Map, To>(self, map: Map) -> Option<HashMap<String, To>>
+    where
+        Map: Fn((String, RtValue)) -> (String, To),
+    {
+        match self {
+            RtValue::Object(elems) => Some(HashMap::from_iter(
+                elems.into_iter().map(|v| map(v)).collect::<Vec<_>>(),
+            )),
+            _ => None,
+        }
+    }
+    pub fn as_int(self) -> Option<i64> {
+        match self {
+            RtValue::Number(RtValueNumber::Int(i)) => Some(i),
+            _ => None,
+        }
+    }
+    pub fn as_float(self) -> Option<f64> {
+        match self {
+            RtValue::Number(RtValueNumber::Float(f)) => Some(f),
+            _ => None,
+        }
+    }
+
+    pub fn as_pointer(self) -> Option<String> {
+        match self {
+            RtValue::Pointer(k) => Some(k),
+            _ => None,
+        }
+    }
+
+    pub fn chain(self, bb: &BlackBoard) -> RtResult<RtValue> {
+        match self {
+            RtValue::Pointer(p) => {
+                let mut value = bb.get(p)?;
+                while let Some(p) = value.clone().as_pointer() {
+                    value = bb.get(p)?;
+                }
+                Ok(value.clone())
+            }
+            v => Ok(v),
+        }
+    }
 }
 
 impl From<Message> for RtValue {
@@ -58,12 +126,28 @@ impl From<Message> for RtValue {
     }
 }
 
-#[derive(Default, Debug, PartialEq)]
+#[derive(Default, Debug, PartialEq, Clone)]
 pub struct RtArgs(pub Vec<RtArgument>);
-#[derive(Debug, PartialEq)]
+
+impl RtArgs {
+    pub fn find(&self, key: RtAKey) -> Option<RtValue> {
+        self.0
+            .iter()
+            .find(|a| a.name == key)
+            .map(|a| a.clone().value)
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
 pub struct RtArgument {
     name: RtAKey,
     value: RtValue,
+}
+
+impl RtArgument {
+    pub fn val(self) -> RtValue {
+        self.value
+    }
 }
 
 impl RtArgument {

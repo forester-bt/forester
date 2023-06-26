@@ -10,7 +10,7 @@ pub enum Token {
     #[regex(r"(?i)(?&letter)((?&letter)|(?&digit))*", parse_id)]
     Id(String),
 
-    #[regex(r#""([^"\\]|\\t|\\u|\\n|\\")*""#, parse_qt_lit)]
+    #[regex(r#""(?:[^"\\]|\\.)*""#, parse_qt_lit)]
     StringLit(String),
 
     #[regex(r"-?(?&digit)", number)]
@@ -129,6 +129,13 @@ mod tests {
         lt::expect::<Token>(
             r#"1000000.000001"#,
             vec![Token::Digit(Number::Float(1000000.000001))],
+        );
+    }
+    #[test]
+    fn string() {
+        lt::expect::<Token>(
+            "\"C:\\projects\"",
+            vec![Token::StringLit("C:\\projects".to_string())],
         );
     }
 }

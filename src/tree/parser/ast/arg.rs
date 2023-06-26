@@ -1,4 +1,4 @@
-use crate::runtime::RuntimeErrorCause;
+use crate::runtime::RuntimeError;
 use crate::tree::parser::ast::arg::ArgumentsType::{Named, Unnamed};
 use crate::tree::parser::ast::call::Call;
 use crate::tree::parser::ast::message::Message;

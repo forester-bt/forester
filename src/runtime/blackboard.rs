@@ -1,43 +1,34 @@
-use crate::runtime::RuntimeErrorCause;
+use crate::runtime::args::RtValue;
+use crate::runtime::RuntimeError;
 use serde::{Deserialize, Serialize};
 
 pub type BBKey = String;
 
+#[derive(Default, Debug)]
 pub struct BlackBoard {}
 
 impl BlackBoard {
-    pub fn lock(&self, key: BBKey) -> Result<(), RuntimeErrorCause> {
+    pub fn lock(&self, key: BBKey) -> Result<(), RuntimeError> {
         unimplemented!()
     }
-    pub fn unlock(&self, key: BBKey) -> Result<(), RuntimeErrorCause> {
-        unimplemented!()
-    }
-
-    pub fn get<T: for<'a> Deserialize<'a>>(&self, key: BBKey) -> Result<&T, RuntimeErrorCause> {
-        unimplemented!()
-    }
-    pub fn take<T: for<'a> Deserialize<'a>>(&self, key: BBKey) -> Result<T, RuntimeErrorCause> {
-        unimplemented!()
-    }
-    pub fn check<T: for<'a> Deserialize<'a>>(&self, key: BBKey) -> Result<bool, RuntimeErrorCause> {
+    pub fn unlock(&self, key: BBKey) -> Result<(), RuntimeError> {
         unimplemented!()
     }
 
-    pub fn put<T: Serialize>(&mut self, key: BBKey, value: T) -> Result<(), RuntimeErrorCause> {
+    pub fn get(&self, key: BBKey) -> Result<&RtValue, RuntimeError> {
         unimplemented!()
     }
-    pub fn put_if_absent<T: Serialize>(
-        &mut self,
-        key: BBKey,
-        value: T,
-    ) -> Result<(), RuntimeErrorCause> {
+    pub fn take(&self, key: BBKey) -> Result<RtValue, RuntimeError> {
         unimplemented!()
     }
-    pub fn replace<T: Serialize, D: for<'a> Deserialize<'a>>(
-        &mut self,
-        key: BBKey,
-        value: T,
-    ) -> Result<D, RuntimeErrorCause> {
+    pub fn check(&self, key: BBKey) -> Result<bool, RuntimeError> {
+        unimplemented!()
+    }
+
+    pub fn put(&mut self, key: BBKey, value: RtValue) -> Result<(), RuntimeError> {
+        unimplemented!()
+    }
+    pub fn put_if_absent(&mut self, key: BBKey, value: RtValue) -> Result<(), RuntimeError> {
         unimplemented!()
     }
 }
