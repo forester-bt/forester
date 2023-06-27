@@ -1,42 +1,50 @@
 use crate::runtime::action::{Impl, Tick};
-use crate::runtime::args::RtArgs;
+use crate::runtime::args::{RtArgs, RtValue};
+use crate::runtime::blackboard::{BBKey, BlackBoard};
 use crate::runtime::context::TreeContext;
 use crate::runtime::{RuntimeError, TickResult};
-
-struct Empty(String);
-
-impl Impl for Empty {
-    fn tick(&self, _args: RtArgs, _ctx: &mut TreeContext) -> Tick {
-        Err(RuntimeError::UnImplementedAction(self.0.to_string()))
-    }
-}
 
 pub struct Fail;
 
 impl Impl for Fail {
     fn tick(&self, args: RtArgs, _ctx: &mut TreeContext) -> Tick {
-        let c = {
-            if args.0.len() == 1 {
-                args.0
-                    .first()
-                    .and_then(|v| v.clone().val().as_string())
-                    .unwrap_or("fail".to_string())
-            } else {
-                args.find("reason".to_string())
-                    .and_then(|v| v.as_string())
-                    .unwrap_or("fail".to_string())
-            }
-        };
-        println!("fail -> {}", c);
+        let c = args
+            .first_as(RtValue::as_string)
+            .unwrap_or("fail".to_string());
         Ok(TickResult::failure(c))
     }
 }
 
-struct Print;
+pub struct GenerateData<T>
+where
+    T: Fn(RtValue) -> RtValue,
+{
+    key: BBKey,
+    generator: T,
+    default: RtValue,
+}
 
-impl Impl for Print {
+impl<T> GenerateData<T>
+where
+    T: Fn(RtValue) -> RtValue,
+{
+    pub fn new(key: BBKey, default: RtValue, generator: T) -> Self {
+        Self {
+            key,
+            generator,
+            default,
+        }
+    }
+}
+
+impl<T> Impl for GenerateData<T>
+where
+    T: Fn(RtValue) -> RtValue,
+{
     fn tick(&self, args: RtArgs, ctx: &mut TreeContext) -> Tick {
-        println!("{:?}", args);
-        Ok(TickResult::success())
+        let mut bb: &mut BlackBoard = ctx.bb();
+        let curr = bb.get(self.key.clone())?.unwrap_or(&self.default).clone();
+        bb.put(self.key.clone(), (self.generator)(curr))?;
+        Ok(TickResult::Success)
     }
 }

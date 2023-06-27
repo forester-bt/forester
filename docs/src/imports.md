@@ -1,6 +1,6 @@
 # Imports
 
-The code of the trees can be organized as a project, breaking down the tree definitions into different files.
+The code of the trees can be organized as a project, breaking down the tree [definitions](./definitions.md) into different files.
 It enables the project to be organized logically avoiding redundancy. 
 
 Therefore, the imports can appear in the file anywhere but are mostly grouped at the top, forming a sort of header.

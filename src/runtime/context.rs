@@ -10,7 +10,7 @@ use std::collections::{HashMap, VecDeque};
 pub type Timestamp = usize;
 
 pub struct TreeContext<'a> {
-    bb: &'a BlackBoard,
+    bb: &'a mut BlackBoard,
     stack: VecDeque<RNodeId>,
     state: HashMap<RNodeId, RNodeState>,
     ts_map: HashMap<RNodeId, Timestamp>,
@@ -18,7 +18,10 @@ pub struct TreeContext<'a> {
 }
 
 impl<'a> TreeContext<'a> {
-    pub fn new(bb: &'a BlackBoard) -> Self {
+    pub fn bb(&mut self) -> &mut BlackBoard {
+        self.bb
+    }
+    pub fn new(bb: &'a mut BlackBoard) -> Self {
         Self {
             bb,
             stack: Default::default(),
@@ -126,6 +129,13 @@ impl RNodeState {
             cursor: 0,
             len: children,
             run_args: RtArgs::default(),
+        }
+    }
+    pub(crate) fn run_with(children: usize, args: RtArgs) -> RNodeState {
+        RNodeState::Running {
+            cursor: 0,
+            len: children,
+            run_args: args,
         }
     }
     pub(crate) fn running(cursor: ChildIndex, children: usize) -> RNodeState {

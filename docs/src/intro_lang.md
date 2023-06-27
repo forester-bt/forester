@@ -6,7 +6,7 @@ and enabling to create of the building block upon the abstractions \
 
 ### Why the language is needed
 
-The basic idea behind the language is an attempt to provide a set generalizations \
+The basic idea behind the language is an attempt to provide a set of generalizations \
 which will alleviate the redundancy in some cases.
 
 - The language allows creating the tree definitions accepting other trees as parameters (higher order trees)
@@ -29,7 +29,7 @@ All imports start from the root and represent a path relating to the root direct
         - helpers.tree
 ```
 
-The project should have at least one `root` tree definition. If the project has several,
+The project should have at least one `root` tree [definition](./definitions.md). If the project has several,
 the one that is supposed to run needs to be pointed out to.
 
 ### File extension

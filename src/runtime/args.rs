@@ -3,7 +3,7 @@ pub mod transform;
 
 use crate::runtime::blackboard::{BBKey, BlackBoard};
 use crate::runtime::rtree::rnode::DecoratorType;
-use crate::runtime::RtResult;
+use crate::runtime::{RtResult, RuntimeError};
 use crate::tree::parser::ast::arg::{
     Argument, ArgumentRhs, Arguments, ArgumentsType, MesType, Param, Params,
 };
@@ -101,9 +101,9 @@ impl RtValue {
     pub fn chain(self, bb: &BlackBoard) -> RtResult<RtValue> {
         match self {
             RtValue::Pointer(p) => {
-                let mut value = bb.get(p)?;
+                let mut value = bb.get(p)?.expect("something");
                 while let Some(p) = value.clone().as_pointer() {
-                    value = bb.get(p)?;
+                    value = bb.get(p)?.expect("something");
                 }
                 Ok(value.clone())
             }
@@ -130,6 +130,12 @@ impl From<Message> for RtValue {
 pub struct RtArgs(pub Vec<RtArgument>);
 
 impl RtArgs {
+    pub fn first_as<M, To>(&self, map: M) -> Option<To>
+    where
+        M: Fn(RtValue) -> Option<To>,
+    {
+        self.0.first().and_then(|v| map(v.value.clone()))
+    }
     pub fn find(&self, key: RtAKey) -> Option<RtValue> {
         self.0
             .iter()

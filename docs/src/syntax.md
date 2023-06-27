@@ -4,11 +4,11 @@ The syntax of the `tree` language is similar to any average scripting language n
 - tree definitions: subtree that defines a prat of the complete tree.
 - tree invocations: the calls of the tree definitions.
 - imports: the instructions that enable import from the other files.
-- parameters and arguments: that allow to pass the values and the other tree to the tree definitions.
-- lambda:  the ability to define the anonymous tree definitions and invoke it at the same time.
+- parameters and arguments: that allow passing the values and the other tree to the tree definitions.
+- lambda: the ability to define the anonymous tree definitions and invoke it at the same time.
 - comments: the extra information.
 
-Below, a simple example that shows aforementioned points
+Below, a simple example that shows the aforementioned points
 
 ```f-tree
 import "nested/impls.tree"

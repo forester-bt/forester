@@ -9,7 +9,7 @@ pub fn cerr(v: String) -> TreeError {
     TreeError::CompileError(v)
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum TreeError {
     ParseError(String),
     CompileError(String),

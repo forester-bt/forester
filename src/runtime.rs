@@ -16,7 +16,7 @@ use std::collections::HashMap;
 
 pub type RtResult<T> = Result<T, RuntimeError>;
 pub type RtOk = Result<(), RuntimeError>;
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum TickResult {
     Success,
     Failure(String),
@@ -38,7 +38,7 @@ impl TickResult {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum RuntimeError {
     CompileError(TreeError),
     UnImplementedAction(String),
@@ -51,6 +51,9 @@ pub enum RuntimeError {
 impl RuntimeError {
     pub fn uex(s: String) -> Self {
         Self::Unexpected(s)
+    }
+    pub fn bb(s: String) -> Self {
+        Self::BlackBoardError(s)
     }
 }
 
