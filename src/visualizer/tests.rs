@@ -61,3 +61,20 @@ fn manual4() {
     let svg = graph.to_str().unwrap().to_string();
     let _ = Visualizer::svg_file(tree, svg).unwrap();
 }
+
+#[test]
+fn manualx() {
+    let mut root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let mut project_root = root.clone();
+    let mut graph = root.clone();
+    project_root.push("tree/tests/flow/sequence");
+    let project = Project::build("main.tree".to_string(), project_root).unwrap();
+
+    let tree = RuntimeTree::build(project).unwrap();
+
+    graph.push("tree/tests/flow/sequence/main.svg");
+    let svg = graph.to_str().unwrap().to_string();
+    // let _ = Visualizer::svg_file(tree, svg).unwrap();
+    let s = Visualizer::dot(tree).unwrap();
+    println!("{}", s);
+}

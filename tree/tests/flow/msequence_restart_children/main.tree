@@ -1,0 +1,12 @@
+import "std::actions"
+
+impl store(k:string,v:num);
+impl store_tick();
+impl fail();
+
+root main retry(5) m_sequence {
+    store("k1",0)
+    store("k2",0)
+    store_tick()
+    fail()
+}

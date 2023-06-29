@@ -16,6 +16,7 @@ use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 
 pub type RtAKey = String;
+
 #[derive(Debug, PartialEq, Clone)]
 pub enum RtValueNumber {
     Int(i64),
@@ -46,6 +47,10 @@ pub enum RtValue {
 }
 
 impl RtValue {
+    pub fn int(i: i64) -> Self {
+        RtValue::Number(RtValueNumber::Int(i))
+    }
+
     pub fn as_string(self) -> Option<String> {
         match self {
             RtValue::String(v) => Some(v),
@@ -130,6 +135,9 @@ impl From<Message> for RtValue {
 pub struct RtArgs(pub Vec<RtArgument>);
 
 impl RtArgs {
+    pub fn first(&self) -> Option<RtValue> {
+        self.0.first().map(|a| a.value.clone())
+    }
     pub fn first_as<M, To>(&self, map: M) -> Option<To>
     where
         M: Fn(RtValue) -> Option<To>,
@@ -142,6 +150,30 @@ impl RtArgs {
             .find(|a| a.name == key)
             .map(|a| a.clone().value)
     }
+    pub fn find_or_ith(&self, key: RtAKey, ith: usize) -> Option<RtValue> {
+        self.0
+            .iter()
+            .find(|a| a.name == key)
+            .or(self.0.get(ith))
+            .map(|a| a.clone().value)
+    }
+
+    pub fn with(self, key: &str, value: RtValue) -> RtArgs {
+        let mut elems = self.0;
+        let cursor = elems.iter().position(|e| e.clone().name() == key);
+        let new_elem = RtArgument::new(key.to_string(), value);
+        match cursor {
+            None => {
+                elems.push(new_elem);
+            }
+            Some(idx) => {
+                elems.remove(idx);
+                elems.insert(idx, new_elem)
+            }
+        }
+
+        RtArgs(elems)
+    }
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -153,6 +185,9 @@ pub struct RtArgument {
 impl RtArgument {
     pub fn val(self) -> RtValue {
         self.value
+    }
+    pub fn name(self) -> RtAKey {
+        self.name
     }
 }
 

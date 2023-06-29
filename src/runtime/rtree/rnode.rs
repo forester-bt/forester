@@ -34,6 +34,15 @@ pub enum FlowType {
     RFallback,
 }
 
+impl FlowType {
+    pub fn is_root(&self) -> bool {
+        match self {
+            FlowType::Root => true,
+            _ => false,
+        }
+    }
+}
+
 impl TryFrom<TreeType> for DecoratorType {
     type Error = TreeError;
 

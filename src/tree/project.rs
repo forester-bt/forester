@@ -108,9 +108,19 @@ impl<'a> Project {
 }
 
 fn file_to_str<'a>(root: PathBuf, file: FileName) -> Result<String, ParseError<'a>> {
-    let mut path = root.clone();
-    path.push(file.clone());
-    fs::read_to_string(path).map_err(|e| {
-        ParseError::ExternalError(format!("error:{}, file:{:?}", e.to_string(), file), 0)
-    })
+    if file == "std::actions" {
+        Ok(BUILTIN.to_string())
+    } else {
+        let mut path = root.clone();
+        path.push(file.clone());
+        fs::read_to_string(path).map_err(|e| {
+            ParseError::ExternalError(format!("error:{}, file:{:?}", e.to_string(), file), 0)
+        })
+    }
 }
+
+const BUILTIN: &str = r#"
+impl fail();
+impl success();
+impl store_str(key:string, value:string);
+"#;

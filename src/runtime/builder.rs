@@ -27,8 +27,8 @@ impl ForesterBuilder {
         }
     }
 
-    pub fn register_action(&mut self, name: ActionName, action: Action) {
-        self.actions.insert(name, action);
+    pub fn register_action(&mut self, name: &str, action: Action) {
+        self.actions.insert(name.to_string(), action);
     }
 
     pub fn root(&mut self, root: PathBuf) {

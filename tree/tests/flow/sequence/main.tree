@@ -1,0 +1,9 @@
+impl store(key:string, default:string);
+impl store_tick();
+
+root main sequence {
+    store("a","1")
+    store("b","2")
+    store("c","3")
+    store_tick()
+}

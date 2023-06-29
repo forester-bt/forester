@@ -1,3 +1,3 @@
-impl store();
+impl store(k:string,d:string);
 
-root main repeat(5) store()
+root main repeat(5) store("key","1")

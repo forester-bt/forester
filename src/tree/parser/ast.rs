@@ -54,6 +54,7 @@ impl TreeType {
             | TreeType::ForceFail
             | TreeType::Repeat
             | TreeType::Retry
+            | TreeType::Delay
             | TreeType::Timeout => true,
             _ => false,
         }

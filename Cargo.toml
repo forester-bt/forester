@@ -16,3 +16,5 @@ itertools = "0.10.5"
 serde = "1.0.163"
 strum = "0.24.1"
 strum_macros = "0.24.1"
+
+tracing = "0.1"

@@ -33,7 +33,7 @@ impl<'a> TreeContext<'a> {
 }
 
 impl<'a> TreeContext<'a> {
-    pub(crate) fn shift(&mut self) -> RtOk {
+    pub(crate) fn next_tick(&mut self) -> RtOk {
         self.curr_ts += 1;
         Ok(())
     }
@@ -63,7 +63,6 @@ impl<'a> TreeContext<'a> {
 
     pub(crate) fn push(&mut self, id: RNodeId) -> RtOk {
         self.stack.push_back(id);
-        self.state.insert(id, RNodeState::Ready);
         Ok(())
     }
     pub(crate) fn pop(&mut self) -> RtResult<Option<RNodeId>> {
@@ -85,14 +84,16 @@ impl<'a> TreeContext<'a> {
         self.ts_map.insert(id, self.curr_ts);
         Ok(self.state.insert(id, state))
     }
-    pub(crate) fn get_state_in_cts(&self, id: RNodeId) -> RNodeState {
+    pub(crate) fn state_in_ts(&self, id: RNodeId) -> RNodeState {
+        let actual_state = self
+            .state
+            .get(&id)
+            .map(|s| s.clone())
+            .unwrap_or(RNodeState::Ready(RtArgs::default()));
         if self.is_curr_ts(&id) {
-            self.state
-                .get(&id)
-                .map(|s| s.clone())
-                .unwrap_or(RNodeState::Ready)
+            actual_state
         } else {
-            RNodeState::Ready
+            RNodeState::Ready(actual_state.tick_args())
         }
     }
 }
@@ -101,51 +102,33 @@ pub type ChildIndex = usize;
 
 #[derive(Clone, Debug)]
 pub enum RNodeState {
-    Ready,
-    Running {
-        run_args: RtArgs,
-        cursor: ChildIndex,
-        len: usize,
-    },
-    Finished {
-        res: TickResult,
-        cursor: ChildIndex,
-        len: usize,
-    },
+    Ready(RtArgs),
+    Running { tick_args: RtArgs },
+    Finished { res: TickResult, tick_args: RtArgs },
     Leaf(TickResult),
 }
 
 impl RNodeState {
-    pub fn leaf(tick_r: TickResult) -> RNodeState {
-        RNodeState::Leaf(tick_r)
-    }
-    pub fn fin(res: TickResult, cursor: ChildIndex, len: usize) -> Self {
-        RNodeState::Finished { res, cursor, len }
-    }
-}
-impl RNodeState {
-    pub(crate) fn run(children: usize) -> RNodeState {
-        RNodeState::Running {
-            cursor: 0,
-            len: children,
-            run_args: RtArgs::default(),
-        }
-    }
-    pub(crate) fn run_with(children: usize, args: RtArgs) -> RNodeState {
-        RNodeState::Running {
-            cursor: 0,
-            len: children,
-            run_args: args,
-        }
-    }
-    pub(crate) fn running(cursor: ChildIndex, children: usize) -> RNodeState {
-        RNodeState::Running {
-            cursor,
-            len: children,
-            run_args: RtArgs::default(),
+    pub fn tick_args(&self) -> RtArgs {
+        match self {
+            RNodeState::Ready(tick_args) => tick_args.clone(),
+            RNodeState::Running { tick_args, .. } => tick_args.clone(),
+            RNodeState::Finished { tick_args, .. } => tick_args.clone(),
+            RNodeState::Leaf(_) => RtArgs::default(),
         }
     }
 
+    pub(crate) fn leaf(tick_r: TickResult) -> RNodeState {
+        RNodeState::Leaf(tick_r)
+    }
+    pub(crate) fn fin(res: TickResult, tick_args: RtArgs) -> Self {
+        RNodeState::Finished { res, tick_args }
+    }
+    pub(crate) fn run(tick_args: RtArgs) -> RNodeState {
+        RNodeState::Running { tick_args }
+    }
+}
+impl RNodeState {
     pub fn is_running(&self) -> bool {
         match self {
             RNodeState::Running { .. } => true,
@@ -154,7 +137,7 @@ impl RNodeState {
     }
     pub fn is_ready(&self) -> bool {
         match self {
-            RNodeState::Ready => true,
+            RNodeState::Ready(_) => true,
             _ => false,
         }
     }
