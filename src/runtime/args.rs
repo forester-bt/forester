@@ -46,12 +46,52 @@ pub enum RtValue {
     Call(Call),
 }
 
+pub struct RtValueCast<'a> {
+    v: RtValue,
+    bb: &'a BlackBoard,
+}
+
+impl<'a> RtValueCast<'a> {
+    fn chain(self) -> RtResult<RtValue> {
+        self.v.chain(self.bb)
+    }
+
+    pub fn string(self) -> RtResult<Option<String>> {
+        self.chain().map(RtValue::as_string)
+    }
+    pub fn int(self) -> RtResult<Option<i64>> {
+        self.chain().map(RtValue::as_int)
+    }
+    pub fn bool(self) -> RtResult<Option<bool>> {
+        self.chain().map(RtValue::as_bool)
+    }
+    pub fn float(self) -> RtResult<Option<f64>> {
+        self.chain().map(RtValue::as_float)
+    }
+    pub fn vec<Map, To>(self, map: Map) -> RtResult<Option<Vec<To>>>
+    where
+        Map: Fn(RtValue) -> To,
+    {
+        self.chain().map(|v| v.as_vec(map))
+    }
+    pub fn map<Map, To>(self, map: Map) -> RtResult<Option<HashMap<String, To>>>
+    where
+        Map: Fn((String, RtValue)) -> (String, To),
+    {
+        self.chain().map(|v| v.as_map(map))
+    }
+}
+
 impl RtValue {
     pub fn int(i: i64) -> Self {
         RtValue::Number(RtValueNumber::Int(i))
     }
     pub fn str(s: String) -> Self {
         RtValue::String(s)
+    }
+
+    pub fn cast(self, bb: &BlackBoard) -> RtValueCast {
+        RtValueCast { v: self, bb }
     }
 
     pub fn as_string(self) -> Option<String> {
@@ -112,6 +152,7 @@ impl RtValue {
                 let mut value = bb.get(p)?.expect("something");
                 while let Some(p) = value.clone().as_pointer() {
                     value = bb.get(p)?.expect("something");
+                    debug!(target:"  chain","{value}");
                 }
                 Ok(value.clone())
             }

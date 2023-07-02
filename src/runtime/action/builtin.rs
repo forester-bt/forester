@@ -34,10 +34,15 @@ impl ReturnResult {
 }
 
 impl Impl for ReturnResult {
-    fn tick(&self, args: RtArgs, _ctx: &mut TreeContext) -> Tick {
+    fn tick(&self, args: RtArgs, ctx: &mut TreeContext) -> Tick {
         Ok(match &self.res {
             TickResult::Failure(_) => {
-                TickResult::failure(args.first_as(RtValue::as_string).unwrap_or("".to_string()))
+                let mb_str = args.first();
+                let c = match mb_str {
+                    None => String::new(),
+                    Some(v) => v.cast(ctx.bb()).string()?.unwrap_or_default(),
+                };
+                TickResult::failure(c)
             }
             r => r.clone(),
         })

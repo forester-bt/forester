@@ -1,10 +1,14 @@
 import "std::actions"
 impl incr(k:string, i:num);
 
-root main sequence {
-    incr("a",1)
-    r_fallback {
-        eq_num("__TICK__",10)
-        running()
+root main r_sequence{
+    store_str("x","tick")
+    store_tick("tick")
+    sequence {
+        incr("a",1)
+        r_fallback {
+            eq_num(x, 10)
+            running()
+        }
     }
 }

@@ -7,6 +7,8 @@ use crate::runtime::{RtOk, RtResult, RuntimeError, TickResult};
 use std::thread::sleep;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
+// It runs on the preparation stage when the child is ready but not running.
+// It is useful to save some information before(counters, timeout etc)
 pub(crate) fn prepare(
     tpe: &DecoratorType,
     init_args: RtArgs,
@@ -25,7 +27,8 @@ pub(crate) fn prepare(
         _ => Ok(RNodeState::Running(tick_args.with(LEN, RtValue::int(1)))),
     }
 }
-
+// This runs when the child returns running.
+// It works for timeout and other controlling decorators
 pub(crate) fn monitor(
     tpe: &DecoratorType,
     init_args: RtArgs,
@@ -57,6 +60,7 @@ pub(crate) fn monitor(
     }
 }
 
+// It works when the child is finished to process the result and pass it farther
 pub(crate) fn finalize(
     tpe: &DecoratorType,
     tick_args: RtArgs,

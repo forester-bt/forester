@@ -1,4 +1,4 @@
-use crate::runtime::action::builtin::data::{CheckEq, StoreData};
+use crate::runtime::action::builtin::data::{CheckEq, StoreData, StoreTick};
 use crate::runtime::action::builtin::ReturnResult;
 use crate::runtime::action::keeper::ActionKeeper;
 use crate::runtime::action::{Action, ActionName};
@@ -78,6 +78,7 @@ impl BuilderBuiltInActions {
             "store_str" => Ok(Action::sync(StoreData)),
             "eq_str" => Ok(Action::sync(CheckEq)),
             "eq_num" => Ok(Action::sync(CheckEq)),
+            "store_tick" => Ok(Action::sync(StoreTick)),
 
             _ => Err(RuntimeError::UnImplementedAction(format!(
                 "action {action} is absent in the library"
@@ -116,6 +117,10 @@ impl store_str(key:string, value:string);
 // - Returns Fail(reason) if there is no cell in bbe with the given key.
 impl eq_str(key:string, expected:string);
 impl eq_num(key:string, expected:num);
+
+/// Store the current tick
+impl store_tick(name:string);
+
 "#
         .to_string()
     }

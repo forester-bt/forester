@@ -1,3 +1,5 @@
+mod tests;
+
 use crate::runtime::action::flow::{read_cursor, run_with, CURSOR, LEN, P_CURSOR};
 use crate::runtime::action::keeper::ActionKeeper;
 use crate::runtime::action::{decorator, flow, Tick};
@@ -8,6 +10,7 @@ use crate::runtime::rtree::rnode::{FlowType, Name, RNode};
 use crate::runtime::rtree::RuntimeTree;
 use crate::runtime::{RtOk, RtResult, RuntimeError, TickResult};
 use crate::tree::project::Project;
+use graphviz_rust::attributes::target;
 use log::debug;
 
 pub struct Forester {
@@ -159,6 +162,7 @@ impl Forester {
                 },
                 // The leaf nodes process atomically.
                 RNode::Leaf(f_name, args) => {
+                    debug!(target:"leaf","args :{:?}",args);
                     if ctx.state_in_ts(id).is_ready() {
                         let mut action = self.keeper.get(f_name.name()?)?;
                         let res = action.tick(args.clone(), &mut ctx)?;

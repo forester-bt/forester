@@ -16,7 +16,7 @@ pub struct Builder {
     stack: VecDeque<StackItem>,
     chain_map: HashMap<usize, ChainItem>,
 }
-
+// to help in traversing the call stack
 pub struct StackItem {
     pub id: usize,
     pub call: Call,

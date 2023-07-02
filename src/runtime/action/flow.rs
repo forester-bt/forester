@@ -3,9 +3,15 @@ use crate::runtime::context::{ChildIndex, RNodeState, TreeContext};
 use crate::runtime::rtree::rnode::{FlowType, RNodeId};
 use crate::runtime::{RtOk, RtResult, RuntimeError, TickResult};
 
+// current child
 pub const CURSOR: &str = "cursor";
+// the child len
 pub const LEN: &str = "len";
+
+// the current cursor
+// when the process is torn up(the child returns running or in seq is failure etc)
 pub const P_CURSOR: &str = "prev_cursor";
+// reason for the failure
 pub const REASON: &str = "reason";
 
 pub fn run_with(tick_args: RtArgs, c: i64, l: i64) -> RtArgs {
@@ -27,7 +33,7 @@ pub(crate) fn read_cursor(tick_args: RtArgs) -> RtResult<i64> {
         .and_then(RtValue::as_int)
         .unwrap_or(0))
 }
-
+/// Shortest version of TickResult, containing only finished statuses.
 pub enum TickResultFin {
     Failure(String),
     Success,
@@ -58,7 +64,7 @@ impl Into<TickResult> for TickResultFin {
         }
     }
 }
-
+// It starts when the child is finished and the flow needs to go farther.
 pub fn finalize(
     tpe: &FlowType,
     args: RtArgs,
@@ -162,7 +168,8 @@ pub fn finalize(
                                                                          // FlowType::RFallback => {}
     }
 }
-
+// it starts when the child returns running.
+// This stage handles some peculiarities with the tearing state up and etc
 pub fn monitor(
     tpe: &FlowType,
     args: RtArgs,
@@ -188,10 +195,7 @@ pub fn monitor(
                 tick_args.with(P_CURSOR, RtValue::int(cursor)),
             ))
         }
-        _ => Ok(RNodeState::Running(tick_args)), // FlowType::Parallel => {}
-                                                 // FlowType::MSequence => {}
-                                                 // FlowType::RSequence => {}
-                                                 // FlowType::Fallback => {}
-                                                 // FlowType::RFallback => {}
+        _ => Ok(RNodeState::Running(tick_args)),
+        // FlowType::Parallel => {}
     }
 }

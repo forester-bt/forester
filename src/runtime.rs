@@ -6,9 +6,6 @@ pub mod context;
 pub mod forester;
 pub mod rtree;
 
-#[cfg(test)]
-mod tests;
-
 use crate::runtime::action::Tick;
 use crate::tree::TreeError;
 use serde::{Deserialize, Serialize};
