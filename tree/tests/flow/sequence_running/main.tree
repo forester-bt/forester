@@ -1,0 +1,10 @@
+import "std::actions"
+impl incr(k:string, i:num);
+
+root main sequence {
+    incr("a",1)
+    r_fallback {
+        eq_num("__TICK__",10)
+        running()
+    }
+}

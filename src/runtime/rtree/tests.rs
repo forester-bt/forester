@@ -44,9 +44,16 @@ mod tests {
                             vec![3]
                         )
                     )
-                ])
+                ]),
+                std_nodes: Default::default(),
             }
         )
+    }
+
+    #[test]
+    fn std_action() {
+        let tree = test_tree("actions", "std_actions.tree");
+        println!("{:?}", tree);
     }
 
     #[test]

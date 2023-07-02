@@ -50,6 +50,9 @@ impl RtValue {
     pub fn int(i: i64) -> Self {
         RtValue::Number(RtValueNumber::Int(i))
     }
+    pub fn str(s: String) -> Self {
+        RtValue::String(s)
+    }
 
     pub fn as_string(self) -> Option<String> {
         match self {

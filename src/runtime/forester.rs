@@ -1,4 +1,4 @@
-use crate::runtime::action::flow::{read_cursor, tick_run_with, CURSOR, LEN, P_CURSOR};
+use crate::runtime::action::flow::{read_cursor, run_with, CURSOR, LEN, P_CURSOR};
 use crate::runtime::action::keeper::ActionKeeper;
 use crate::runtime::action::{decorator, flow, Tick};
 use crate::runtime::args::{RtArgs, RtValue};
@@ -8,7 +8,7 @@ use crate::runtime::rtree::rnode::{FlowType, Name, RNode};
 use crate::runtime::rtree::RuntimeTree;
 use crate::runtime::{RtOk, RtResult, RuntimeError, TickResult};
 use crate::tree::project::Project;
-use tracing::{debug, info};
+use log::debug;
 
 pub struct Forester {
     pub tree: RuntimeTree,
@@ -17,100 +17,154 @@ pub struct Forester {
 }
 
 impl Forester {
-    pub fn new(tree: RuntimeTree, bb: BlackBoard, keeper: ActionKeeper) -> Self {
-        Self { tree, bb, keeper }
+    pub(crate) fn new(tree: RuntimeTree, bb: BlackBoard, keeper: ActionKeeper) -> RtResult<Self> {
+        Ok(Self { tree, bb, keeper })
     }
-    /// Main loop executing the code
     pub fn start(&mut self) -> Tick {
+        // The ctx has a call stack to manage the flow.
+        // When the flow goes up it pops the current element and leaps to the parent.
         let mut ctx = TreeContext::new(&mut self.bb);
         ctx.push(self.tree.root)?;
-
+        // starts from root and pops up the element when either it is finished
+        // or the root needs to make a new tick
         while let Some(id) = ctx.peek()? {
             let id = *id;
+            debug!(target:"loop", "node = {}, tick = {}", id,ctx.curr_ts());
             match self.tree.node(&id)? {
                 RNode::Flow(tpe, n, args, children) => match ctx.state_in_ts(id) {
+                    // do nothing, since there are no children
                     RNodeState::Ready(tick_args) if children.is_empty() => {
-                        ctx.new_state(
-                            id,
-                            RNodeState::fin(TickResult::Success, tick_run_with(tick_args, 0, 0)),
-                        )?;
+                        debug!(target:"flow[ready]", "tick:{}, {tpe}. The children are empty. Go to the fin state", ctx.curr_ts());
+                        ctx.new_state(id, RNodeState::Success(run_with(tick_args, 0, 0)))?;
                         ctx.pop()?;
                     }
+                    // since it is ready we need to zero cursor for the children
+                    // for some memory nodes we can switch it after.
+                    // But then we do nothing but switch the state to running in the current tick.
                     RNodeState::Ready(tick_args) => {
-                        ctx.new_state(
-                            id,
-                            RNodeState::run(
-                                tick_args
-                                    .with(CURSOR, RtValue::int(0))
-                                    .with(LEN, RtValue::int(children.len() as i64)),
-                            ),
-                        )?;
+                        let new_state =
+                            RNodeState::Running(run_with(tick_args, 0, children.len() as i64));
+                        debug!(target:"flow[ready]", "tick:{}, {tpe}. Just switch to the new_state:{:?}",ctx.curr_ts(),&new_state);
+                        ctx.new_state(id, new_state)?;
                     }
-                    RNodeState::Running { tick_args } => {
+                    // the flow can arrive here in 2 possible cases:
+                    // - when we are about to start child
+                    // - when we have the child finished (with any state)
+                    // to figure out where we are, we analyze the child at the current cursor.
+                    RNodeState::Running(tick_args) => {
                         let cursor = read_cursor_as_usize(tick_args.clone())?;
                         let child = children[cursor];
                         match ctx.state_in_ts(child) {
+                            // we are about to kick off the child.
+                            // Just pass the control to the child
                             RNodeState::Ready(..) => {
+                                debug!(target:"flow[run]", "tick:{}, {tpe}. The '{child}' is ready, push it on the stack",ctx.curr_ts());
                                 ctx.push(child)?;
                             }
-                            RNodeState::Running { .. } => {
+                            // child is already running and since the flow is here in the parent,
+                            // he decided that it is a final state for the tick,
+                            // thus pass the control to the parent
+                            RNodeState::Running(_) => {
+                                // root does not have parent so, just proceed to the next tick
                                 if tpe.is_root() {
+                                    debug!(target:"flow[run]", "tick:{}, {tpe}. The '{child}' is running, tick up the flow. ",ctx.curr_ts());
                                     ctx.next_tick()?;
                                     ctx.push(child)?;
                                 } else {
+                                    let next_state =
+                                        flow::monitor(tpe, args.clone(), tick_args, &mut ctx)?;
+                                    debug!(target:"flow[run]", "tick:{}, {tpe}. Go up with the new state: {:?}",ctx.curr_ts(),&next_state);
+                                    ctx.new_state(id, next_state)?;
                                     ctx.pop()?;
                                 }
                             }
-                            RNodeState::Finished { res, .. } | RNodeState::Leaf(res) => {
-                                let new_state = flow::process(
+                            // child is finished, thus the node needs to make a decision how to proceed.
+                            // this stage just updates the status and depending on the status,
+                            // the flow goes further or stays on the node but on the next loop of while.
+                            s @ (RNodeState::Failure(_) | RNodeState::Success(_)) => {
+                                let new_state = flow::finalize(
                                     tpe,
                                     args.clone(),
                                     tick_args.clone(),
-                                    res,
+                                    s.clone().try_into()?,
                                     &mut ctx,
                                 )?;
+                                debug!(target:"flow[run]", "tick:{}, {tpe}. The '{}' is finished as {:?}, the new state: {:?} ",ctx.curr_ts(),child,s, &new_state);
                                 ctx.new_state(id, new_state)?;
                             }
                         }
                     }
-                    RNodeState::Finished { .. } => {
+                    // the node is finished. pass the control further or if it is root,
+                    // finish the whole procedure
+                    RNodeState::Failure(_) | RNodeState::Success(_) => {
+                        debug!(target:"flow[fin]", "tick:{},{tpe} gets popped up",ctx.curr_ts());
                         ctx.pop()?;
                     }
-                    RNodeState::Leaf(_) => return type_err("flow"),
                 },
+                // similar to the flow except we don't need to handle more than 1 child.
                 RNode::Decorator(tpe, init_args, child) => match ctx.state_in_ts(id) {
+                    // since it is ready we need to prepare decorator to start
+                    // But then we do nothing but switch the state to running in the current tick.
                     RNodeState::Ready(tick_args) => {
                         let new_state =
-                            decorator::before(tpe, init_args.clone(), tick_args, &mut ctx)?;
+                            decorator::prepare(tpe, init_args.clone(), tick_args, &mut ctx)?;
+                        debug!(target:"decorator[ready]", "tick:{}, the new_state: {:?}",ctx.curr_ts(),&new_state);
                         ctx.new_state(id, new_state)?;
                     }
-                    RNodeState::Running { tick_args, .. } => match ctx.state_in_ts(*child) {
+                    // the flow can arrive here in 2 possible cases:
+                    // - when we are about to start child
+                    // - when we have the child finished (with any state)
+                    // to figure out where we are, we analyze the child at the current cursor.
+                    RNodeState::Running(tick_args) => match ctx.state_in_ts(*child) {
+                        // we are about to kick off the child.
+                        // Just pass the control to the child
                         RNodeState::Ready(..) => {
+                            debug!(target:"decorator[run]", "tick:{}, The '{}' is ready, push it on the stack",ctx.curr_ts(),&child);
                             ctx.push(*child)?;
                         }
+                        // child is already running and since the flow is here in the parent,
+                        // he decided that it is a final state for the tick,
+                        // thus pass the control to the parent
+                        // we can use this to monitor the progress and make a decision
+                        // (for Timeout for example)
                         RNodeState::Running { .. } => {
                             let new_state =
-                                decorator::during(tpe, init_args.clone(), tick_args, &mut ctx)?;
+                                decorator::monitor(tpe, init_args.clone(), tick_args, &mut ctx)?;
+                            debug!(target:"decorator[run]", "tick:{},The '{}' is running, the new state: {:?} ",ctx.curr_ts(),child, &new_state);
                             ctx.new_state(id, new_state)?;
                             ctx.pop()?;
                         }
-                        RNodeState::Finished { res, .. } | RNodeState::Leaf(res) => {
-                            let new_state =
-                                decorator::after(tpe, tick_args, init_args.clone(), res, &mut ctx)?;
+                        // child is finished, thus the node needs to make a decision how to proceed.
+                        // this stage just updates the status and depending on the status,
+                        // the flow goes further or stays on the node but on the next loop of while.
+                        s @ (RNodeState::Success(_) | RNodeState::Failure(_)) => {
+                            let new_state = decorator::finalize(
+                                tpe,
+                                tick_args,
+                                init_args.clone(),
+                                s.to_tick_result()?,
+                                &mut ctx,
+                            )?;
+                            debug!(target:"decorator[run]", "tick:{},The '{}' is finished, the new state: {:?} ",ctx.curr_ts(),child, &new_state);
                             ctx.new_state(id, new_state)?;
                             ctx.pop()?;
                         }
                     },
-                    RNodeState::Finished { .. } => {
+                    // the node is finished. pass the control further or if it is root,
+                    // finish the whole procedure
+                    RNodeState::Success(_) | RNodeState::Failure(_) => {
+                        debug!(target:"decorator[fin]", "tick:{}, it gets popped up",ctx.curr_ts());
                         ctx.pop()?;
                     }
-                    RNodeState::Leaf(_) => return type_err("decorator"),
                 },
+                // The leaf nodes process atomically.
                 RNode::Leaf(f_name, args) => {
                     if ctx.state_in_ts(id).is_ready() {
                         let mut action = self.keeper.get(f_name.name()?)?;
-                        let tick_res = action.tick(args.clone(), &mut ctx)?;
-                        ctx.new_state(id, RNodeState::leaf(tick_res))?;
+                        let res = action.tick(args.clone(), &mut ctx)?;
+                        let new_state = RNodeState::from(args.clone(), res);
+                        debug!(target:"leaf", "tick:{}, the new state: {:?}",ctx.curr_ts(),&new_state);
+                        ctx.new_state(id, new_state)?;
                     }
                     ctx.pop()?;
                 }

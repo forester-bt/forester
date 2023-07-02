@@ -1,3 +1,5 @@
+use crate::runtime::action::builtin::data::{CheckEq, StoreData};
+use crate::runtime::action::builtin::ReturnResult;
 use crate::runtime::action::keeper::ActionKeeper;
 use crate::runtime::action::{Action, ActionName};
 use crate::runtime::blackboard::BlackBoard;
@@ -6,6 +8,7 @@ use crate::runtime::rtree::RuntimeTree;
 use crate::runtime::{RtResult, RuntimeError};
 use crate::tree::project::{FileName, Project, TreeName};
 use std::collections::HashMap;
+use std::fmt::format;
 use std::path::{Path, PathBuf};
 
 pub struct ForesterBuilder {
@@ -51,11 +54,69 @@ impl ForesterBuilder {
                 )))
             }
         };
+        let tree = RuntimeTree::build(project)?;
+        let mut actions = self.actions;
 
-        Ok(Forester::new(
-            RuntimeTree::build(project)?,
-            BlackBoard::default(),
-            ActionKeeper::new(self.actions),
-        ))
+        for action_name in tree.std_nodes.iter() {
+            let action = BuilderBuiltInActions::action_impl(action_name)?;
+            actions.insert(action_name.clone(), action);
+        }
+
+        Forester::new(tree, BlackBoard::default(), ActionKeeper::new(actions))
+    }
+}
+
+pub struct BuilderBuiltInActions;
+
+impl BuilderBuiltInActions {
+    fn action_impl(action: &ActionName) -> RtResult<Action> {
+        match action.as_str() {
+            "fail_empty" => Ok(Action::sync(ReturnResult::fail_empty())),
+            "fail" => Ok(Action::sync(ReturnResult::fail_empty())),
+            "success" => Ok(Action::sync(ReturnResult::success())),
+            "running" => Ok(Action::sync(ReturnResult::running())),
+            "store_str" => Ok(Action::sync(StoreData)),
+            "eq_str" => Ok(Action::sync(CheckEq)),
+            "eq_num" => Ok(Action::sync(CheckEq)),
+
+            _ => Err(RuntimeError::UnImplementedAction(format!(
+                "action {action} is absent in the library"
+            ))),
+        }
+    }
+
+    pub fn builtin_actions_file() -> String {
+        r#"
+//
+// Built-in actions. 
+// The actions are accessible using the import 'import "std::actions"' 
+// Better off, the file be avoided modifying
+//
+
+// Fails execution, returning Result::Failure        
+impl fail(reason:string);
+impl fail_empty();
+
+// Success execution, returning Result::Success  
+impl success();
+
+// Running execution, returning Result::Running  
+impl running();
+
+// Sleeps on duration(milliseconds) then returns Result::Success
+// impl sleep(duration:num);
+
+// Stores the string value in the given key. Returns Result::Success. 
+// If the cell is locked, returns Result::Failure   
+impl store_str(key:string, value:string);
+
+// Compares given string value with what is in the cell:
+// - Returns Result::Success if they are equal
+// - Returns Fail(reason)if they are not equal
+// - Returns Fail(reason) if there is no cell in bbe with the given key.
+impl eq_str(key:string, expected:string);
+impl eq_num(key:string, expected:num);
+"#
+        .to_string()
     }
 }

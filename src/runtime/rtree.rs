@@ -22,6 +22,7 @@ use std::collections::{HashMap, HashSet, VecDeque};
 pub struct RuntimeTree {
     pub root: RNodeId,
     pub nodes: HashMap<RNodeId, RNode>,
+    pub std_nodes: HashSet<ActionName>,
 }
 
 impl RuntimeTree {
@@ -106,7 +107,10 @@ impl RuntimeTree {
                         }
                     }
                     None => {
-                        let tree = import_map.find(&name, &project)?;
+                        let (tree, file) = import_map.find(&name, &project)?;
+                        if file == "std::actions" {
+                            r_tree.std_nodes.insert(tree.name.clone());
+                        }
                         let rt_args = to_rt_args(name.as_str(), args.clone(), tree.params.clone())?;
                         builder.add_chain(id, parent_id, args.clone(), tree.params.clone());
                         let children = builder.push_vec(tree.calls.clone(), id, file_name.clone());
@@ -146,7 +150,6 @@ impl RuntimeTree {
 
         Ok(r_tree)
     }
-
     pub fn node(&self, id: &RNodeId) -> RtResult<&RNode> {
         self.nodes.get(id).ok_or(RuntimeError::uex(format!(
             "the node {id} is not found in the rt tree"

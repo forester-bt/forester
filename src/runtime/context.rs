@@ -1,19 +1,27 @@
+use crate::runtime::action::flow::REASON;
 use crate::runtime::action::Tick;
-use crate::runtime::args::RtArgs;
+use crate::runtime::args::{RtArgs, RtValue};
 use crate::runtime::blackboard::BlackBoard;
 use crate::runtime::rtree::rnode::RNodeId;
 use crate::runtime::{RtOk, RtResult, RuntimeError, TickResult};
-use graphviz_rust::attributes::bb;
-use graphviz_rust::attributes::color_name::lawngreen;
 use std::collections::{HashMap, VecDeque};
 
 pub type Timestamp = usize;
 
 pub struct TreeContext<'a> {
+    /// Storage
     bb: &'a mut BlackBoard,
+
+    /// The call stack
     stack: VecDeque<RNodeId>,
+
+    /// The latest state for the node
     state: HashMap<RNodeId, RNodeState>,
+
+    /// The latest tick for the node
     ts_map: HashMap<RNodeId, Timestamp>,
+
+    /// Current tick
     curr_ts: Timestamp,
 }
 
@@ -35,6 +43,7 @@ impl<'a> TreeContext<'a> {
 impl<'a> TreeContext<'a> {
     pub(crate) fn next_tick(&mut self) -> RtOk {
         self.curr_ts += 1;
+        debug!(target:"root", "tick up the flow to:{}",self.curr_ts);
         Ok(())
     }
 
@@ -42,13 +51,7 @@ impl<'a> TreeContext<'a> {
         self.state
             .get(&root)
             .ok_or(RuntimeError::uex(format!("the root node {root} is absent")))
-            .and_then(|s| match s {
-                RNodeState::Finished { res, .. } => Ok(res.clone()),
-                s => Err(RuntimeError::uex(format!(
-                    "the root is in unexpected state {:?}",
-                    s
-                ))),
-            })
+            .and_then(RNodeState::to_tick_result)
     }
 
     pub(crate) fn is_curr_ts(&self, id: &RNodeId) -> bool {
@@ -57,8 +60,8 @@ impl<'a> TreeContext<'a> {
             .map(|e| *e == self.curr_ts)
             .unwrap_or(false)
     }
-    pub fn curr_ts(&self) -> RtResult<Timestamp> {
-        Ok(self.curr_ts)
+    pub fn curr_ts(&self) -> Timestamp {
+        self.curr_ts
     }
 
     pub(crate) fn push(&mut self, id: RNodeId) -> RtOk {
@@ -93,42 +96,49 @@ impl<'a> TreeContext<'a> {
         if self.is_curr_ts(&id) {
             actual_state
         } else {
-            RNodeState::Ready(actual_state.tick_args())
+            RNodeState::Ready(actual_state.args())
         }
     }
 }
 
 pub type ChildIndex = usize;
 
+/// The current state of the node.
+/// RtArgs here represent the arguments that are passed between ticks and used as meta info
 #[derive(Clone, Debug)]
 pub enum RNodeState {
     Ready(RtArgs),
-    Running { tick_args: RtArgs },
-    Finished { res: TickResult, tick_args: RtArgs },
-    Leaf(TickResult),
+    Running(RtArgs),
+    Success(RtArgs),
+    Failure(RtArgs),
 }
 
 impl RNodeState {
-    pub fn tick_args(&self) -> RtArgs {
-        match self {
-            RNodeState::Ready(tick_args) => tick_args.clone(),
-            RNodeState::Running { tick_args, .. } => tick_args.clone(),
-            RNodeState::Finished { tick_args, .. } => tick_args.clone(),
-            RNodeState::Leaf(_) => RtArgs::default(),
+    pub fn from(tick_args: RtArgs, res: TickResult) -> RNodeState {
+        match res {
+            TickResult::Success => RNodeState::Success(tick_args),
+            TickResult::Failure(v) => RNodeState::Failure(tick_args.with(REASON, RtValue::str(v))),
+            TickResult::Running => RNodeState::Running(tick_args),
+        }
+    }
+    pub fn to_tick_result(&self) -> RtResult<TickResult> {
+        match &self {
+            RNodeState::Ready(_) => Err(RuntimeError::uex(format!(
+                "the ready is the unexpected state for "
+            ))),
+            RNodeState::Running(_) => Ok(TickResult::running()),
+            RNodeState::Success(_) => Ok(TickResult::success()),
+            RNodeState::Failure(args) => {
+                let reason = args
+                    .find(REASON.to_string())
+                    .and_then(RtValue::as_string)
+                    .unwrap_or_default();
+
+                Ok(TickResult::Failure(reason))
+            }
         }
     }
 
-    pub(crate) fn leaf(tick_r: TickResult) -> RNodeState {
-        RNodeState::Leaf(tick_r)
-    }
-    pub(crate) fn fin(res: TickResult, tick_args: RtArgs) -> Self {
-        RNodeState::Finished { res, tick_args }
-    }
-    pub(crate) fn run(tick_args: RtArgs) -> RNodeState {
-        RNodeState::Running { tick_args }
-    }
-}
-impl RNodeState {
     pub fn is_running(&self) -> bool {
         match self {
             RNodeState::Running { .. } => true,
@@ -143,8 +153,17 @@ impl RNodeState {
     }
     pub fn is_finished(&self) -> bool {
         match self {
-            RNodeState::Finished { .. } => true,
+            RNodeState::Success(_) | RNodeState::Failure(_) => true,
             _ => false,
+        }
+    }
+
+    pub fn args(&self) -> RtArgs {
+        match self {
+            RNodeState::Ready(tick_args)
+            | RNodeState::Running(tick_args)
+            | RNodeState::Failure(tick_args)
+            | RNodeState::Success(tick_args) => tick_args.clone(),
         }
     }
 }

@@ -1,4 +1,4 @@
-use crate::runtime::action::flow::{tick_run_with, CURSOR, LEN};
+use crate::runtime::action::flow::{run_with, CURSOR, LEN, REASON};
 use crate::runtime::action::Tick;
 use crate::runtime::args::{RtArgs, RtArgument, RtValue, RtValueNumber};
 use crate::runtime::context::{RNodeState, TreeContext};
@@ -7,31 +7,32 @@ use crate::runtime::{RtOk, RtResult, RuntimeError, TickResult};
 use std::thread::sleep;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-pub(crate) fn before(
+pub(crate) fn prepare(
     tpe: &DecoratorType,
     init_args: RtArgs,
     tick_args: RtArgs,
     ctx: &mut TreeContext,
 ) -> RtResult<RNodeState> {
+    debug!(target:"> decorator::prepare", "tick:{}, type:{}",ctx.curr_ts(), tpe);
     match tpe {
         DecoratorType::Delay => {
             sleep(Duration::from_millis(
                 u64::try_from(get_delay(init_args)?).unwrap(),
             ));
-
-            Ok(RNodeState::run(tick_run_with(tick_args, 0, 1)))
+            Ok(RNodeState::Running(run_with(tick_args, 0, 1)))
         }
-        DecoratorType::Timeout => Ok(RNodeState::run(start_args().with(LEN, RtValue::int(1)))),
-        _ => Ok(RNodeState::run(tick_args.with(LEN, RtValue::int(1)))),
+        DecoratorType::Timeout => Ok(RNodeState::Running(start_args().with(LEN, RtValue::int(1)))),
+        _ => Ok(RNodeState::Running(tick_args.with(LEN, RtValue::int(1)))),
     }
 }
 
-pub(crate) fn during(
+pub(crate) fn monitor(
     tpe: &DecoratorType,
     init_args: RtArgs,
     tick_args: RtArgs,
     ctx: &mut TreeContext,
 ) -> RtResult<RNodeState> {
+    debug!(target:"> decorator::monitor", "tick:{}, type:{}",ctx.curr_ts(), tpe);
     match tpe {
         DecoratorType::Timeout => {
             let timeout = init_args.first_as(RtValue::as_int).unwrap_or(0);
@@ -42,62 +43,59 @@ pub(crate) fn during(
                 .ok_or(RuntimeError::uex(err))?;
             let curr = get_ts();
             if curr - start >= timeout {
-                Ok(RNodeState::fin(
-                    TickResult::failure(format!("the timeout {timeout} exceeded")),
-                    tick_run_with(tick_args, 0, 1),
-                ))
+                let args = run_with(tick_args, 0, 1).with(
+                    REASON,
+                    RtValue::str(format!("the timeout {timeout} exceeded")),
+                );
+
+                Ok(RNodeState::Failure(args))
             } else {
-                Ok(RNodeState::run(tick_args.with(LEN, RtValue::int(1))))
+                Ok(RNodeState::Running(tick_args.with(LEN, RtValue::int(1))))
             }
         }
-        _ => Ok(RNodeState::run(tick_args.with(LEN, RtValue::int(1)))),
+        _ => Ok(RNodeState::Running(tick_args.with(LEN, RtValue::int(1)))),
     }
 }
 
-pub(crate) fn after(
+pub(crate) fn finalize(
     tpe: &DecoratorType,
     tick_args: RtArgs,
     init_args: RtArgs,
     child_res: TickResult,
     ctx: &mut TreeContext,
 ) -> RtResult<RNodeState> {
+    debug!(target:"> decorator::fin", "tick:{}, type:{}",ctx.curr_ts(), tpe);
     match tpe {
         DecoratorType::Inverter => match child_res {
-            TickResult::Success => Ok(RNodeState::fin(
-                TickResult::failure("decorator inverts the result.".to_string()),
-                tick_run_with(tick_args, 1, 1),
-            )),
-            TickResult::Failure(_) => Ok(RNodeState::fin(
-                TickResult::success(),
-                tick_run_with(tick_args, 0, 1),
-            )),
-            TickResult::Running => Ok(RNodeState::run(tick_run_with(tick_args, 0, 1))),
+            TickResult::Success => {
+                let args = run_with(tick_args, 1, 1).with(
+                    REASON,
+                    RtValue::str("decorator inverts the result.".to_string()),
+                );
+                Ok(RNodeState::Failure(args))
+            }
+            TickResult::Failure(_) => Ok(RNodeState::Success(run_with(tick_args, 0, 1))),
+            TickResult::Running => Ok(RNodeState::Running(run_with(tick_args, 0, 1))),
         },
         DecoratorType::ForceSuccess => match child_res {
-            TickResult::Running => Ok(RNodeState::run(tick_run_with(tick_args, 0, 1))),
-            _ => Ok(RNodeState::fin(
-                TickResult::success(),
-                tick_run_with(tick_args, 0, 1),
-            )),
+            TickResult::Running => Ok(RNodeState::Running(run_with(tick_args, 0, 1))),
+            _ => Ok(RNodeState::Success(run_with(tick_args, 0, 1))),
         },
         DecoratorType::ForceFail => match child_res {
-            TickResult::Running => Ok(RNodeState::run(tick_run_with(tick_args, 0, 1))),
-            _ => Ok(RNodeState::fin(
-                TickResult::failure_empty(),
-                tick_run_with(tick_args, 0, 1),
-            )),
+            TickResult::Running => Ok(RNodeState::Running(run_with(tick_args, 0, 1))),
+            _ => Ok(RNodeState::Failure(run_with(tick_args, 0, 1).with(
+                REASON,
+                RtValue::str("decorator force fail.".to_string()),
+            ))),
         },
         DecoratorType::Repeat => {
             let count = init_args.first_as(RtValue::as_int).unwrap_or(1);
             let attempt = tick_args.first_as(RtValue::as_int).unwrap_or(1);
             if attempt >= count {
-                Ok(RNodeState::fin(
-                    TickResult::success(),
-                    tick_run_with(tick_args, 0, 1),
-                ))
+                Ok(RNodeState::Success(run_with(tick_args, 0, 1)))
             } else {
                 let args = RtArgs(vec![RtArgument::new_noname(RtValue::int(attempt + 1))]);
-                Ok(RNodeState::run(tick_run_with(args, 0, 1)))
+                Ok(RNodeState::Running(run_with(args, 0, 1)))
             }
         }
         DecoratorType::Timeout => match child_res {
@@ -110,40 +108,34 @@ pub(crate) fn after(
                     .ok_or(RuntimeError::uex(err))?;
                 let curr = get_ts();
                 if curr - start >= timeout {
-                    Ok(RNodeState::fin(
-                        TickResult::failure(format!("the timeout {timeout} exceeded")),
-                        tick_run_with(tick_args, 0, 1),
-                    ))
+                    let args = run_with(tick_args, 0, 1)
+                        .with(REASON, RtValue::str("decorator force fail.".to_string()));
+                    Ok(RNodeState::Failure(args))
                 } else {
-                    Ok(RNodeState::run(tick_run_with(tick_args, 0, 1)))
+                    Ok(RNodeState::Running(run_with(tick_args, 0, 1)))
                 }
             }
-            r => Ok(RNodeState::fin(r, tick_run_with(tick_args, 1, 1))),
+            r => Ok(RNodeState::from(run_with(tick_args, 1, 1), r)),
         },
         DecoratorType::Delay => match child_res {
-            TickResult::Running => Ok(RNodeState::run(tick_run_with(tick_args, 0, 1))),
-            r => Ok(RNodeState::fin(r, tick_run_with(tick_args, 0, 1))),
+            TickResult::Running => Ok(RNodeState::Running(run_with(tick_args, 0, 1))),
+            r => Ok(RNodeState::from(run_with(tick_args, 0, 1), r)),
         },
         DecoratorType::Retry => match child_res {
-            TickResult::Success => Ok(RNodeState::fin(
-                TickResult::success(),
-                tick_run_with(tick_args, 1, 1),
-            )),
+            TickResult::Success => Ok(RNodeState::Success(run_with(tick_args, 1, 1))),
             TickResult::Failure(v) => {
                 let count = init_args.first_as(RtValue::as_int).unwrap_or(0);
                 let attempts = tick_args.first_as(RtValue::as_int).unwrap_or(0);
 
                 if attempts >= count {
-                    Ok(RNodeState::fin(
-                        TickResult::failure(v),
-                        tick_run_with(tick_args, 0, 1),
-                    ))
+                    let args = run_with(tick_args, 0, 1).with(REASON, RtValue::str(v));
+                    Ok(RNodeState::Failure(args))
                 } else {
                     let args = RtArgs(vec![RtArgument::new_noname(RtValue::int(attempts + 1))]);
-                    Ok(RNodeState::run(tick_run_with(args, 0, 1)))
+                    Ok(RNodeState::Running(run_with(args, 0, 1)))
                 }
             }
-            TickResult::Running => Ok(RNodeState::run(tick_run_with(tick_args, 0, 1))),
+            TickResult::Running => Ok(RNodeState::Running(run_with(tick_args, 0, 1))),
         },
     }
 }

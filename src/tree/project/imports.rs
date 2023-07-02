@@ -49,25 +49,35 @@ impl ImportMap {
         Ok(map)
     }
 
-    pub fn find<'a>(&self, key: &TreeName, project: &'a Project) -> Result<&'a Tree, TreeError> {
+    pub fn find<'a>(
+        &'a self,
+        key: &TreeName,
+        project: &'a Project,
+    ) -> Result<(&'a Tree, &'a FileName), TreeError> {
         if let Some(file) = self.trees.get(key) {
-            project.find_tree(file, key).ok_or(cerr(format!(
-                "the call {key} can not be found in the file {file} "
-            )))
+            project
+                .find_tree(file, key)
+                .map(|t| (t, file))
+                .ok_or(cerr(format!(
+                    "the call {key} can not be found in the file {file} "
+                )))
         } else if let Some(id) = self.aliases.get(key) {
             let file = self
                 .trees
                 .get(id)
                 .ok_or(cerr(format!("the call {id} is not presented")))?;
-            project.find_tree(file, id).ok_or(cerr(format!(
-                "the call {key} can not be found in the file {file} "
-            )))
+            project
+                .find_tree(file, id)
+                .map(|t| (t, file))
+                .ok_or(cerr(format!(
+                    "the call {key} can not be found in the file {file} "
+                )))
         } else {
             self.files
                 .iter()
                 .flat_map(|f| project.files.get(f))
                 .find(|f| f.definitions.contains_key(key))
-                .and_then(|f| f.definitions.get(key))
+                .and_then(|f| f.definitions.get(key).map(|t| (t, &f.name)))
                 .ok_or(cerr(format!(
                     "the call {key} can not be found among the file in the project"
                 )))

@@ -1,8 +1,20 @@
-extern crate core;
+#[macro_use]
+extern crate log;
 
-mod runtime;
-mod tree;
-mod visualizer;
+use log::LevelFilter;
+
+pub mod runtime;
+pub mod tree;
+pub mod visualizer;
+
+fn turn_on_logs() {
+    let _ = env_logger::builder()
+        .is_test(true)
+        .filter_level(LevelFilter::max())
+        .format_timestamp(None)
+        .format_level(false)
+        .try_init();
+}
 
 #[cfg(test)]
 pub mod test_utils {

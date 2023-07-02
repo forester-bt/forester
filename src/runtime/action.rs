@@ -10,7 +10,6 @@ use std::collections::HashMap;
 
 pub type ActionName = String;
 pub type Tick = RtResult<TickResult>;
-
 pub enum Action {
     Impl(Box<dyn Impl>),
     Async(Box<dyn ImplAsync>),

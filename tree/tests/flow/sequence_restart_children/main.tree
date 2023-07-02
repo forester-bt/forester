@@ -1,10 +1,9 @@
-impl store(k:string,v:num);
+import "std::actions"
 impl store_tick();
-impl fail();
-
+impl gen_store(k:string, v:num);
 root main retry(5) sequence {
-    store("k1",0)
-    store("k2",0)
+    gen_store("k1",0)
+    gen_store("k2",0)
     store_tick()
-    fail()
+    fail_empty()
 }

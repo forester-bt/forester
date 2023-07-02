@@ -1,0 +1,5 @@
+import "std::actions"
+
+root main sequence {
+    fail("test")
+}

@@ -6,17 +6,18 @@ use crate::runtime::{RtOk, RtResult, RuntimeError, TickResult};
 pub const CURSOR: &str = "cursor";
 pub const LEN: &str = "len";
 pub const P_CURSOR: &str = "prev_cursor";
+pub const REASON: &str = "reason";
 
-pub fn tick_run_with(tick_args: RtArgs, c: i64, l: i64) -> RtArgs {
+pub fn run_with(tick_args: RtArgs, c: i64, l: i64) -> RtArgs {
     tick_args
         .with(CURSOR, RtValue::int(c))
         .with(LEN, RtValue::int(l))
 }
 
-pub(crate) fn read_len(args: RtArgs, def: i64) -> i64 {
+pub(crate) fn read_len_or_zero(args: RtArgs) -> i64 {
     args.find(LEN.to_string())
         .and_then(|v| v.as_int())
-        .unwrap_or(def)
+        .unwrap_or(0)
 }
 
 pub(crate) fn read_cursor(tick_args: RtArgs) -> RtResult<i64> {
@@ -27,81 +28,126 @@ pub(crate) fn read_cursor(tick_args: RtArgs) -> RtResult<i64> {
         .unwrap_or(0))
 }
 
-pub fn process(
+pub enum TickResultFin {
+    Failure(String),
+    Success,
+}
+
+impl TryFrom<RNodeState> for TickResultFin {
+    type Error = RuntimeError;
+
+    fn try_from(value: RNodeState) -> Result<Self, Self::Error> {
+        match value {
+            RNodeState::Success(_) => Ok(TickResultFin::Success),
+            RNodeState::Failure(v) => {
+                let r = v
+                    .find(REASON.to_string())
+                    .and_then(RtValue::as_string)
+                    .unwrap_or_default();
+                Ok(TickResultFin::Failure(r))
+            }
+            _ => Err(RuntimeError::uex("running is unexpected".to_string())),
+        }
+    }
+}
+impl Into<TickResult> for TickResultFin {
+    fn into(self) -> TickResult {
+        match self {
+            TickResultFin::Failure(v) => TickResult::Failure(v),
+            TickResultFin::Success => TickResult::Success,
+        }
+    }
+}
+
+pub fn finalize(
     tpe: &FlowType,
     args: RtArgs,
     tick_args: RtArgs,
-    res: TickResult,
+    res: TickResultFin,
     ctx: &mut TreeContext,
 ) -> RtResult<RNodeState> {
     match tpe {
-        FlowType::Root => match res {
-            r @ (TickResult::Success | TickResult::Failure(_)) => {
-                Ok(RNodeState::fin(r, tick_run_with(tick_args, 0, 1)))
-            }
-            TickResult::Running => {
-                ctx.next_tick()?;
-                Ok(RNodeState::run(tick_run_with(tick_args, 0, 1)))
-            }
-        },
-        FlowType::Sequence => {
+        FlowType::Root => Ok(RNodeState::from(run_with(tick_args, 0, 1), res.into())),
+        FlowType::Sequence | FlowType::RSequence => {
             let cursor = read_cursor(tick_args.clone())?;
-            let len = read_len(tick_args.clone(), 0);
+            let len = read_len_or_zero(tick_args.clone());
 
             match res {
-                TickResult::Failure(v) => Ok(RNodeState::fin(
-                    TickResult::failure(v),
-                    tick_run_with(tick_args.clone(), cursor, len),
-                )),
-                TickResult::Success => {
+                TickResultFin::Failure(v) => {
+                    let args =
+                        run_with(tick_args.clone(), cursor, len).with(REASON, RtValue::str(v));
+
+                    Ok(RNodeState::Failure(args))
+                }
+                TickResultFin::Success => {
                     if cursor == len - 1 {
-                        Ok(RNodeState::fin(
-                            TickResult::success(),
-                            tick_run_with(tick_args.clone(), cursor, len),
-                        ))
+                        Ok(RNodeState::Success(run_with(
+                            tick_args.clone(),
+                            cursor,
+                            len,
+                        )))
                     } else {
-                        Ok(RNodeState::run(tick_run_with(
+                        Ok(RNodeState::Running(run_with(
                             tick_args.clone(),
                             cursor + 1,
                             len,
                         )))
                     }
                 }
-                TickResult::Running => Ok(RNodeState::run(tick_run_with(
-                    tick_args.clone(),
-                    cursor,
-                    len,
-                ))),
             }
         }
         FlowType::MSequence => {
             let cursor = read_cursor(tick_args.clone())?;
-            let len = read_len(tick_args.clone(), 0);
+            let len = read_len_or_zero(tick_args.clone());
 
             match res {
-                TickResult::Failure(v) => Ok(RNodeState::fin(
-                    TickResult::failure(v),
-                    tick_run_with(
+                TickResultFin::Failure(v) => {
+                    let args = run_with(
                         tick_args.clone().with(P_CURSOR, RtValue::int(cursor)),
                         cursor,
                         len,
-                    ),
-                )),
-                TickResult::Success => {
+                    )
+                    .with(REASON, RtValue::str(v));
+
+                    Ok(RNodeState::Failure(args))
+                }
+                TickResultFin::Success => {
                     if cursor == len - 1 {
-                        Ok(RNodeState::fin(
-                            TickResult::success(),
-                            tick_run_with(tick_args.clone(), cursor, len),
-                        ))
+                        Ok(RNodeState::Success(run_with(
+                            tick_args.clone(),
+                            cursor,
+                            len,
+                        )))
                     } else {
-                        Ok(RNodeState::run(tick_run_with(
+                        Ok(RNodeState::Running(run_with(
                             tick_args.clone(),
                             cursor + 1,
                             len,
                         )))
                     }
                 }
-                TickResult::Running => Ok(RNodeState::run(tick_run_with(
+            }
+        }
+
+        FlowType::Fallback | FlowType::RFallback => {
+            let cursor = read_cursor(tick_args.clone())?;
+            let len = read_len_or_zero(tick_args.clone());
+
+            match res {
+                TickResultFin::Failure(v) => {
+                    if cursor == len - 1 {
+                        let args =
+                            run_with(tick_args.clone(), cursor, len).with(REASON, RtValue::str(v));
+                        Ok(RNodeState::Failure(args))
+                    } else {
+                        Ok(RNodeState::Running(run_with(
+                            tick_args.clone(),
+                            cursor + 1,
+                            len,
+                        )))
+                    }
+                }
+                TickResultFin::Success => Ok(RNodeState::Success(run_with(
                     tick_args.clone(),
                     cursor,
                     len,
@@ -114,5 +160,38 @@ pub fn process(
                                                                          // FlowType::RSequence => {}
                                                                          // FlowType::Fallback => {}
                                                                          // FlowType::RFallback => {}
+    }
+}
+
+pub fn monitor(
+    tpe: &FlowType,
+    args: RtArgs,
+    tick_args: RtArgs,
+    ctx: &mut TreeContext,
+) -> RtResult<RNodeState> {
+    match tpe {
+        FlowType::Sequence => {
+            let cursor = read_cursor(tick_args.clone())?;
+            Ok(RNodeState::Running(
+                tick_args.with(P_CURSOR, RtValue::int(cursor)),
+            ))
+        }
+        FlowType::Fallback => {
+            let cursor = read_cursor(tick_args.clone())?;
+            Ok(RNodeState::Running(
+                tick_args.with(P_CURSOR, RtValue::int(cursor)),
+            ))
+        }
+        FlowType::MSequence => {
+            let cursor = read_cursor(tick_args.clone())?;
+            Ok(RNodeState::Running(
+                tick_args.with(P_CURSOR, RtValue::int(cursor)),
+            ))
+        }
+        _ => Ok(RNodeState::Running(tick_args)), // FlowType::Parallel => {}
+                                                 // FlowType::MSequence => {}
+                                                 // FlowType::RSequence => {}
+                                                 // FlowType::Fallback => {}
+                                                 // FlowType::RFallback => {}
     }
 }

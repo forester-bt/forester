@@ -3,6 +3,8 @@ pub mod imports;
 #[cfg(test)]
 mod tests;
 
+use crate::runtime::action::ActionName;
+use crate::runtime::builder::BuilderBuiltInActions;
 use crate::tree::parser::ast::{AstFile, FileEntity, Import, ImportName, Key, Tree};
 use crate::tree::parser::Parser;
 use crate::tree::project::file::File;
@@ -29,6 +31,7 @@ pub struct Project {
     pub root: PathBuf,
     pub main: (FileName, TreeName),
     pub files: HashMap<FileName, File>,
+    pub std: HashSet<ActionName>,
 }
 
 impl<'a> Project {
@@ -57,6 +60,7 @@ impl<'a> Project {
             root: root.clone(),
             main: ("".to_string(), "".to_string()),
             files: Default::default(),
+            std: Default::default(),
         };
         project.main = (main_file.clone(), main_call);
         let _ = project.parse_file(root.clone(), main_file.clone())?;
@@ -67,6 +71,7 @@ impl<'a> Project {
             root: root.clone(),
             main: ("".to_string(), "".to_string()),
             files: Default::default(),
+            std: Default::default(),
         };
 
         let _ = project.parse_file(root.clone(), main_file.clone())?;
@@ -106,21 +111,14 @@ impl<'a> Project {
         Ok(())
     }
 }
-
 fn file_to_str<'a>(root: PathBuf, file: FileName) -> Result<String, ParseError<'a>> {
     if file == "std::actions" {
-        Ok(BUILTIN.to_string())
+        Ok(BuilderBuiltInActions::builtin_actions_file())
     } else {
-        let mut path = root.clone();
+        let mut path = root;
         path.push(file.clone());
         fs::read_to_string(path).map_err(|e| {
             ParseError::ExternalError(format!("error:{}, file:{:?}", e.to_string(), file), 0)
         })
     }
 }
-
-const BUILTIN: &str = r#"
-impl fail();
-impl success();
-impl store_str(key:string, value:string);
-"#;
