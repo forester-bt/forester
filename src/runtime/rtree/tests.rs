@@ -4,10 +4,19 @@ mod tests {
     use crate::runtime::rtree::rnode::RNodeName::Name;
     use crate::runtime::rtree::rnode::{FlowType, RNode};
     use crate::runtime::rtree::RuntimeTree;
-    use crate::test_utils::test_tree;
     use crate::tree::parser::ast::call::Call;
+    use crate::tree::project::Project;
     use graphviz_rust::attributes::arrowhead::vee;
     use std::collections::HashMap;
+    use std::path::PathBuf;
+
+    pub fn test_tree(root_dir: &str, root_file: &str) -> RuntimeTree {
+        let mut root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        root.push("tree/tests");
+        root.push(root_dir);
+        let project = Project::build(root_file.to_string(), root).unwrap();
+        RuntimeTree::build(project).unwrap()
+    }
 
     #[test]
     fn ho_op() {

@@ -1,7 +1,7 @@
 # Tree definition
 
 The tree definition denotes a part of the tree (so-called subtree) that defines an independent description and can 
-- have the input parametersand accept arguments including other trees definitions
+- have the input parameters and accept arguments including other trees definitions
 - invoke other tree definitions and get invoked by others (except `root`)
 
 There are the following types of the definitions:

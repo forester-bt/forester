@@ -3,7 +3,7 @@
 A Sequence node ticks all underlying nodes as long as they return `Success`.
 Otherwise, (when a child returns `failure` a sequence aborted)
 
-In the language the tree definitions and lambda invocations are marked with the key word `sequence`.
+In the language, the tree definitions and lambda invocations of this element are marked with the key word `sequence`.
 
 ```f-tree
 impl store(key:string, value:string); // store a string value to a key in blackboard 

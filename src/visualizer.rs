@@ -4,6 +4,7 @@ mod tests;
 
 use crate::runtime::rtree::rnode::{RNode, RNodeId};
 use crate::runtime::rtree::RuntimeTree;
+use crate::runtime::RtOk;
 use crate::tree::parser::ast::arg::{Arguments, Params};
 use crate::tree::parser::ast::call::Call;
 use crate::tree::parser::ast::{ImportName, Key, Tree};
@@ -21,6 +22,14 @@ use itertools::Itertools;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::fmt::format;
 use std::path::PathBuf;
+
+pub fn as_svg(main_file: String, root_dir: PathBuf, svg_file: String) -> RtOk {
+    let _ = Visualizer::svg_file(
+        RuntimeTree::build(Project::build(main_file, root_dir)?)?,
+        svg_file,
+    )?;
+    Ok(())
+}
 
 struct Visualizer;
 
