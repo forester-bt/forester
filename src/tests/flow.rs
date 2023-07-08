@@ -172,8 +172,6 @@ fn sequence_running() {
             .and_then(|v| v.clone().as_int())
             .unwrap();
     assert_eq!(x, 2);
-
-    println!("{}", f.tracer);
 }
 
 #[test]

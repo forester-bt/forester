@@ -1,0 +1,12 @@
+ actions:
+  -
+      name: name
+      stub: success
+      params:
+        delay: 10
+
+  -
+      name: name2
+      stub: failure
+      params:
+        delay: 0
