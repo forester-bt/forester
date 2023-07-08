@@ -25,7 +25,8 @@ impl ToStmt for RNode {
         match self {
             RNode::Leaf(name, args) => {
                 let label = NodeAttributes::label(format!(
-                    "\"{} {}\"",
+                    "\"({}) {} {}\"",
+                    id,
                     name_to_label(name),
                     ShortDisplayedRtArguments(args)
                 ));
@@ -42,16 +43,20 @@ impl ToStmt for RNode {
                 let args_s = ShortDisplayedRtArguments(args).to_string();
 
                 let label = if name_s.is_empty() && args_s.is_empty() {
-                    NodeAttributes::label(format!("\"{}\"", t,))
+                    NodeAttributes::label(format!("\"({}) {}\"", id, t,))
                 } else {
-                    NodeAttributes::label(format!("\"{}\n{} {}\"", t, name_s, args_s))
+                    NodeAttributes::label(format!("\"({}) {}\n{} {}\"", id, t, name_s, args_s))
                 };
 
                 stmt!(node!(id.as_str(); label,shape,color))
             }
             RNode::Decorator(t, args, _) => {
-                let label =
-                    NodeAttributes::label(format!("\"{} {}\"", t, ShortDisplayedRtArguments(args)));
+                let label = NodeAttributes::label(format!(
+                    "\"({}) {} {}\"",
+                    id,
+                    t,
+                    ShortDisplayedRtArguments(args)
+                ));
                 let color = NodeAttributes::color(color_name::purple);
                 let shape = NodeAttributes::shape(shape::tab);
                 stmt!(node!(id.as_str(); label,shape,color))

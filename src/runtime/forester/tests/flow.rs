@@ -61,6 +61,8 @@ fn simple_sequence() {
             .and_then(|v| v.clone().as_int())
             .unwrap();
     assert_eq!(x, 1);
+
+    println!("{}", f.tracer);
 }
 
 #[test]
@@ -149,7 +151,6 @@ fn mseq_restart_all_children() {
 
 #[test]
 fn sequence_running() {
-    turn_on_logs();
     let mut fb = fb("flow/sequence_running");
 
     fb.register_action(
@@ -171,6 +172,8 @@ fn sequence_running() {
             .and_then(|v| v.clone().as_int())
             .unwrap();
     assert_eq!(x, 2);
+
+    println!("{}", f.tracer);
 }
 
 #[test]

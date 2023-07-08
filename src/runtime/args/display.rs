@@ -3,40 +3,6 @@ use crate::tree::parser::ast::call::Call;
 use itertools::Itertools;
 use std::fmt::{Display, Formatter};
 
-impl Display for RtValue {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            RtValue::Number(v) => match v {
-                RtValueNumber::Int(v) => write!(f, "{}", v),
-                RtValueNumber::Float(v) => write!(f, "{}", v),
-                RtValueNumber::Hex(v) => write!(f, "{}", v),
-                RtValueNumber::Binary(v) => write!(f, "{}", v),
-            },
-            RtValue::String(v) => write!(f, "{}", v),
-            RtValue::Bool(b) => write!(f, "{b}"),
-            RtValue::Array(array) => {
-                let mut list = f.debug_list();
-                let strings: Vec<_> = array.iter().map(|v| format!("{}", v)).collect();
-                list.entries(strings);
-                list.finish()
-            }
-            RtValue::Object(obj) => {
-                let mut map = f.debug_map();
-                let entries: Vec<_> = obj.iter().map(|(k, v)| (k, format!("{}", v))).collect();
-                map.entries(entries);
-                map.finish()
-            }
-            RtValue::Pointer(p) => write!(f, "&{p}"),
-            RtValue::Call(c) => match c {
-                Call::Invocation(t, _) => write!(f, "{}(..)", t),
-                Call::HoInvocation(t) => write!(f, "{}(..)", t),
-                Call::Lambda(t, _) => write!(f, "{}..", t),
-                Call::Decorator(t, _, _) => write!(f, "{}(..)", t),
-            },
-        }
-    }
-}
-
 #[derive(Debug)]
 pub struct ShortDisplayedRtArguments<'a>(pub &'a RtArgs);
 

@@ -13,7 +13,7 @@ use crate::tree::parser::ast::Key;
 use crate::tree::{cerr, TreeError};
 use itertools::Itertools;
 use std::collections::HashMap;
-use std::fmt::{Display, Formatter};
+use std::fmt::{Display, Formatter, Write};
 
 pub type RtAKey = String;
 
@@ -220,10 +220,56 @@ impl RtArgs {
     }
 }
 
+impl Display for RtArgs {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let elems = self.0.iter().map(|v| v.to_string()).join(",");
+        f.write_str(elems.as_str())?;
+        Ok(())
+    }
+}
+
 #[derive(Debug, PartialEq, Clone)]
 pub struct RtArgument {
     name: RtAKey,
     value: RtValue,
+}
+
+impl Display for RtValueNumber {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            RtValueNumber::Int(v) => f.write_str(format!("{}", v).as_str()),
+            RtValueNumber::Float(v) => f.write_str(format!("{}", v).as_str()),
+            RtValueNumber::Hex(v) => f.write_str(format!("0x{:02x}", v).as_str()),
+            RtValueNumber::Binary(v) => f.write_str(format!("{:#b}", v).as_str()),
+        }
+    }
+}
+impl Display for RtValue {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            RtValue::String(v) => f.write_str(v)?,
+            RtValue::Bool(b) => f.write_str(format!("{}", b).as_str())?,
+            RtValue::Array(elems) => {
+                let elems = elems.iter().map(|e| e.to_string()).join(",");
+                f.write_str(format!("[{}]", elems).as_str())?;
+            }
+            RtValue::Object(obj) => {
+                let elems = obj.iter().map(|(k, v)| format!("{}:{}", k, v)).join(",");
+                f.write_str(format!("[{}]", elems).as_str())?;
+            }
+            RtValue::Number(n) => f.write_str(format!("{}", n).as_str())?,
+            RtValue::Pointer(p) => f.write_str(format!("{}", p).as_str())?,
+            RtValue::Call(_) => f.write_str(format!("<Call>>").as_str())?,
+        }
+        Ok(())
+    }
+}
+
+impl Display for RtArgument {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_str(format!("{}={}", &self.name, &self.value).as_str())?;
+        Ok(())
+    }
 }
 
 impl RtArgument {

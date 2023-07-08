@@ -6,6 +6,7 @@ use crate::runtime::blackboard::BlackBoard;
 use crate::runtime::forester::Forester;
 use crate::runtime::rtree::RuntimeTree;
 use crate::runtime::{RtResult, RuntimeError};
+use crate::tracer::Tracer;
 use crate::tree::project::{FileName, Project, TreeName};
 use std::collections::HashMap;
 use std::fmt::format;
@@ -17,6 +18,7 @@ pub struct ForesterBuilder {
     main: Option<TreeName>,
     root: Option<PathBuf>,
     bb: BlackBoard,
+    tracer: Tracer,
 }
 
 impl ForesterBuilder {
@@ -27,6 +29,7 @@ impl ForesterBuilder {
             main: None,
             root: None,
             bb: BlackBoard::default(),
+            tracer: Tracer::default(),
         }
     }
 
@@ -42,6 +45,10 @@ impl ForesterBuilder {
     }
     pub fn main_tree(&mut self, main_tree: TreeName) {
         self.main = Some(main_tree);
+    }
+
+    pub fn tracer(&mut self, tr: Tracer) {
+        self.tracer = tr;
     }
 
     pub fn build(self) -> RtResult<Forester> {
@@ -62,7 +69,12 @@ impl ForesterBuilder {
             actions.insert(action_name.clone(), action);
         }
 
-        Forester::new(tree, BlackBoard::default(), ActionKeeper::new(actions))
+        Forester::new(
+            tree,
+            BlackBoard::default(),
+            ActionKeeper::new(actions),
+            self.tracer,
+        )
     }
 }
 

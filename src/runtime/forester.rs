@@ -9,6 +9,7 @@ use crate::runtime::context::{RNodeState, TreeContext};
 use crate::runtime::rtree::rnode::{FlowType, Name, RNode};
 use crate::runtime::rtree::RuntimeTree;
 use crate::runtime::{RtOk, RtResult, RuntimeError, TickResult};
+use crate::tracer::Tracer;
 use crate::tree::project::Project;
 use graphviz_rust::attributes::target;
 use log::debug;
@@ -17,16 +18,27 @@ pub struct Forester {
     pub tree: RuntimeTree,
     pub bb: BlackBoard,
     pub keeper: ActionKeeper,
+    pub tracer: Tracer,
 }
 
 impl Forester {
-    pub(crate) fn new(tree: RuntimeTree, bb: BlackBoard, keeper: ActionKeeper) -> RtResult<Self> {
-        Ok(Self { tree, bb, keeper })
+    pub(crate) fn new(
+        tree: RuntimeTree,
+        bb: BlackBoard,
+        keeper: ActionKeeper,
+        tracer: Tracer,
+    ) -> RtResult<Self> {
+        Ok(Self {
+            tree,
+            bb,
+            keeper,
+            tracer,
+        })
     }
     pub fn start(&mut self) -> Tick {
         // The ctx has a call stack to manage the flow.
         // When the flow goes up it pops the current element and leaps to the parent.
-        let mut ctx = TreeContext::new(&mut self.bb);
+        let mut ctx = TreeContext::new(&mut self.bb, &mut self.tracer);
         ctx.push(self.tree.root)?;
         // starts from root and pops up the element when either it is finished
         // or the root needs to make a new tick

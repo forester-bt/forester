@@ -4,13 +4,18 @@ use crate::runtime::args::{RtArgs, RtValue};
 use crate::runtime::blackboard::BlackBoard;
 use crate::runtime::rtree::rnode::RNodeId;
 use crate::runtime::{RtOk, RtResult, RuntimeError, TickResult};
+use crate::tracer::Event::NewState;
+use crate::tracer::{Event, Tracer};
 use std::collections::{HashMap, VecDeque};
+use std::fmt::{Display, Formatter};
 
 pub type Timestamp = usize;
 
 pub struct TreeContext<'a> {
     /// Storage
     bb: &'a mut BlackBoard,
+
+    tracer: &'a mut Tracer,
 
     /// The call stack
     stack: VecDeque<RNodeId>,
@@ -29,9 +34,10 @@ impl<'a> TreeContext<'a> {
     pub fn bb(&mut self) -> &mut BlackBoard {
         self.bb
     }
-    pub fn new(bb: &'a mut BlackBoard) -> Self {
+    pub fn new(bb: &'a mut BlackBoard, tracer: &'a mut Tracer) -> Self {
         Self {
             bb,
+            tracer,
             stack: Default::default(),
             state: Default::default(),
             ts_map: Default::default(),
@@ -41,8 +47,12 @@ impl<'a> TreeContext<'a> {
 }
 
 impl<'a> TreeContext<'a> {
+    pub fn trace(&mut self, ev: Event) {
+        self.tracer.trace(self.curr_ts, ev)
+    }
     pub(crate) fn next_tick(&mut self) -> RtOk {
         self.curr_ts += 1;
+        self.trace(Event::NextTick);
         debug!(target:"root", "tick up the flow to:{}",self.curr_ts);
         Ok(())
     }
@@ -65,11 +75,14 @@ impl<'a> TreeContext<'a> {
     }
 
     pub(crate) fn push(&mut self, id: RNodeId) -> RtOk {
+        self.tracer.right();
         self.stack.push_back(id);
         Ok(())
     }
     pub(crate) fn pop(&mut self) -> RtResult<Option<RNodeId>> {
-        Ok(self.stack.pop_back())
+        let pop_node = self.stack.pop_back();
+        self.tracer.left();
+        Ok(pop_node)
     }
     pub(crate) fn peek(&self) -> RtResult<Option<&RNodeId>> {
         if self.stack.is_empty() {
@@ -85,6 +98,7 @@ impl<'a> TreeContext<'a> {
         state: RNodeState,
     ) -> RtResult<Option<RNodeState>> {
         self.ts_map.insert(id, self.curr_ts);
+        self.trace(NewState(id, state.clone()));
         Ok(self.state.insert(id, state))
     }
     pub(crate) fn state_in_ts(&self, id: RNodeId) -> RNodeState {
@@ -111,6 +125,26 @@ pub enum RNodeState {
     Running(RtArgs),
     Success(RtArgs),
     Failure(RtArgs),
+}
+
+impl Display for RNodeState {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            RNodeState::Ready(args) => {
+                f.write_str(format!("Ready({})", args).as_str())?;
+            }
+            RNodeState::Running(args) => {
+                f.write_str(format!("Running({})", args).as_str())?;
+            }
+            RNodeState::Success(args) => {
+                f.write_str(format!("Success({})", args).as_str())?;
+            }
+            RNodeState::Failure(args) => {
+                f.write_str(format!("Failure({})", args).as_str())?;
+            }
+        }
+        Ok(())
+    }
 }
 
 impl RNodeState {
