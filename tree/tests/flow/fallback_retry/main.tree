@@ -1,0 +1,8 @@
+import "std::actions"
+impl tick_num_store();
+
+root main fallback {
+    fail_empty( )
+    fail_empty( )
+    tick_num_store()
+}
