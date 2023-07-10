@@ -1,2 +1,0 @@
-cargo:rustc-cfg=fd
-cargo:rerun-if-changed=build.rs
