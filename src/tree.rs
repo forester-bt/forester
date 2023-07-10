@@ -22,3 +22,8 @@ impl From<ParseError<'_>> for TreeError {
         TreeError::ParseError(value.to_string())
     }
 }
+impl From<RuntimeError> for TreeError {
+    fn from(value: RuntimeError) -> Self {
+        TreeError::IOError(format!("{:?}", value))
+    }
+}

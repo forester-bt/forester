@@ -1,6 +1,5 @@
 pub mod display;
 pub mod transform;
-
 use crate::runtime::blackboard::{BBKey, BlackBoard};
 use crate::runtime::rtree::rnode::DecoratorType;
 use crate::runtime::{RtResult, RuntimeError};
@@ -12,12 +11,13 @@ use crate::tree::parser::ast::message::{Message, Number};
 use crate::tree::parser::ast::Key;
 use crate::tree::{cerr, TreeError};
 use itertools::Itertools;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter, Write};
 
 pub type RtAKey = String;
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Deserialize, Serialize)]
 pub enum RtValueNumber {
     Int(i64),
     Float(f64),
@@ -35,7 +35,7 @@ impl From<Number> for RtValueNumber {
         }
     }
 }
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum RtValue {
     String(String),
     Bool(bool),

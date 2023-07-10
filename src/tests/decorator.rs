@@ -2,8 +2,8 @@ use crate::runtime::action::builtin::data::{GenerateData, StoreData};
 use crate::runtime::action::builtin::ReturnResult;
 use crate::runtime::action::Action;
 use crate::runtime::args::RtValue;
-use crate::runtime::forester::tests::fb;
 use crate::runtime::TickResult;
+use crate::tests::fb;
 use std::time::SystemTime;
 
 #[test]
@@ -13,7 +13,7 @@ fn simple_inverter() {
     fb.register_action("store", Action::sync(StoreData));
 
     let mut f = fb.build().unwrap();
-    let result = f.start();
+    let result = f.run();
     assert_eq!(
         result,
         Ok(TickResult::failure(format!(
@@ -44,7 +44,7 @@ fn simple_repeat() {
 
     let mut f = fb.build().unwrap();
 
-    let result = f.start();
+    let result = f.run();
     assert_eq!(result, Ok(TickResult::success()));
 
     let x =
@@ -65,7 +65,7 @@ fn simple_delay() {
     let before = SystemTime::now();
 
     let mut f = fb.build().unwrap();
-    let result = f.start();
+    let result = f.run();
     assert_eq!(result, Ok(TickResult::success()));
 
     let duration = SystemTime::now().duration_since(before).unwrap();

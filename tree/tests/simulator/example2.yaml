@@ -1,8 +1,4 @@
-config:
-  trace: false
-  max_ticks: 0
-
-actions:
+ actions:
   -
       name: name
       stub: success

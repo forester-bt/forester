@@ -1,0 +1,10 @@
+[package]
+name = "forest"
+description = "the cli app to execute the commands from forester."
+version = "0.1.0"
+edition = "2021"
+
+
+[dependencies]
+clap = { version = "4.3.11", features = ["derive"] }
+forester = { path = "../../" }

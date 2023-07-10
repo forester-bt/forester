@@ -1,5 +1,3 @@
-mod tests;
-
 use crate::runtime::action::flow::{read_cursor, run_with, CURSOR, LEN, P_CURSOR};
 use crate::runtime::action::keeper::ActionKeeper;
 use crate::runtime::action::{decorator, flow, Tick};
@@ -13,6 +11,7 @@ use crate::tracer::Tracer;
 use crate::tree::project::Project;
 use graphviz_rust::attributes::target;
 use log::debug;
+use std::path::PathBuf;
 
 pub struct Forester {
     pub tree: RuntimeTree,
@@ -35,10 +34,16 @@ impl Forester {
             tracer,
         })
     }
-    pub fn start(&mut self) -> Tick {
+
+    pub fn run(&mut self) -> Tick {
+        self.run_until(None)
+    }
+
+    pub fn run_until(&mut self, max_tick: Option<usize>) -> Tick {
         // The ctx has a call stack to manage the flow.
         // When the flow goes up it pops the current element and leaps to the parent.
-        let mut ctx = TreeContext::new(&mut self.bb, &mut self.tracer);
+        let mut ctx =
+            TreeContext::new(&mut self.bb, &mut self.tracer, max_tick.unwrap_or_default());
         ctx.push(self.tree.root)?;
         // starts from root and pops up the element when either it is finished
         // or the root needs to make a new tick
@@ -188,6 +193,10 @@ impl Forester {
         }
 
         ctx.root_state(self.tree.root)
+    }
+
+    pub fn bb_dump(&self, file: PathBuf) -> RtOk {
+        self.bb.dump(file)
     }
 }
 

@@ -1,8 +1,9 @@
 use crate::tree::parser::ast::arg::MesType;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq, Deserialize, Serialize)]
 pub enum Number {
     Int(i64),
     Float(f64),
@@ -10,10 +11,10 @@ pub enum Number {
     Binary(isize),
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct StringLit(pub String);
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub enum Bool {
     True,
     False,
@@ -28,7 +29,7 @@ impl Into<bool> for Bool {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub enum Message {
     Num(Number),
     String(StringLit),

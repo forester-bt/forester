@@ -1,7 +1,8 @@
 use crate::tree::parser::ast::arg::Arguments;
 use crate::tree::parser::ast::{Key, TreeType};
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub enum Call {
     Invocation(Key, Arguments),
     HoInvocation(Key),
@@ -48,7 +49,7 @@ impl Call {
     }
 }
 
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
 pub struct Calls {
     pub elems: Vec<Call>,
 }

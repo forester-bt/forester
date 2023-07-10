@@ -1,0 +1,9 @@
+import "std::actions"
+
+fallback retryer(t:tree, default:tree){
+    retry(5) t(..)
+    fail("just should fail")
+    default(..)
+}
+
+impl task(config: object);

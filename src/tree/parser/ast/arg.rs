@@ -5,6 +5,7 @@ use crate::tree::parser::ast::message::Message;
 use crate::tree::parser::ast::Key;
 use crate::tree::{cerr, TreeError};
 use itertools::Itertools;
+use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 
 #[derive(Clone, Debug, PartialEq)]
@@ -33,7 +34,7 @@ impl Params {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub enum ArgumentRhs {
     Id(Key),
     Mes(Message),
@@ -72,7 +73,7 @@ impl Display for ArgumentRhs {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub enum Argument {
     Assigned(Key, ArgumentRhs),
     Unassigned(ArgumentRhs),
@@ -130,7 +131,7 @@ impl Argument {
     }
 }
 
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
 pub struct Arguments {
     pub args: Vec<Argument>,
 }

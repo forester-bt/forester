@@ -2,7 +2,6 @@ pub mod arg;
 pub mod call;
 pub mod invocation;
 pub mod message;
-
 use crate::runtime::rtree::rnode::Name;
 use crate::runtime::RuntimeError;
 use crate::tree::parser::ast::invocation::Invocation;
@@ -14,6 +13,7 @@ use call::{Call, Calls};
 use itertools::Itertools;
 use message::Message;
 use parsit::step::Step;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::{format, write, Display, Formatter, Write};
 use std::str::FromStr;
@@ -23,7 +23,7 @@ use strum_macros::EnumString;
 
 pub type Key = String;
 
-#[derive(Display, Debug, Clone, Copy, Eq, PartialEq, EnumString)]
+#[derive(Display, Debug, Clone, Copy, Eq, PartialEq, EnumString, Deserialize, Serialize)]
 #[strum(serialize_all = "snake_case")]
 pub enum TreeType {
     Root,

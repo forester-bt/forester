@@ -2,6 +2,7 @@ use crate::runtime::args::{RtArgs, RtArgument, RtValue};
 use crate::runtime::context::{ChildIndex, RNodeState, TreeContext};
 use crate::runtime::rtree::rnode::{FlowType, RNodeId};
 use crate::runtime::{RtOk, RtResult, RuntimeError, TickResult};
+use std::cmp::max;
 
 // current child
 pub const CURSOR: &str = "cursor";
@@ -27,11 +28,16 @@ pub(crate) fn read_len_or_zero(args: RtArgs) -> i64 {
 }
 
 pub(crate) fn read_cursor(tick_args: RtArgs) -> RtResult<i64> {
-    Ok(tick_args
+    let cursor = tick_args
         .find(P_CURSOR.to_string())
-        .or(tick_args.find(CURSOR.to_string()))
-        .and_then(RtValue::as_int)
-        .unwrap_or(0))
+        .and_then(RtValue::as_int);
+    let prev_cursor = tick_args.find(CURSOR.to_string()).and_then(RtValue::as_int);
+
+    match (cursor, prev_cursor) {
+        (Some(lhs), Some(rhs)) => Ok(max(lhs, rhs)),
+        (None, Some(v)) | (Some(v), None) => Ok(v),
+        _ => Ok(0),
+    }
 }
 /// Shortest version of TickResult, containing only finished statuses.
 pub enum TickResultFin {

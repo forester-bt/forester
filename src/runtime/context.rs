@@ -28,13 +28,16 @@ pub struct TreeContext<'a> {
 
     /// Current tick
     curr_ts: Timestamp,
+
+    /// the max amount of ticks
+    tick_limit: Timestamp,
 }
 
 impl<'a> TreeContext<'a> {
     pub fn bb(&mut self) -> &mut BlackBoard {
         self.bb
     }
-    pub fn new(bb: &'a mut BlackBoard, tracer: &'a mut Tracer) -> Self {
+    pub fn new(bb: &'a mut BlackBoard, tracer: &'a mut Tracer, tick_limit: Timestamp) -> Self {
         Self {
             bb,
             tracer,
@@ -42,6 +45,7 @@ impl<'a> TreeContext<'a> {
             state: Default::default(),
             ts_map: Default::default(),
             curr_ts: 1,
+            tick_limit,
         }
     }
 }
@@ -54,7 +58,14 @@ impl<'a> TreeContext<'a> {
         self.curr_ts += 1;
         self.trace(Event::NextTick);
         debug!(target:"root", "tick up the flow to:{}",self.curr_ts);
-        Ok(())
+        if self.tick_limit != 0 && self.curr_ts >= self.tick_limit {
+            Err(RuntimeError::Stopped(format!(
+                "the limit of ticks are exceeded on {}",
+                self.curr_ts
+            )))
+        } else {
+            Ok(())
+        }
     }
 
     pub(crate) fn root_state(&self, root: RNodeId) -> Tick {

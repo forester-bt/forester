@@ -43,6 +43,7 @@ pub enum RuntimeError {
     IOError(String),
     Unexpected(String),
     WrongArgument(String),
+    Stopped(String),
 }
 
 impl RuntimeError {
@@ -57,5 +58,20 @@ impl RuntimeError {
 impl From<TreeError> for RuntimeError {
     fn from(value: TreeError) -> Self {
         RuntimeError::CompileError(value)
+    }
+}
+impl From<serde_yaml::Error> for RuntimeError {
+    fn from(value: serde_yaml::Error) -> Self {
+        RuntimeError::IOError(value.to_string())
+    }
+}
+impl From<serde_json::Error> for RuntimeError {
+    fn from(value: serde_json::Error) -> Self {
+        RuntimeError::IOError(value.to_string())
+    }
+}
+impl From<std::io::Error> for RuntimeError {
+    fn from(value: std::io::Error) -> Self {
+        RuntimeError::IOError(value.to_string())
     }
 }

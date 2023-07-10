@@ -1,0 +1,3 @@
+impl custom_state();
+
+root main repeat(3) custom_state()

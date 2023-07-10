@@ -98,7 +98,7 @@ That will igve the following trace:
 
 The tracer has a few settings.
 - indent: the indent of the lines in dependance of the nesting level
-- to_file: if the file is provided, the trace will be duplicated into this file also.
+- to_file: if the file is provided, the trace will be redirected into this file.
 
 ```rust
 #[test]

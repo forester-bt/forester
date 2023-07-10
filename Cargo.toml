@@ -13,8 +13,10 @@ parsit = { path = "../parseit" }
 graphviz-rust = "0.6.2"
 logos = "0.13.0"
 itertools = "0.10.5"
-serde = "1.0.163"
 strum = "0.24.1"
 strum_macros = "0.24.1"
 log = "0.4"
 env_logger = "0.10.0"
+serde = { version = "1.0.166", features = ["derive"] }
+serde_json = { version = "1.0.99"}
+serde_yaml = "0.9.22"

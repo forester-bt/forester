@@ -16,8 +16,7 @@ fn manual() {
     let tree = RuntimeTree::build(project).unwrap();
 
     graph.push("tree/tests/plain_project/main.svg");
-    let svg = graph.to_str().unwrap().to_string();
-    let _ = Visualizer::svg_file(tree, svg).unwrap();
+    let _ = Visualizer::svg_file(&tree, graph).unwrap();
 }
 #[test]
 fn manual2() {
@@ -30,8 +29,7 @@ fn manual2() {
     let tree = RuntimeTree::build(project).unwrap();
 
     graph.push("tree/tests/drive_robot/amr_simple.svg");
-    let svg = graph.to_str().unwrap().to_string();
-    let _ = Visualizer::svg_file(tree, svg).unwrap();
+    let _ = Visualizer::svg_file(&tree, graph).unwrap();
 }
 #[test]
 fn manual3() {
@@ -44,8 +42,7 @@ fn manual3() {
     let tree = RuntimeTree::build(project).unwrap();
 
     graph.push("tree/tests/ho_tree/main.svg");
-    let svg = graph.to_str().unwrap().to_string();
-    let _ = Visualizer::svg_file(tree, svg).unwrap();
+    let _ = Visualizer::svg_file(&tree, graph).unwrap();
 }
 #[test]
 fn manual4() {
@@ -58,8 +55,7 @@ fn manual4() {
     let tree = RuntimeTree::build(project).unwrap();
 
     graph.push("tree/tests/units/ho/main.svg");
-    let svg = graph.to_str().unwrap().to_string();
-    let _ = Visualizer::svg_file(tree, svg).unwrap();
+    let _ = Visualizer::svg_file(&tree, graph).unwrap();
 }
 
 #[test]
@@ -75,6 +71,6 @@ fn manualx() {
     graph.push("tree/tests/flow/sequence/main.svg");
     let svg = graph.to_str().unwrap().to_string();
     // let _ = Visualizer::svg_file(tree, svg).unwrap();
-    let s = Visualizer::dot(tree).unwrap();
+    let s = Visualizer::dot(&tree).unwrap();
     println!("{}", s);
 }

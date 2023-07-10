@@ -2,7 +2,8 @@ use crate::tree::parser::ast::arg::{Argument, Arguments, MesType, Param, Params}
 use crate::tree::parser::ast::call::{Call, Calls};
 use crate::tree::parser::ast::message::Message;
 use crate::tree::parser::ast::{Import, ImportName, Key, Tree, TreeType};
-use crate::tree::project::{File, Project};
+use crate::tree::project::file::File;
+use crate::tree::project::Project;
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 

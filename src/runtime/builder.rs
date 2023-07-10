@@ -19,6 +19,7 @@ pub struct ForesterBuilder {
     root: Option<PathBuf>,
     bb: BlackBoard,
     tracer: Tracer,
+    bb_load: Option<String>,
 }
 
 impl ForesterBuilder {
@@ -29,7 +30,8 @@ impl ForesterBuilder {
             main: None,
             root: None,
             bb: BlackBoard::default(),
-            tracer: Tracer::default(),
+            tracer: Tracer::noop(),
+            bb_load: None,
         }
     }
 
@@ -50,9 +52,12 @@ impl ForesterBuilder {
     pub fn tracer(&mut self, tr: Tracer) {
         self.tracer = tr;
     }
+    pub fn bb_load(&mut self, bb: String) {
+        self.bb_load = Some(bb);
+    }
 
     pub fn build(self) -> RtResult<Forester> {
-        let project = match (self.main, self.root, self.main_file) {
+        let project = match (self.main, self.root.clone(), self.main_file) {
             (None, Some(root), Some(mf)) => Project::build(mf, root)?,
             (Some(mt), Some(root), Some(mf)) => Project::build_with_root(mf, mt, root)?,
             _ => {
@@ -68,6 +73,19 @@ impl ForesterBuilder {
             let action = BuilderBuiltInActions::action_impl(action_name)?;
             actions.insert(action_name.clone(), action);
         }
+
+        let mut bb = BlackBoard::default();
+        if let Some(bb_load_dump) = self.bb_load {
+            let file = PathBuf::from(bb_load_dump);
+            let file = if file.is_relative() {
+                let mut r = self.root.unwrap().clone();
+                r.push(file);
+                r
+            } else {
+                file
+            };
+            bb.load(&file)?;
+        };
 
         Forester::new(
             tree,

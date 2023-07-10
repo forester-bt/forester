@@ -1,8 +1,13 @@
 import "std::actions"
-impl tick_num_store();
 
-root main fallback {
-    fail_empty( )
-    fail_empty( )
-    tick_num_store()
+root main sequence {
+    store_str("info", "initial")
+    retryer(fail_empty(), success())
+    store_str("field","some_info")
+}
+
+fallback retryer(t:tree, default:tree){
+    retry(5) t(..)
+    fail_empty()
+    default(..)
 }

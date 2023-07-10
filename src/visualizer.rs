@@ -1,6 +1,4 @@
 mod statements;
-#[cfg(test)]
-mod tests;
 
 use crate::runtime::rtree::rnode::{RNode, RNodeId};
 use crate::runtime::rtree::RuntimeTree;
@@ -19,22 +17,15 @@ use graphviz_rust::dot_structures::*;
 use graphviz_rust::printer::PrinterContext;
 use graphviz_rust::{exec, exec_dot, print};
 use itertools::Itertools;
+use serde_json::to_string;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::fmt::format;
 use std::path::PathBuf;
 
-pub fn as_svg(main_file: String, root_dir: PathBuf, svg_file: String) -> RtOk {
-    let _ = Visualizer::svg_file(
-        RuntimeTree::build(Project::build(main_file, root_dir)?)?,
-        svg_file,
-    )?;
-    Ok(())
-}
-
-struct Visualizer;
+pub struct Visualizer;
 
 impl<'a> Visualizer {
-    fn build_graph(runtime_tree: RuntimeTree) -> Result<Graph, TreeError> {
+    fn build_graph(runtime_tree: &RuntimeTree) -> Result<Graph, TreeError> {
         let mut graph = graph!(strict di id!(""));
         let mut stack: VecDeque<RNodeId> = VecDeque::new();
         stack.push_back(runtime_tree.root);
@@ -65,19 +56,24 @@ impl<'a> Visualizer {
         Ok(graph)
     }
 
-    pub fn dot(runtime_tree: RuntimeTree) -> Result<String, TreeError> {
+    pub fn dot(runtime_tree: &RuntimeTree) -> Result<String, TreeError> {
         Ok(print(
             Visualizer::build_graph(runtime_tree)?,
             &mut PrinterContext::default(),
         ))
     }
 
-    pub fn svg_file(runtime_tree: RuntimeTree, path: String) -> Result<String, TreeError> {
+    pub fn svg_file(runtime_tree: &RuntimeTree, path: PathBuf) -> Result<String, TreeError> {
         let mut g = Visualizer::build_graph(runtime_tree)?;
+        let p = path.to_str().ok_or(TreeError::VisualizationError(format!(
+            "{:?} is not applicable",
+            &path
+        )))?;
+
         exec(
             g,
             &mut PrinterContext::default(),
-            vec![Format::Svg.into(), CommandArg::Output(path)],
+            vec![Format::Svg.into(), CommandArg::Output(p.to_string())],
         )
         .map_err(|e| TreeError::VisualizationError(e.to_string()))
     }

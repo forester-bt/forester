@@ -3,10 +3,8 @@ use crate::runtime::action::builtin::ReturnResult;
 use crate::runtime::action::{Action, Impl, Tick};
 use crate::runtime::args::{RtArgs, RtValue};
 use crate::runtime::context::TreeContext;
-use crate::runtime::forester::tests::fb;
 use crate::runtime::TickResult;
-use crate::turn_on_logs;
-use log::LevelFilter;
+use crate::tests::{fb, test_folder, turn_on_logs};
 
 struct StoreTick;
 
@@ -27,7 +25,7 @@ fn simple_sequence() {
     fb.register_action("store_tick", Action::sync(StoreTick));
 
     let mut f = fb.build().unwrap();
-    let result = f.start();
+    let result = f.run();
     assert_eq!(result, Ok(TickResult::success()));
 
     let x =
@@ -62,7 +60,8 @@ fn simple_sequence() {
             .unwrap();
     assert_eq!(x, 1);
 
-    println!("{}", f.tracer);
+    let buf = test_folder("flow/sequence/bb_dump.json");
+    f.bb_dump(buf).unwrap();
 }
 
 #[test]
@@ -79,7 +78,7 @@ fn seq_restart_all_children() {
     fb.register_action("store_tick", Action::sync(StoreTick));
 
     let mut f = fb.build().unwrap();
-    let result = f.start();
+    let result = f.run();
     assert_eq!(result, Ok(TickResult::failure("".to_string())));
 
     let x =
@@ -121,7 +120,7 @@ fn mseq_restart_all_children() {
     fb.register_action("store_tick", Action::sync(StoreTick));
 
     let mut f = fb.build().unwrap();
-    let result = f.start();
+    let result = f.run();
     assert_eq!(result, Ok(TickResult::failure("".to_string())));
 
     let x =
@@ -162,7 +161,7 @@ fn sequence_running() {
     );
 
     let mut f = fb.build().unwrap();
-    let result = f.start();
+    let result = f.run();
     assert_eq!(result, Ok(TickResult::success()));
 
     let x =
@@ -181,7 +180,7 @@ fn fallback() {
     fb.register_action("tick_num_store", Action::sync(StoreTick));
 
     let mut f = fb.build().unwrap();
-    let result = f.start();
+    let result = f.run();
     assert_eq!(result, Ok(TickResult::success()));
 
     let x =
@@ -191,4 +190,16 @@ fn fallback() {
             .and_then(|v| v.clone().as_int())
             .unwrap();
     assert_eq!(x, 1);
+}
+#[test]
+fn fallback_retry() {
+    turn_on_logs();
+
+    let mut fb = fb("flow/fallback_retry");
+
+    fb.register_action("tick_num_store", Action::sync(StoreTick));
+
+    let mut f = fb.build().unwrap();
+    let result = f.run();
+    assert_eq!(result, Ok(TickResult::success()));
 }

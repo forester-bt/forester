@@ -1,19 +1,22 @@
+use crate::read_file;
 use crate::runtime::args::RtValue;
 use crate::runtime::blackboard::BBValue::{Locked, Taken, Unlocked};
-use crate::runtime::{RtOk, RuntimeError};
+use crate::runtime::{RtOk, RtResult, RuntimeError};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::fs;
 use std::hash::Hash;
+use std::path::PathBuf;
 
 pub type BBKey = String;
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub enum BBValue {
     Locked(RtValue),
     Unlocked(RtValue),
     Taken,
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct BlackBoard {
     storage: HashMap<BBKey, BBValue>,
 }
@@ -77,5 +80,19 @@ impl BlackBoard {
                 Ok(())
             }
         }
+    }
+}
+impl BlackBoard {
+    pub fn dump(&self, file: PathBuf) -> RtOk {
+        let dump = serde_json::to_string(self)?;
+
+        fs::write(file, dump)?;
+
+        Ok(())
+    }
+    pub fn load(&self, file: &PathBuf) -> RtResult<BlackBoard> {
+        let src = read_file(file)?;
+        let bb: BlackBoard = serde_json::from_str(src.as_str())?;
+        Ok(bb)
     }
 }

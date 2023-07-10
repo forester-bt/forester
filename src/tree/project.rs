@@ -1,10 +1,10 @@
 pub mod file;
 pub mod imports;
-#[cfg(test)]
-mod tests;
 
+use crate::read_file;
 use crate::runtime::action::ActionName;
 use crate::runtime::builder::BuilderBuiltInActions;
+use crate::runtime::RtResult;
 use crate::tree::parser::ast::{AstFile, FileEntity, Import, ImportName, Key, Tree};
 use crate::tree::parser::Parser;
 use crate::tree::project::file::File;
@@ -111,14 +111,12 @@ impl<'a> Project {
         Ok(())
     }
 }
-fn file_to_str<'a>(root: PathBuf, file: FileName) -> Result<String, ParseError<'a>> {
+fn file_to_str<'a>(root: PathBuf, file: FileName) -> Result<String, TreeError> {
     if file == "std::actions" {
         Ok(BuilderBuiltInActions::builtin_actions_file())
     } else {
         let mut path = root;
         path.push(file.clone());
-        fs::read_to_string(path).map_err(|e| {
-            ParseError::ExternalError(format!("error:{}, file:{:?}", e.to_string(), file), 0)
-        })
+        Ok(read_file(&path)?)
     }
 }

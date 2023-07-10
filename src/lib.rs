@@ -2,21 +2,23 @@
 extern crate log;
 
 use crate::runtime::rtree::RuntimeTree;
-use crate::runtime::RtOk;
+use crate::runtime::{RtOk, RtResult};
 use crate::tree::project::Project;
 use log::LevelFilter;
+use std::fs;
 use std::path::PathBuf;
 
 pub mod runtime;
+pub mod simulator;
 pub mod tracer;
 pub mod tree;
 pub mod visualizer;
 
-fn turn_on_logs() {
-    let _ = env_logger::builder()
-        .is_test(true)
-        .filter_level(LevelFilter::max())
-        .format_timestamp(None)
-        .format_level(false)
-        .try_init();
+use crate::runtime::RuntimeError;
+#[cfg(test)]
+mod tests;
+
+pub fn read_file(pb: &PathBuf) -> RtResult<String> {
+    Ok(fs::read_to_string(pb)
+        .map_err(|e| RuntimeError::IOError(format!("error:{}, file:{:?}", e.to_string(), pb)))?)
 }

@@ -1,0 +1,13 @@
+config:
+  trace: gen/main.trace
+  graph: gen/main.svg
+  bb:
+    dump: gen/bb.json
+  max_ticks: 10
+
+actions:
+  -
+    name: task
+    stub: failure
+    params:
+      delay: 100
