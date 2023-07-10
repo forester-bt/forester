@@ -8,3 +8,5 @@ edition = "2021"
 [dependencies]
 clap = { version = "4.3.11", features = ["derive"] }
 forester = { path = "../../" }
+log = "0.4"
+env_logger = "0.10.0"
