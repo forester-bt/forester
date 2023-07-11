@@ -15,7 +15,7 @@ fn cli() -> Command {
         .about("A console utility to interact with Forester")
         .subcommand_required(true)
         .arg_required_else_help(true)
-        .version("0.1")
+        .version("0.0.1")
         .subcommand(
             Command::new("sim")
                 .about(r#"Runs simulation. Expects a simulation profile"#)
@@ -40,7 +40,7 @@ fn buf(val: &str, relative: PathBuf) -> PathBuf {
 
 fn sim(matches: &ArgMatches) {
     if let Some(p) = matches.get_one::<String>("profile") {
-        let pwd = std::env::current_dir().expect("the current directory is not  presented");
+        let pwd = std::env::current_dir().expect("the current directory is presented");
 
         let root = match matches.get_one::<String>("root") {
             Some(root) => buf(root.as_str(), pwd),
