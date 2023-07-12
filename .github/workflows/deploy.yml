@@ -21,7 +21,6 @@ jobs:
           mkdir mdbook
           curl -sSL $url | tar -xz --directory=./mdbook
           echo `pwd`/mdbook >> $GITHUB_PATH
-          cargo install mdbook-graphviz
       - name: Deploy GitHub Pages
         run: |
           # This assumes your book is in the root of your repository.
