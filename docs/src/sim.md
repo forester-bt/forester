@@ -50,9 +50,18 @@ The actions sections is an array to stub the actions
 | Setting      | Description                              | Default             | Example |
 |--------------|------------------------------------------|---------------------|---------|
 | name         | the name of the stubbed action           | should be presented | name    |
-| stub         | the stubbed implmenetation               | should be presented | success |
+| stub         | the stubbed implementation               | should be presented | success |
 | params.delay | denotes the pause before start in millis | 0                   | 100     |
 
+
+### Stubs
+
+- success: returns a success
+- failure: returns a failure
+- random: returns either a failure or a success randomly
+
+All stubs have the following params:
+- delay: in millis, the time to delay the stub.
 
 ## Process
 
@@ -60,3 +69,40 @@ The simulation can be performed in on of two ways:
 - using console application from console
 - using library from rust code
 
+### In the code
+
+Just use the builder and the simulator from the `simulator` module.
+
+```rust
+#[test]
+fn smoke() {
+    let mut sb = SimulatorBuilder::new();
+    
+    let root = test_folder("simulator/smoke");
+
+    sb.root(root);
+    
+    // can be relative to root or absolute.
+    sb.profile(PathBuf::from("sim.yaml"));
+    sb.main_file("main.tree".to_string());
+    
+    // can be ommited if only one root definition in the file
+    sb.main_tree("main".to_string());
+    
+    let mut sim = sb.build().unwrap();
+    sim.run().unwrap();
+}
+
+```
+
+### In the console
+
+Just use a `forest` console cli to run a simulation
+
+```shell
+forest sim --root tree\tests\simulator\smoke\  --profile sim.yaml
+```
+
+- root can be ommited, the `<pwd>` folder will be taken by default
+- tree can be ommited if only one root definition in the file
+- main can be ommited, by default, the name `main.tree` will be taken.  
