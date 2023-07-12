@@ -1,5 +1,6 @@
 mod statements;
 
+use crate::get_pb;
 use crate::runtime::rtree::rnode::{RNode, RNodeId};
 use crate::runtime::rtree::RuntimeTree;
 use crate::runtime::RtOk;
@@ -25,6 +26,35 @@ use std::path::PathBuf;
 pub struct Visualizer;
 
 impl<'a> Visualizer {
+    pub fn visualize_to_file(
+        root: PathBuf,
+        file: Option<&str>,
+        tree: Option<&str>,
+        output: Option<&str>,
+    ) -> Result<String, TreeError> {
+        let project = match (file, tree) {
+            (Some(file), Some(tree)) => {
+                Project::build_with_root(file.to_string(), tree.to_string(), root)
+            }
+            (Some(file), None) => Project::build(file.to_string(), root),
+            _ => Project::build("main.tree".to_string(), root),
+        }?;
+
+        let output_pb = match output {
+            Some(path) => get_pb(&path.to_string(), project.root.clone()),
+            None => {
+                let mut output_name = PathBuf::from(project.main.0.clone());
+                let _ = output_name.set_extension("svg");
+                let mut new_output = project.root.clone();
+                new_output.push(output_name);
+                new_output
+            }
+        };
+
+        let rt = RuntimeTree::build(project)?;
+        Visualizer::svg_file(&rt, output_pb)
+    }
+
     fn build_graph(runtime_tree: &RuntimeTree) -> Result<Graph, TreeError> {
         let mut graph = graph!(strict di id!(""));
         let mut stack: VecDeque<RNodeId> = VecDeque::new();

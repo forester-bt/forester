@@ -22,3 +22,14 @@ pub fn read_file(pb: &PathBuf) -> RtResult<String> {
     Ok(fs::read_to_string(pb)
         .map_err(|e| RuntimeError::IOError(format!("error:{}, file:{:?}", e.to_string(), pb)))?)
 }
+
+pub(crate) fn get_pb(file: &String, root: PathBuf) -> PathBuf {
+    let file_pb = PathBuf::from(file);
+    if file_pb.is_relative() {
+        let mut full_path = root;
+        full_path.push(file_pb);
+        full_path
+    } else {
+        file_pb
+    }
+}

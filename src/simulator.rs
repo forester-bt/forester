@@ -11,6 +11,7 @@ use std::path::{Path, PathBuf};
 pub mod actions;
 pub mod builder;
 pub mod config;
+use crate::get_pb;
 
 pub struct Simulator {
     pub root: PathBuf,
@@ -84,16 +85,5 @@ impl Simulator {
         }
 
         result
-    }
-}
-
-pub(crate) fn get_pb(file: &String, root: PathBuf) -> PathBuf {
-    let file_pb = PathBuf::from(file);
-    if file_pb.is_relative() {
-        let mut full_path = root;
-        full_path.push(file_pb);
-        full_path
-    } else {
-        file_pb
     }
 }
