@@ -90,6 +90,11 @@ impl BlackBoard {
 
         Ok(())
     }
+    pub fn print_dump(&self) -> RtOk {
+        let dump = serde_json::to_string_pretty(self)?;
+        info!("{dump}");
+        Ok(())
+    }
     pub fn load(&self, file: &PathBuf) -> RtResult<BlackBoard> {
         let src = read_file(file)?;
         let bb: BlackBoard = serde_json::from_str(src.as_str())?;

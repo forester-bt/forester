@@ -5,6 +5,7 @@ use clap::{arg, value_parser, ArgMatches, Command};
 use forester::runtime::action::Tick;
 use forester::runtime::RtResult;
 use forester::simulator::builder::SimulatorBuilder;
+use forester::tree::TreeError;
 use forester::visualizer::Visualizer;
 
 #[macro_use]
@@ -28,11 +29,11 @@ fn cli() -> Command {
         .subcommand(
             Command::new("vis")
                 .about(r#"Runs visualization. Output is in svg format."#)
-                .arg(arg!(-p --output <OUTPUT> "a file for svg. If  no, the name from the main file will be taken."))
+                .arg(arg!(-o --output <OUTPUT> "a file for svg. If  no, the name from the main file will be taken."))
                 .arg(arg!(-r --root <ROOT> "a path to a root folder. The <PWD> folder by default"))
                 .arg(arg!(-m --main <MAIN> "a path to a main file. The 'main.tree' by default"))
                 .arg(arg!(-t --tree <TREE> "a root in a main file. If there is only one root it takes by default"))
-                .arg_required_else_help(true)
+
         )
 }
 
@@ -89,44 +90,25 @@ fn sim(matches: &ArgMatches) {
     }
 }
 fn viz(matches: &ArgMatches) {
-    if let Some(p) = matches.get_one::<String>("profile") {
-        let pwd = std::env::current_dir().expect("the current directory is presented");
+    let pwd = std::env::current_dir().expect("the current directory is presented");
 
-        let root = match matches.get_one::<String>("root") {
-            Some(root) => buf(root.as_str(), pwd),
-            None => pwd,
-        };
+    let root = match matches.get_one::<String>("root") {
+        Some(root) => buf(root.as_str(), pwd),
+        None => pwd,
+    };
 
-        let sim = buf(p, root.clone());
-        let main_file = matches
-            .get_one::<String>("main")
-            .map(|v| v.to_string())
-            .unwrap_or("main.tree".to_string());
-        let main_tree = matches.get_one::<String>("tree");
-
-        let mut sb = SimulatorBuilder::new();
-        sb.profile(sim);
-        sb.root(root);
-        sb.main_file(main_file);
-        if main_tree.is_some() {
-            sb.main_tree(main_tree.unwrap().to_string())
+    match Visualizer::visualize_to_file(
+        root,
+        matches.get_one::<String>("main"),
+        matches.get_one::<String>("tree"),
+        matches.get_one::<String>("output"),
+    ) {
+        Ok(_) => {
+            info!("the result is successfully saved to the given file.")
         }
-
-        match sb.build() {
-            Ok(mut s) => match s.run() {
-                Ok(r) => {
-                    info!("the process is finished with the result: {:?}", r)
-                }
-                Err(err) => {
-                    error!("the runtime error occured : {:?}", err)
-                }
-            },
-            Err(err) => {
-                error!("the building error occured: {:?}", err)
-            }
+        Err(e) => {
+            error!("the visualization is failed due to '{:?}'", e);
         }
-    } else {
-        error!("the simulation profile is required")
     }
 }
 
@@ -138,7 +120,7 @@ fn main() {
         Some(("sim", args)) => {
             sim(args);
         }
-        Some(("viz", args)) => {
+        Some(("vis", args)) => {
             viz(args);
         }
         Some((e, _)) => {

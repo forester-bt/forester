@@ -10,6 +10,7 @@ use crate::runtime::action::Tick;
 use crate::tree::TreeError;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::fmt::Debug;
 
 pub type RtResult<T> = Result<T, RuntimeError>;
 pub type RtOk = Result<(), RuntimeError>;
@@ -39,14 +40,19 @@ impl TickResult {
 pub enum RuntimeError {
     CompileError(TreeError),
     UnImplementedAction(String),
-    BlackBoardError(String),
     IOError(String),
     Unexpected(String),
     WrongArgument(String),
     Stopped(String),
+    RecoveryToFailure(String),
+    BlackBoardError(String),
 }
 
 impl RuntimeError {
+    pub fn fail(reason: String) -> Self {
+        Self::RecoveryToFailure(reason)
+    }
+
     pub fn uex(s: String) -> Self {
         Self::Unexpected(s)
     }

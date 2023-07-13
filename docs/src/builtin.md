@@ -16,7 +16,7 @@ import "std::actions" {
 
 ## File
 ```f-tree
-//
+ //
 // Built-in actions. 
 // The actions are accessible using the import 'import "std::actions"' 
 // Better off, the file be avoided modifying
@@ -40,14 +40,24 @@ impl running();
 impl store_str(key:string, value:string);
 
 // Compares given string value with what is in the cell:
-// - Returns Success if they are equal
-// - Returns Fail(reason) if they are not equal
-// - Returns Fail(reason) if there is no cell in bb with the given key.
+// - Returns Result::Success if they are equal
+// - Returns Fail(reason)if they are not equal
+// - Returns Fail(reason) if there is no cell in bbe with the given key.
 impl eq_str(key:string, expected:string);
 impl eq_num(key:string, expected:num);
 
-/// Store the current tick
+// Store the current tick
 impl store_tick(name:string);
+
+// Lock key in bb
+impl lock(key:string);
+
+// Unlock key in bb
+impl unlock(key:string);
+
+// Performs http get request
+impl http_get(url:string, bb_key:string);
+
 
 ```
 

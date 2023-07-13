@@ -1,4 +1,5 @@
 pub mod data;
+pub mod http;
 
 use crate::runtime::action::{Impl, Tick};
 use crate::runtime::args::{RtArgs, RtValue};

@@ -1,4 +1,5 @@
-use crate::runtime::action::builtin::data::{CheckEq, StoreData, StoreTick};
+use crate::runtime::action::builtin::data::{CheckEq, LockUnlockBBKey, StoreData, StoreTick};
+use crate::runtime::action::builtin::http::HttpGet;
 use crate::runtime::action::builtin::ReturnResult;
 use crate::runtime::action::keeper::ActionKeeper;
 use crate::runtime::action::{Action, ActionName};
@@ -109,6 +110,9 @@ impl BuilderBuiltInActions {
             "eq_str" => Ok(Action::sync(CheckEq)),
             "eq_num" => Ok(Action::sync(CheckEq)),
             "store_tick" => Ok(Action::sync(StoreTick)),
+            "http_get" => Ok(Action::sync(HttpGet)),
+            "lock" => Ok(Action::sync(LockUnlockBBKey::Lock)),
+            "unlock" => Ok(Action::sync(LockUnlockBBKey::Unlock)),
 
             _ => Err(RuntimeError::UnImplementedAction(format!(
                 "action {action} is absent in the library"
@@ -150,6 +154,15 @@ impl eq_num(key:string, expected:num);
 
 /// Store the current tick
 impl store_tick(name:string);
+
+/// Performs http get request
+impl http_get(url:string, bb_key:string);
+
+// Lock key in bb
+impl lock(key:string);
+
+// Unlock key in bb
+impl unlock(key:string);
 
 "#
         .to_string()

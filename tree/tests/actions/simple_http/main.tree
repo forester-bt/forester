@@ -1,0 +1,9 @@
+import "std::actions"
+
+root main sequence {
+    fallback {
+        http_get("not_exist","out")
+        http_get("http://httpbin.org/get", "out1")
+    }
+    http_get("http://httpbin.org/get", "out2")
+}

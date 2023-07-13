@@ -43,7 +43,7 @@ pub(crate) fn monitor(
             let args = tick_args.clone();
             let start = args
                 .first_as(RtValue::as_int)
-                .ok_or(RuntimeError::uex(err))?;
+                .ok_or(RuntimeError::fail(err))?;
             let curr = get_ts();
             if curr - start >= timeout {
                 let args = run_with(tick_args, 0, 1).with(
@@ -109,7 +109,7 @@ pub(crate) fn finalize(
                 let args = tick_args.clone();
                 let start = args
                     .first_as(RtValue::as_int)
-                    .ok_or(RuntimeError::uex(err))?;
+                    .ok_or(RuntimeError::fail(err))?;
                 let curr = get_ts();
                 if curr - start >= timeout {
                     let args = run_with(tick_args, 0, 1)
@@ -159,5 +159,6 @@ fn get_delay(args: RtArgs) -> RtResult<i64> {
     let err = format!(
         "the decorator delay accepts one integer param, denoting duration of delay in millis"
     );
-    args.first_as(RtValue::as_int).ok_or(RuntimeError::uex(err))
+    args.first_as(RtValue::as_int)
+        .ok_or(RuntimeError::fail(err))
 }

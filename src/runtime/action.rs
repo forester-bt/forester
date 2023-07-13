@@ -11,6 +11,14 @@ use std::collections::HashMap;
 pub type ActionName = String;
 pub type Tick = RtResult<TickResult>;
 
+fn recover(tick: Tick) -> Tick {
+    match tick {
+        Err(RuntimeError::RecoveryToFailure(r)) => Ok(TickResult::Failure(r)),
+        Err(RuntimeError::BlackBoardError(r)) => Ok(TickResult::Failure(r)),
+        other => other,
+    }
+}
+
 pub enum Action {
     Impl(Box<dyn Impl>),
     Async(Box<dyn ImplAsync>),
@@ -27,10 +35,10 @@ impl Action {
 
 impl Action {
     pub fn tick(&self, args: RtArgs, ctx: &mut TreeContext) -> Tick {
-        match self {
+        recover(match self {
             Action::Impl(a) => a.tick(args, ctx),
             Action::Async(aa) => aa.tick(args, ctx),
-        }
+        })
     }
 }
 

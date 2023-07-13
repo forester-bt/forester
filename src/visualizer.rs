@@ -28,9 +28,9 @@ pub struct Visualizer;
 impl<'a> Visualizer {
     pub fn visualize_to_file(
         root: PathBuf,
-        file: Option<&str>,
-        tree: Option<&str>,
-        output: Option<&str>,
+        file: Option<&String>,
+        tree: Option<&String>,
+        output: Option<&String>,
     ) -> Result<String, TreeError> {
         let project = match (file, tree) {
             (Some(file), Some(tree)) => {
@@ -41,7 +41,7 @@ impl<'a> Visualizer {
         }?;
 
         let output_pb = match output {
-            Some(path) => get_pb(&path.to_string(), project.root.clone()),
+            Some(path) => get_pb(path, project.root.clone()),
             None => {
                 let mut output_name = PathBuf::from(project.main.0.clone());
                 let _ = output_name.set_extension("svg");
