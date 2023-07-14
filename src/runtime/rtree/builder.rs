@@ -10,6 +10,9 @@ use std::collections::{HashMap, VecDeque};
 /// Basically, it needs to keep 2 things
 ///  - the bfs iter order stack  
 ///  - the stack trace of the calls
+///
+/// # Note
+/// The internal structure
 #[derive(Default)]
 pub struct Builder {
     gen: usize,

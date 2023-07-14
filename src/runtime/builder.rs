@@ -1,5 +1,5 @@
 use crate::runtime::action::builtin::data::{CheckEq, LockUnlockBBKey, StoreData, StoreTick};
-use crate::runtime::action::builtin::http::HttpGet;
+use crate::runtime::action::builtin::http::{HttpGet, HttpGetAsync};
 use crate::runtime::action::builtin::ReturnResult;
 use crate::runtime::action::keeper::ActionKeeper;
 use crate::runtime::action::{Action, ActionName};
@@ -111,6 +111,7 @@ impl BuilderBuiltInActions {
             "eq_num" => Ok(Action::sync(CheckEq)),
             "store_tick" => Ok(Action::sync(StoreTick)),
             "http_get" => Ok(Action::sync(HttpGet)),
+            "http_get_async" => Ok(Action::asynch(HttpGetAsync::new())),
             "lock" => Ok(Action::sync(LockUnlockBBKey::Lock)),
             "unlock" => Ok(Action::sync(LockUnlockBBKey::Unlock)),
 
@@ -157,6 +158,9 @@ impl store_tick(name:string);
 
 /// Performs http get request
 impl http_get(url:string, bb_key:string);
+
+/// Performs http get request
+impl http_get_async(url:string, bb_key:string);
 
 // Lock key in bb
 impl lock(key:string);

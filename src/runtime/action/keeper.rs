@@ -4,6 +4,7 @@ use crate::runtime::context::{RNodeState, TreeContext};
 use crate::runtime::{RtResult, RuntimeError};
 use std::collections::HashMap;
 
+/// Just a simple action map to register and execute the actions.
 #[derive(Default)]
 pub struct ActionKeeper {
     actions: HashMap<ActionName, Action>,

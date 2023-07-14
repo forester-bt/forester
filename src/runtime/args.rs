@@ -46,6 +46,18 @@ pub enum RtValue {
     Call(Call),
 }
 
+/// Just a utility helping to cast the `RtValue` to the specific type.
+/// ```rust
+///     fn tick(args: RtArgs, ctx: &mut TreeContext) {
+///      match args.first() {
+///         None => (),
+///         Some(v) => {
+///             let val = v.cast(ctx.bb()).string()?.unwrap_or_default();
+///             println!("{val}");
+///         }
+///     }
+///
+/// ```
 pub struct RtValueCast<'a> {
     v: RtValue,
     bb: &'a BlackBoard,
@@ -82,6 +94,7 @@ impl<'a> RtValueCast<'a> {
     }
 }
 
+/// The structure that represents the message type in runtime.
 impl RtValue {
     pub fn int(i: i64) -> Self {
         RtValue::Number(RtValueNumber::Int(i))
@@ -179,21 +192,26 @@ impl From<Message> for RtValue {
 pub struct RtArgs(pub Vec<RtArgument>);
 
 impl RtArgs {
+    /// takes the first one
     pub fn first(&self) -> Option<RtValue> {
         self.0.first().map(|a| a.value.clone())
     }
+    /// takes the first one and transform
     pub fn first_as<M, To>(&self, map: M) -> Option<To>
     where
         M: Fn(RtValue) -> Option<To>,
     {
         self.0.first().and_then(|v| map(v.value.clone()))
     }
+
+    /// finds by name
     pub fn find(&self, key: RtAKey) -> Option<RtValue> {
         self.0
             .iter()
             .find(|a| a.name == key)
             .map(|a| a.clone().value)
     }
+    /// finds by name or takes by index
     pub fn find_or_ith(&self, key: RtAKey, ith: usize) -> Option<RtValue> {
         self.0
             .iter()
@@ -201,7 +219,9 @@ impl RtArgs {
             .or(self.0.get(ith))
             .map(|a| a.clone().value)
     }
-
+    /// add to the given list of RtValues another one.
+    /// # Notes
+    /// If there is already a value with the same key, the value will be replaced
     pub fn with(self, key: &str, value: RtValue) -> RtArgs {
         let mut elems = self.0;
         let cursor = elems.iter().position(|e| e.clone().name() == key);

@@ -16,12 +16,28 @@ pub enum BBValue {
     Taken,
 }
 
+/// The representation of memory in the trees.
+/// It represents a simple map in memory of in file.
+///
+/// **A pair of key and value is called cell.**
+///
+/// It provides a several basis features:
+/// - put to store
+/// - get to store
+/// - lock/unlock the value in the cell.
+/// - take the value in the cell
+///
 #[derive(Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct BlackBoard {
     storage: HashMap<BBKey, BBValue>,
 }
 
 impl BlackBoard {
+    /// Locks the value preventing from any actions including reading writing or taking.
+    /// If the value is absent or taken will return an error
+    ///
+    /// #Notes:
+    /// If it is already locked returns only ok.
     pub fn lock(&mut self, key: BBKey) -> RtOk {
         let v = self.storage.get(&key);
         match v {
@@ -35,6 +51,10 @@ impl BlackBoard {
             ))),
         }
     }
+    /// Unlock the value enablint any actions including reading writing or taking.
+    ///
+    /// #Notes:
+    /// If it asent or taken returns ok.
     pub fn unlock(&mut self, key: BBKey) -> RtOk {
         let v = self.storage.get(&key);
         match v {
@@ -46,6 +66,11 @@ impl BlackBoard {
         }
     }
 
+    /// Gets the element by key
+    ///
+    /// #Notes:
+    /// - If locked returns error
+    /// - If taken returns none
     pub fn get(&self, key: BBKey) -> Result<Option<&RtValue>, RuntimeError> {
         let v = self.storage.get(&key);
         match v {
@@ -54,6 +79,13 @@ impl BlackBoard {
             Some(Unlocked(v)) => Ok(Some(v)),
         }
     }
+
+    /// Trying to extract the element by key
+    ///
+    /// #Notes:
+    /// - If the cell is absent returns error
+    /// - If locked returns error
+    /// - If taken returns error
     pub fn take(&mut self, key: BBKey) -> Result<RtValue, RuntimeError> {
         let v = self.storage.get(&key);
         match v {
@@ -67,10 +99,19 @@ impl BlackBoard {
             }
         }
     }
+
+    /// Check if the key is presented
+    ///
+    /// #Notes:
+    /// Not considered is it is taken or locked.
     pub fn contains(&self, key: BBKey) -> Result<bool, RuntimeError> {
         Ok(self.storage.contains_key(&key))
     }
 
+    /// Puts an value to a cell
+    ///
+    /// #Notes:
+    /// Error if it is locked
     pub fn put(&mut self, key: BBKey, value: RtValue) -> RtOk {
         let curr = self.storage.get(&key);
         match curr {
@@ -83,6 +124,7 @@ impl BlackBoard {
     }
 }
 impl BlackBoard {
+    /// Drops the snapshot to the file in json format.
     pub fn dump(&self, file: PathBuf) -> RtOk {
         let dump = serde_json::to_string(self)?;
 
@@ -90,11 +132,15 @@ impl BlackBoard {
 
         Ok(())
     }
+
+    /// Prints the snapshot in json format.
     pub fn print_dump(&self) -> RtOk {
         let dump = serde_json::to_string_pretty(self)?;
         info!("{dump}");
         Ok(())
     }
+
+    /// Loads the snapshot from the file.
     pub fn load(&self, file: &PathBuf) -> RtResult<BlackBoard> {
         let src = read_file(file)?;
         let bb: BlackBoard = serde_json::from_str(src.as_str())?;

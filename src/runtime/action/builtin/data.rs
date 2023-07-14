@@ -5,6 +5,7 @@ use crate::runtime::context::TreeContext;
 use crate::runtime::{RuntimeError, TickResult};
 
 /// Lock or unlock key in bb
+/// Just simple wrapper around the bb api.
 pub enum LockUnlockBBKey {
     Lock,
     Unlock,
@@ -35,7 +36,7 @@ impl Impl for StoreTick {
 
         let k = v.clone().cast(ctx.bb()).string()?;
         match k {
-            None => Ok(TickResult::Failure(format!("the {v} is not a string",))),
+            None => Ok(TickResult::failure(format!("the {v} is not a string",))),
             Some(key) => ctx
                 .bb()
                 .put(key, RtValue::int(curr_tick as i64))
@@ -57,7 +58,7 @@ impl Impl for CheckEq {
             .ok_or(RuntimeError::fail(format!("the key is expected")))?;
 
         match key.clone().cast(ctx.bb()).string()? {
-            None => Err(RuntimeError::fail(format!("the {key} should be string"))),
+            None => Err(RuntimeError::fail(format!("the {key} should be a string"))),
             Some(k) => match ctx.bb().get(k.clone())? {
                 None => Ok(TickResult::failure(
                     format!("the {key} is not found in bb",),
@@ -69,6 +70,11 @@ impl Impl for CheckEq {
     }
 }
 
+/// A simple action that can generate and then update data in the given cell in bb.
+/// Encompassess a function that accepts a current value of the cell and then place the updated one.
+///
+/// ## Note:
+/// The action accepts a default parameter that will be used initially.
 pub struct GenerateData<T>
 where
     T: Fn(RtValue) -> RtValue,
@@ -107,7 +113,7 @@ where
         Ok(TickResult::Success)
     }
 }
-
+/// Just stores the data to the given cell in bb
 pub struct StoreData;
 
 impl Impl for StoreData {

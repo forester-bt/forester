@@ -1,3 +1,5 @@
+/// The actions that can help in implemeneting some logic.
+/// Also, they are used in the std::actions
 pub mod data;
 pub mod http;
 
@@ -7,6 +9,7 @@ use crate::runtime::blackboard::{BBKey, BlackBoard};
 use crate::runtime::context::TreeContext;
 use crate::runtime::{RuntimeError, TickResult};
 
+/// Simple implementation to resturn result
 pub struct ReturnResult {
     res: TickResult,
 }

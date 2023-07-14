@@ -8,6 +8,7 @@ use crate::tree::parser::ast::Key;
 use crate::tree::{cerr, TreeError};
 use std::collections::HashMap;
 
+/// It extracts and validates the arguments for decorators since the contract is fixed.
 pub fn to_dec_rt_args(tpe: &DecoratorType, args: Arguments) -> Result<RtArgs, TreeError> {
     let empty = |args: &Arguments| {
         if args.args.is_empty() {

@@ -3,6 +3,8 @@ use crate::tree::parser::ast::call::Call;
 use itertools::Itertools;
 use std::fmt::{Display, Formatter};
 
+/// The short version of arguments to display,
+/// It shows [..] and {..} when the list is too long
 #[derive(Debug)]
 pub struct ShortDisplayedRtArguments<'a>(pub &'a RtArgs);
 
