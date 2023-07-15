@@ -14,6 +14,41 @@ pub const LINE_ENDING: &'static str = "\r\n";
 #[cfg(not(windows))]
 pub const LINE_ENDING: &'static str = "\n";
 
+/// The structure that keep trace of execution and store it either in memory ot in a file.
+/// The tracer uses printable representation with the space indentation.
+///
+/// #Example of output
+/// ```plain
+/// [1]  1 : Running(cursor=0,len=1)
+/// [1]    2 : Running(cursor=0,len=3)
+/// [1]      3 : Success(key=info,value=initial)
+/// [1]    2 : Running(cursor=1,len=3)
+/// [1]      4 : Running(cursor=0,len=3)
+/// [1]        6 : Running(len=1)
+/// [1]          9 : Failure(config=[],reason=)
+/// [1]        6 : Running(arg=2,cursor=0,len=1)
+/// [1]      4 : Running(cursor=0,len=3,prev_cursor=0)
+/// [1]    2 : Running(cursor=1,len=3,prev_cursor=1)
+/// [2]  next tick
+/// [2]    2 : Running(cursor=0,len=3,prev_cursor=1)
+/// [2]      4 : Running(cursor=0,len=3,prev_cursor=0)
+/// [2]        6 : Running(arg=2,cursor=0,len=1)
+/// [2]          9 : Failure(config=[],reason=)
+/// [2]        6 : Running(arg=3,cursor=0,len=1)
+/// [2]      4 : Running(cursor=0,len=3,prev_cursor=0)
+/// [2]    2 : Running(cursor=0,len=3,prev_cursor=1)
+/// [2]  1 : Running(cursor=0,len=1)
+/// [3]  next tick
+/// [3]    2 : Running(cursor=0,len=3,prev_cursor=1)
+/// [3]      4 : Running(cursor=0,len=3,prev_cursor=0)
+/// [3]        6 : Running(arg=3,cursor=0,len=1)
+/// [3]          9 : Failure(config=[],reason=)
+/// [3]        6 : Running(arg=4,cursor=0,len=1)
+/// [3]      4 : Running(cursor=0,len=3,prev_cursor=0)
+/// [3]    2 : Running(cursor=0,len=3,prev_cursor=1)
+/// [3]  1 : Running(cursor=0,len=1)
+/// [4]  next tick
+/// ```
 #[derive(Debug)]
 pub enum Tracer {
     Noop,
@@ -57,6 +92,7 @@ impl Display for Tracer {
 }
 
 impl Tracer {
+    /// shift the level of tracing back to one level. Better to avoid using this method.
     pub fn left(&mut self) {
         match self {
             Tracer::Noop => {}
@@ -65,6 +101,7 @@ impl Tracer {
             }
         };
     }
+    /// shift the level of tracing forward to one level. Better to avoid using this method.
     pub fn right(&mut self) {
         match self {
             Tracer::Noop => {}
@@ -73,6 +110,7 @@ impl Tracer {
             }
         }
     }
+    /// to add the infromation about the event.
     pub fn trace(&mut self, tick: usize, ev: Event) {
         match self {
             Tracer::Noop => {}
@@ -113,14 +151,12 @@ impl Tracer {
                 indent: cfg.indent,
             }),
             Some(file) => {
-                // println!(" >> {:?}", file);
-                // if !&file.exists() {
-                //     if let Some(parent) = file.parent() {
-                //         fs::create_dir_all(parent);
-                //         fs::File::create(file.clone())?;
-                //     }
-                // }
-
+                if !&file.exists() {
+                    if let Some(parent) = file.parent() {
+                        fs::create_dir_all(parent);
+                        fs::File::create(file.clone())?;
+                    }
+                }
                 Ok(Tracer::InFile {
                     level: 0,
                     indent: cfg.indent,
@@ -161,10 +197,14 @@ impl Default for TracerConfiguration {
     }
 }
 
+/// The type of events that Tracer can store.
 #[derive(Debug, Clone)]
 pub enum Event {
+    /// The next tick occurs
     NextTick,
+    /// The current node updates its state
     NewState(RNodeId, RNodeState),
+    /// The custom user information.
     Custom(String),
 }
 

@@ -3,6 +3,7 @@ pub mod args;
 pub mod blackboard;
 pub mod builder;
 pub mod context;
+pub mod env;
 pub mod forester;
 pub mod rtree;
 
@@ -12,8 +13,11 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::Debug;
 
+/// The major type of every result in Forester.
 pub type RtResult<T> = Result<T, RuntimeError>;
 pub type RtOk = Result<(), RuntimeError>;
+
+/// The result that the node returns
 #[derive(Clone, Debug, PartialEq)]
 pub enum TickResult {
     Success,

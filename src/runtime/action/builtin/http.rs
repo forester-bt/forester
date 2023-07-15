@@ -12,7 +12,7 @@ use tokio::task::{JoinError, JoinHandle};
 pub struct HttpGet;
 
 impl Impl for HttpGet {
-    fn tick(&self, args: RtArgs, ctx: &mut TreeContext) -> Tick {
+    fn tick(&mut self, args: RtArgs, ctx: &mut TreeContext) -> Tick {
         let url = args
             .find_or_ith("url".to_string(), 0)
             .and_then(RtValue::as_string)
@@ -35,69 +35,13 @@ impl Impl for HttpGet {
     }
 }
 
-pub struct HttpGetAsync {
-    resp: Option<JoinHandle<String>>,
-    runtime: Runtime,
-}
+pub struct HttpGetAsync;
 
 impl ImplAsync for HttpGetAsync {
-    fn tick(&mut self, args: RtArgs, ctx: &mut TreeContext) -> Tick {
-        match self.resp {
-            None => {
-                let url = args
-                    .find_or_ith("url".to_string(), 0)
-                    .and_then(RtValue::as_string)
-                    .ok_or(RuntimeError::fail(
-                        "url is not found or it is not a string".to_string(),
-                    ))?;
-
-                let resp = self.runtime.spawn_blocking(reqwest::get(url));
-                self.resp = Some(resp);
-                Ok(TickResult::running())
-            }
-            Some(r) => {
-                if r.is_finished() {
-                    let res = self.runtime.block_on(self.resp.unwrap())?;
-                    let out = args
-                        .find_or_ith("bb_key".to_string(), 1)
-                        .and_then(RtValue::as_string)
-                        .ok_or(RuntimeError::fail(
-                            "bb_key is not found or it is not a string".to_string(),
-                        ))?;
-                    ctx.bb().put(out, RtValue::str(res))?;
-                    Ok(TickResult::success())
-                } else {
-                    Ok(TickResult::running())
-                }
-            }
+    fn tick(&self, args: RtArgs) -> Tick {
+        match reqwest::blocking::get("http://google.com").and_then(|v| v.text()) {
+            Ok(resp) => Ok(TickResult::success()),
+            Err(err) => Ok(TickResult::failure(format!("error {}", err))),
         }
-    }
-
-    fn halt(&mut self, ctx: &mut TreeContext) -> Tick {
-        if self.resp.is_none() {
-            Ok(TickResult::Success)
-        } else {
-            self.resp.unwrap().abort();
-            Ok(TickResult::Success)
-        }
-    }
-}
-
-impl HttpGetAsync {
-    pub fn new() -> RtResult<Self> {
-        let runtime = tokio::runtime::Builder::new_current_thread()
-            .enable_all()
-            .build()?;
-
-        Self {
-            resp: None,
-            runtime,
-        }
-    }
-}
-
-impl From<JoinError> for RuntimeError {
-    fn from(value: JoinError) -> Self {
-        RuntimeError::fail(value.to_string())
     }
 }

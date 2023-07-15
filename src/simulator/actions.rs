@@ -4,9 +4,13 @@ use crate::runtime::context::TreeContext;
 use crate::runtime::{RtResult, RuntimeError, TickResult};
 use std::time::{Duration, SystemTime};
 
+/// The action that represent the stubs fro the real actions.
 pub enum SimAction {
+    /// usize here is a miilisecond for delay
     Success(usize),
+    /// usize here is a miilisecond for delay
     Random(usize),
+    /// usize here is a miilisecond for delay
     Failure(usize),
 }
 
@@ -24,7 +28,7 @@ impl SimAction {
 }
 
 impl Impl for SimAction {
-    fn tick(&self, args: RtArgs, ctx: &mut TreeContext) -> Tick {
+    fn tick(&mut self, args: RtArgs, ctx: &mut TreeContext) -> Tick {
         match self {
             SimAction::Success(d) => {
                 std::thread::sleep(Duration::from_millis(*d as u64));

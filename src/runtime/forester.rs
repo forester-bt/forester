@@ -4,6 +4,7 @@ use crate::runtime::action::{decorator, flow, Tick};
 use crate::runtime::args::{RtArgs, RtValue};
 use crate::runtime::blackboard::BlackBoard;
 use crate::runtime::context::{RNodeState, TreeContext};
+use crate::runtime::env::RtEnv;
 use crate::runtime::rtree::rnode::{FlowType, Name, RNode};
 use crate::runtime::rtree::RuntimeTree;
 use crate::runtime::{RtOk, RtResult, RuntimeError, TickResult};
@@ -12,12 +13,23 @@ use crate::tree::project::Project;
 use graphviz_rust::attributes::target;
 use log::debug;
 use std::path::PathBuf;
+use std::sync::{Arc, Mutex};
 
+/// The entry point to process execution.
+/// It works with the following components:
+/// - Runtime tree to get the current element of the parsing tree.
+/// - Blackboard as a memory layer
+/// - ActionKeeper to execute the actions
+/// - Tracer to store the tracing information
+///
+///# Note:
+/// Better to use `ForesterBuilder` to create a Forester.  
 pub struct Forester {
     pub tree: RuntimeTree,
     pub bb: BlackBoard,
     pub keeper: ActionKeeper,
     pub tracer: Tracer,
+    pub env: RtEnv,
 }
 
 impl Forester {
@@ -26,19 +38,26 @@ impl Forester {
         bb: BlackBoard,
         keeper: ActionKeeper,
         tracer: Tracer,
+        env: RtEnv,
     ) -> RtResult<Self> {
         Ok(Self {
             tree,
             bb,
             keeper,
             tracer,
+            env,
         })
     }
 
+    /// Runs the execution.
+    /// Traverse the tree either until the root transits into either Failure or Success or some Exception will be thrown.
     pub fn run(&mut self) -> Tick {
         self.run_until(None)
     }
 
+    /// Runs the execution but with the limitation on the ticks
+    /// Traverse the tree either until the root transits into either Failure or Success
+    /// or some Exception will be thrown or the limit on ticks is exceeded.
     pub fn run_until(&mut self, max_tick: Option<usize>) -> Tick {
         // The ctx has a call stack to manage the flow.
         // When the flow goes up it pops the current element and leaps to the parent.
@@ -181,8 +200,13 @@ impl Forester {
                 RNode::Leaf(f_name, args) => {
                     debug!(target:"leaf","args :{:?}",args);
                     if ctx.state_in_ts(id).is_ready() {
-                        let mut action = self.keeper.get(f_name.name()?)?;
-                        let res = action.tick(args.clone(), &mut ctx)?;
+                        let mut env = &mut self.env;
+                        let res = self.keeper.on_tick(
+                            &mut env,
+                            f_name.name()?,
+                            args.clone(),
+                            &mut ctx,
+                        )?;
                         let new_state = RNodeState::from(args.clone(), res);
                         debug!(target:"leaf", "tick:{}, the new state: {:?}",ctx.curr_ts(),&new_state);
                         ctx.new_state(id, new_state)?;
@@ -193,10 +217,6 @@ impl Forester {
         }
 
         ctx.root_state(self.tree.root)
-    }
-
-    pub fn bb_dump(&self, file: PathBuf) -> RtOk {
-        self.bb.dump(file)
     }
 }
 

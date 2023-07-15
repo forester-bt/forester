@@ -38,7 +38,7 @@ impl ReturnResult {
 }
 
 impl Impl for ReturnResult {
-    fn tick(&self, args: RtArgs, ctx: &mut TreeContext) -> Tick {
+    fn tick(&mut self, args: RtArgs, ctx: &mut TreeContext) -> Tick {
         Ok(match &self.res {
             TickResult::Failure(_) => {
                 let mb_str = args.first();

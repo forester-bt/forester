@@ -17,6 +17,7 @@ use crate::tree::project::{FileName, Project};
 use crate::tree::{cerr, TreeError};
 use std::collections::{HashMap, HashSet, VecDeque};
 
+/// The runtime tree is a representation of the cimpilation tree supplemented with some runtime information.
 #[derive(Default, Debug, PartialEq)]
 pub struct RuntimeTree {
     pub root: RNodeId,
@@ -149,6 +150,7 @@ impl RuntimeTree {
 
         Ok(r_tree)
     }
+
     pub fn node(&self, id: &RNodeId) -> RtResult<&RNode> {
         self.nodes.get(id).ok_or(RuntimeError::uex(format!(
             "the node {id} is not found in the rt tree"

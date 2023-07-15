@@ -1,3 +1,8 @@
+//! Forester represents a framework that provides the set of tools to perform the effective orchestration of the set of tasks.
+//! The tasks can be performed synchronously or asynchronously, locally or remotely.
+//! Forester takes care of the correct performance and distribution of the tasks.
+//! the main concept of the framework is the flow based on the behavior trees
+//! it can be effectively used in the game, ai, robotic areas, or anywhere where the workflow engine can be applied.
 #[macro_use]
 extern crate log;
 

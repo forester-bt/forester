@@ -12,7 +12,32 @@ pub mod actions;
 pub mod builder;
 pub mod config;
 use crate::get_pb;
+use crate::runtime::env::RtEnv;
 
+/// Simulator is a  wrapper above Forester that moderates a couple of extra things.
+/// The idea is to stub some actions and to get a control run of the tree
+/// under the different circumstances and initial conditions.
+/// Therefore it can be done without codding the stubs, just using the given stubs with different profiles.
+///
+/// # Example
+/// # Example
+/// ```no-run
+/// use std::path::PathBuf;
+/// use forester::simulator::builder::SimulatorBuilder;
+///
+/// fn smoke() {
+///     let mut sb = SimulatorBuilder::new();
+///
+///     let root = PathBuf("simulator/smoke");
+///
+///     sb.root(root);
+///     sb.profile(PathBuf::from("sim.yaml"));
+///     sb.main_file("main.tree".to_string());
+///
+///     let mut sim = sb.build().unwrap();
+///     sim.run().unwrap();
+/// }
+/// ```
 pub struct Simulator {
     pub root: PathBuf,
     pub profile: SimProfile,
@@ -25,12 +50,13 @@ impl Simulator {
         root: PathBuf,
         main_file: String,
         main_tree: Option<String>,
+        env: RtEnv,
     ) -> RtResult<Self> {
         let mut fb = ForesterBuilder::new();
         let pr = profile.clone();
         fb.root(root.clone());
         fb.main_file(main_file);
-
+        fb.rt_env(env);
         if let Some(m_tree) = main_tree {
             fb.main_tree(m_tree);
         }

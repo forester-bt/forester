@@ -7,6 +7,8 @@ use crate::runtime::args::{RtArgs, RtValue};
 use crate::runtime::context::TreeContext;
 use crate::runtime::{RtResult, RuntimeError, TickResult};
 use std::collections::HashMap;
+use std::rc::Rc;
+use std::sync::{Arc, Mutex};
 
 pub type ActionName = String;
 pub type Tick = RtResult<TickResult>;
@@ -24,8 +26,8 @@ fn recover(tick: Tick) -> Tick {
 /// - sync that is used by default
 /// - astnc to handle the future (uses tokio under the hood)
 pub enum Action {
-    Impl(Box<dyn Impl>),
-    Async(Box<dyn ImplAsync>),
+    Sync(Box<dyn Impl>),
+    Async(Arc<dyn ImplAsync>),
 }
 
 impl Action {
@@ -33,23 +35,14 @@ impl Action {
     where
         T: Impl + 'static,
     {
-        Action::Impl(Box::new(a))
+        Action::Sync(Box::new(a))
     }
 
-    pub fn asynch<T>(a: T) -> Self
+    pub fn a_sync<T>(a: T) -> Self
     where
         T: ImplAsync + 'static,
     {
-        Action::Async(Box::new(a))
-    }
-}
-
-impl Action {
-    pub fn tick(&self, args: RtArgs, ctx: &mut TreeContext) -> Tick {
-        recover(match self {
-            Action::Impl(a) => a.tick(args, ctx),
-            Action::Async(aa) => aa.tick(args, ctx),
-        })
+        Action::Async(Arc::new(a))
     }
 }
 
@@ -116,21 +109,21 @@ impl Action {
 /// }
 /// ```
 pub trait Impl {
-    fn tick(&self, args: RtArgs, ctx: &mut TreeContext) -> Tick;
+    fn tick(&mut self, args: RtArgs, ctx: &mut TreeContext) -> Tick;
 }
 
-pub trait ImplAsync {
-    async fn tick(&mut self, args: RtArgs, ctx: &mut TreeContext) -> Tick;
+pub trait ImplAsync: Sync + Send {
+    fn tick(&self, args: RtArgs) -> Tick;
 }
 
 impl From<Box<dyn Impl>> for Action {
     fn from(value: Box<dyn Impl>) -> Self {
-        Action::Impl(value)
+        Action::Sync(value)
     }
 }
 
-impl From<Box<dyn ImplAsync>> for Action {
-    fn from(value: Box<dyn ImplAsync>) -> Self {
+impl From<Arc<dyn ImplAsync>> for Action {
+    fn from(value: Arc<dyn ImplAsync>) -> Self {
         Action::Async(value)
     }
 }

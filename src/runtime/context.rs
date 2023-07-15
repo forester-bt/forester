@@ -11,10 +11,11 @@ use std::fmt::{Display, Formatter};
 
 pub type Timestamp = usize;
 
+/// The runtine context.
 pub struct TreeContext<'a> {
     /// Storage
     bb: &'a mut BlackBoard,
-
+    /// Tracer to save the tracing information.
     tracer: &'a mut Tracer,
 
     /// The call stack
@@ -34,6 +35,7 @@ pub struct TreeContext<'a> {
 }
 
 impl<'a> TreeContext<'a> {
+    /// A pointer to bb struct.
     pub fn bb(&mut self) -> &mut BlackBoard {
         self.bb
     }
@@ -51,9 +53,12 @@ impl<'a> TreeContext<'a> {
 }
 
 impl<'a> TreeContext<'a> {
+    /// Adds a custom record to the tracer.
+    /// Preferably to use `Event::Custom(..)` for that
     pub fn trace(&mut self, ev: Event) {
         self.tracer.trace(self.curr_ts, ev)
     }
+
     pub(crate) fn next_tick(&mut self) -> RtOk {
         self.curr_ts += 1;
         self.trace(Event::NextTick);

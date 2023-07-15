@@ -4,6 +4,7 @@ use crate::runtime::action::builtin::ReturnResult;
 use crate::runtime::action::keeper::ActionKeeper;
 use crate::runtime::action::{Action, ActionName};
 use crate::runtime::blackboard::BlackBoard;
+use crate::runtime::env::RtEnv;
 use crate::runtime::forester::Forester;
 use crate::runtime::rtree::RuntimeTree;
 use crate::runtime::{RtResult, RuntimeError};
@@ -13,6 +14,29 @@ use std::collections::HashMap;
 use std::fmt::format;
 use std::path::{Path, PathBuf};
 
+/// The builder to create a Forester instance
+///
+///# Example
+///```
+/// use std::path::PathBuf;
+/// use forester::tracer::Tracer;
+/// use forester::runtime::builder::ForesterBuilder;
+/// use forester::runtime::action::Action;
+/// use forester::runtime::action::builtin::data::StoreData;
+/// fn test(root:PathBuf){
+///     let mut root = PathBuf::new();
+///
+///     let mut fb = ForesterBuilder::new();
+///     fb.main_file("main.tree".to_string());
+///     fb.root(root);
+///     fb.register_action("store", Action::sync(StoreData));
+///     
+///     fb.tracer(Tracer::default());
+///     fb.bb_load("db/db.json");
+///     let forester = fb.build().unwrap();
+/// }
+///
+/// ```
 pub struct ForesterBuilder {
     actions: HashMap<ActionName, Action>,
     main_file: Option<FileName>,
@@ -20,6 +44,7 @@ pub struct ForesterBuilder {
     root: Option<PathBuf>,
     bb: BlackBoard,
     tracer: Tracer,
+    env: Option<RtEnv>,
     bb_load: Option<String>,
 }
 
@@ -33,30 +58,42 @@ impl ForesterBuilder {
             bb: BlackBoard::default(),
             tracer: Tracer::noop(),
             bb_load: None,
+            env: None,
         }
     }
-
+    /// Add an action accroding to the name.
     pub fn register_action(&mut self, name: &str, action: Action) {
         self.actions.insert(name.to_string(), action);
     }
 
+    /// Root folder.
     pub fn root(&mut self, root: PathBuf) {
         self.root = Some(root);
     }
+    /// A file that has a main root definition
     pub fn main_file(&mut self, main_file: FileName) {
         self.main_file = Some(main_file);
     }
+    /// A name of the main root definition
     pub fn main_tree(&mut self, main_tree: TreeName) {
         self.main = Some(main_tree);
     }
-
+    /// Tracer that will be used to save the tracing information.
     pub fn tracer(&mut self, tr: Tracer) {
         self.tracer = tr;
     }
+    /// A file that has a snapshot of the bb in json format.
     pub fn bb_load(&mut self, bb: String) {
         self.bb_load = Some(bb);
     }
 
+    /// Mix the runtime async env(tokio env)
+    /// By default, creates the default tokio Runtime multi thread
+    pub fn rt_env(&mut self, env: RtEnv) {
+        self.env = Some(env);
+    }
+
+    /// The method to build forester
     pub fn build(self) -> RtResult<Forester> {
         let project = match (self.main, self.root.clone(), self.main_file) {
             (None, Some(root), Some(mf)) => Project::build(mf, root)?,
@@ -88,11 +125,18 @@ impl ForesterBuilder {
             bb.load(&file)?;
         };
 
+        let env = if let Some(e) = self.env {
+            e
+        } else {
+            RtEnv::try_new()?
+        };
+
         Forester::new(
             tree,
             BlackBoard::default(),
-            ActionKeeper::new(actions),
+            ActionKeeper::new(actions)?,
             self.tracer,
+            env,
         )
     }
 }
@@ -111,7 +155,7 @@ impl BuilderBuiltInActions {
             "eq_num" => Ok(Action::sync(CheckEq)),
             "store_tick" => Ok(Action::sync(StoreTick)),
             "http_get" => Ok(Action::sync(HttpGet)),
-            "http_get_async" => Ok(Action::asynch(HttpGetAsync::new())),
+            "http_get_async" => Ok(Action::a_sync(HttpGetAsync)),
             "lock" => Ok(Action::sync(LockUnlockBBKey::Lock)),
             "unlock" => Ok(Action::sync(LockUnlockBBKey::Unlock)),
 

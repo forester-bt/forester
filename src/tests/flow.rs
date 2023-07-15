@@ -9,7 +9,7 @@ use crate::tests::{fb, test_folder, turn_on_logs};
 struct StoreTick;
 
 impl Impl for StoreTick {
-    fn tick(&self, args: RtArgs, ctx: &mut TreeContext) -> Tick {
+    fn tick(&mut self, args: RtArgs, ctx: &mut TreeContext) -> Tick {
         let ts = ctx.curr_ts();
         ctx.bb().put("tick".to_string(), RtValue::int(ts as i64))?;
 
@@ -61,7 +61,6 @@ fn simple_sequence() {
     assert_eq!(x, 1);
 
     let buf = test_folder("flow/sequence/bb_dump.json");
-    f.bb_dump(buf).unwrap();
 }
 
 #[test]

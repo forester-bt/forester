@@ -23,6 +23,7 @@ use std::collections::{HashMap, HashSet, VecDeque};
 use std::fmt::format;
 use std::path::PathBuf;
 
+/// The struct to visualize the given runtime tree to graphviz format.
 pub struct Visualizer;
 
 impl<'a> Visualizer {
