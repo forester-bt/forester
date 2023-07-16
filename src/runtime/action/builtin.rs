@@ -6,7 +6,7 @@ pub mod http;
 use crate::runtime::action::{Impl, Tick};
 use crate::runtime::args::{RtArgs, RtValue};
 use crate::runtime::blackboard::{BBKey, BlackBoard};
-use crate::runtime::context::TreeContext;
+use crate::runtime::context::{TreeContext, TreeContextRef};
 use crate::runtime::{RuntimeError, TickResult};
 
 /// Simple implementation to resturn result
@@ -38,13 +38,14 @@ impl ReturnResult {
 }
 
 impl Impl for ReturnResult {
-    fn tick(&mut self, args: RtArgs, ctx: &mut TreeContext) -> Tick {
+    fn tick(&mut self, args: RtArgs, ctx: TreeContextRef) -> Tick {
         Ok(match &self.res {
             TickResult::Failure(_) => {
                 let mb_str = args.first();
                 let c = match mb_str {
                     None => String::new(),
-                    Some(v) => v.cast(ctx.bb()).string()?.unwrap_or_default(),
+                    Some(v) => v.as_string().unwrap_or_default(),
+                    // Some(v) => v.cast(ctx.bb()).string()?.unwrap_or_default(),
                 };
                 TickResult::failure(c)
             }

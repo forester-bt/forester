@@ -2,16 +2,19 @@ use crate::runtime::action::builtin::data::GenerateData;
 use crate::runtime::action::builtin::ReturnResult;
 use crate::runtime::action::{Action, Impl, Tick};
 use crate::runtime::args::{RtArgs, RtValue};
-use crate::runtime::context::TreeContext;
+use crate::runtime::context::{TreeContext, TreeContextRef};
 use crate::runtime::TickResult;
 use crate::tests::{fb, test_folder, turn_on_logs};
 
 struct StoreTick;
 
 impl Impl for StoreTick {
-    fn tick(&mut self, args: RtArgs, ctx: &mut TreeContext) -> Tick {
-        let ts = ctx.curr_ts();
-        ctx.bb().put("tick".to_string(), RtValue::int(ts as i64))?;
+    fn tick(&mut self, args: RtArgs, ctx: TreeContextRef) -> Tick {
+        let ts = ctx.current_tick();
+        ctx.bb()
+            .lock()
+            .unwrap()
+            .put("tick".to_string(), RtValue::int(ts as i64))?;
 
         Ok(TickResult::Success)
     }
@@ -29,7 +32,9 @@ fn simple_sequence() {
     assert_eq!(result, Ok(TickResult::success()));
 
     let x =
-        f.bb.get("a".to_string())
+        f.bb.lock()
+            .unwrap()
+            .get("a".to_string())
             .ok()
             .flatten()
             .and_then(|v| v.clone().as_string())
@@ -37,7 +42,9 @@ fn simple_sequence() {
     assert_eq!(x.as_str(), "1");
 
     let x =
-        f.bb.get("b".to_string())
+        f.bb.lock()
+            .unwrap()
+            .get("b".to_string())
             .ok()
             .flatten()
             .and_then(|v| v.clone().as_string())
@@ -45,7 +52,9 @@ fn simple_sequence() {
     assert_eq!(x.as_str(), "2");
 
     let x =
-        f.bb.get("c".to_string())
+        f.bb.lock()
+            .unwrap()
+            .get("c".to_string())
             .ok()
             .flatten()
             .and_then(|v| v.clone().as_string())
@@ -53,7 +62,9 @@ fn simple_sequence() {
     assert_eq!(x.as_str(), "3");
 
     let x =
-        f.bb.get("tick".to_string())
+        f.bb.lock()
+            .unwrap()
+            .get("tick".to_string())
             .ok()
             .flatten()
             .and_then(|v| v.clone().as_int())
@@ -81,7 +92,9 @@ fn seq_restart_all_children() {
     assert_eq!(result, Ok(TickResult::failure("".to_string())));
 
     let x =
-        f.bb.get("k1".to_string())
+        f.bb.lock()
+            .unwrap()
+            .get("k1".to_string())
             .ok()
             .flatten()
             .and_then(|v| v.clone().as_int())
@@ -89,7 +102,9 @@ fn seq_restart_all_children() {
     assert_eq!(x, 5);
 
     let x =
-        f.bb.get("k2".to_string())
+        f.bb.lock()
+            .unwrap()
+            .get("k2".to_string())
             .ok()
             .flatten()
             .and_then(|v| v.clone().as_int())
@@ -97,7 +112,9 @@ fn seq_restart_all_children() {
     assert_eq!(x, 5);
 
     let x =
-        f.bb.get("tick".to_string())
+        f.bb.lock()
+            .unwrap()
+            .get("tick".to_string())
             .ok()
             .flatten()
             .and_then(|v| v.clone().as_int())
@@ -123,7 +140,9 @@ fn mseq_restart_all_children() {
     assert_eq!(result, Ok(TickResult::failure("".to_string())));
 
     let x =
-        f.bb.get("k1".to_string())
+        f.bb.lock()
+            .unwrap()
+            .get("k1".to_string())
             .ok()
             .flatten()
             .and_then(|v| v.clone().as_int())
@@ -131,7 +150,9 @@ fn mseq_restart_all_children() {
     assert_eq!(x, 1);
 
     let x =
-        f.bb.get("k2".to_string())
+        f.bb.lock()
+            .unwrap()
+            .get("k2".to_string())
             .ok()
             .flatten()
             .and_then(|v| v.clone().as_int())
@@ -139,7 +160,9 @@ fn mseq_restart_all_children() {
     assert_eq!(x, 1);
 
     let x =
-        f.bb.get("tick".to_string())
+        f.bb.lock()
+            .unwrap()
+            .get("tick".to_string())
             .ok()
             .flatten()
             .and_then(|v| v.clone().as_int())
@@ -164,7 +187,9 @@ fn sequence_running() {
     assert_eq!(result, Ok(TickResult::success()));
 
     let x =
-        f.bb.get("a".to_string())
+        f.bb.lock()
+            .unwrap()
+            .get("a".to_string())
             .ok()
             .flatten()
             .and_then(|v| v.clone().as_int())
@@ -183,7 +208,9 @@ fn fallback() {
     assert_eq!(result, Ok(TickResult::success()));
 
     let x =
-        f.bb.get("tick".to_string())
+        f.bb.lock()
+            .unwrap()
+            .get("tick".to_string())
             .ok()
             .flatten()
             .and_then(|v| v.clone().as_int())

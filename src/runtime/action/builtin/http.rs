@@ -1,18 +1,18 @@
 use crate::runtime::action::{Impl, ImplAsync, Tick};
 use crate::runtime::args::{RtArgs, RtValue};
 use crate::runtime::context::TreeContext;
+use crate::runtime::context::TreeContextRef;
 use crate::runtime::{RtResult, RuntimeError, TickResult};
 use reqwest::Error;
 use std::future::Future;
 use tokio::runtime::Runtime;
 use tokio::task::{JoinError, JoinHandle};
-
 /// Synchronious http get.
 /// It accepts url for request and key in bb to write the results as string.
 pub struct HttpGet;
 
-impl Impl for HttpGet {
-    fn tick(&mut self, args: RtArgs, ctx: &mut TreeContext) -> Tick {
+impl HttpGet {
+    fn on_tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
         let url = args
             .find_or_ith("url".to_string(), 0)
             .and_then(RtValue::as_string)
@@ -27,7 +27,7 @@ impl Impl for HttpGet {
             ))?;
         match reqwest::blocking::get(url).and_then(|v| v.text()) {
             Ok(resp) => {
-                ctx.bb().put(out, RtValue::str(resp))?;
+                ctx.bb().lock()?.put(out, RtValue::str(resp))?;
                 Ok(TickResult::success())
             }
             Err(err) => Ok(TickResult::failure(format!("error {}", err))),
@@ -35,13 +35,14 @@ impl Impl for HttpGet {
     }
 }
 
-pub struct HttpGetAsync;
+impl Impl for HttpGet {
+    fn tick(&mut self, args: RtArgs, ctx: TreeContextRef) -> Tick {
+        self.on_tick(args, ctx)
+    }
+}
 
-// impl ImplAsync for HttpGetAsync {
-//     fn tick(&self, args: RtArgs, ctx: &mut TreeContext) -> Tick {
-//         match reqwest::blocking::get("http://google.com").and_then(|v| v.text()) {
-//             Ok(resp) => Ok(TickResult::success()),
-//             Err(err) => Ok(TickResult::failure(format!("error {}", err))),
-//         }
-//     }
-// }
+impl ImplAsync for HttpGet {
+    fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
+        self.on_tick(args, ctx)
+    }
+}

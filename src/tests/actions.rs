@@ -1,37 +1,47 @@
+use crate::runtime::args::RtValue;
 use crate::runtime::TickResult;
 use crate::tests::{fb, test_folder, turn_on_logs};
 use crate::tracer::{Tracer, TracerConfiguration};
 
 #[test]
 fn builtin_actions() {
-    turn_on_logs();
     let mut fb = fb("actions/builtin");
 
     let mut f = fb.build().unwrap();
     let result = f.run();
     assert_eq!(result, Ok(TickResult::failure("test".to_string())));
 }
+
+#[test]
+fn lock_unlock() {
+    let mut fb = fb("actions/lock_unlock");
+
+    let mut f = fb.build().unwrap();
+    let result = f.run();
+    assert_eq!(result, Ok(TickResult::success()));
+    let guard = f.bb.lock().unwrap();
+    let k = guard.get("k".to_string()).unwrap();
+    assert_eq!(k, Some(&RtValue::str("v2".to_string())))
+}
+
 #[test]
 fn http_get() {
-    turn_on_logs();
     let mut fb = fb("actions/simple_http");
     let mut f = fb.build().unwrap();
     let result = f.run();
-    f.bb.print_dump().unwrap();
+    let bb_ref = f.bb.lock().unwrap();
+    let out1 = bb_ref
+        .get("out1".to_string())
+        .unwrap()
+        .and_then(|v| v.clone().as_string())
+        .unwrap();
+    let out2 = bb_ref
+        .get("out2".to_string())
+        .unwrap()
+        .and_then(|v| v.clone().as_string())
+        .unwrap();
+
     assert_eq!(result, Ok(TickResult::success()));
-}
-#[test]
-fn http_get_async() {
-    turn_on_logs();
-    let mut fb = fb("actions/simple_http_async");
-    fb.tracer(
-        Tracer::create(TracerConfiguration::in_file(test_folder(
-            "actions/simple_http_async/trace.log",
-        )))
-        .unwrap(),
-    );
-    let mut f = fb.build().unwrap();
-    let result = f.run();
-    f.bb.print_dump().unwrap();
-    assert_eq!(result, Ok(TickResult::success()));
+    assert!(out1.contains("http://httpbin.org/get"));
+    assert!(out2.contains("http://httpbin.org/get"));
 }

@@ -1,6 +1,6 @@
 use crate::runtime::action::{Impl, Tick};
 use crate::runtime::args::RtArgs;
-use crate::runtime::context::TreeContext;
+use crate::runtime::context::{TreeContext, TreeContextRef};
 use crate::runtime::{RtResult, RuntimeError, TickResult};
 use std::time::{Duration, SystemTime};
 
@@ -28,7 +28,7 @@ impl SimAction {
 }
 
 impl Impl for SimAction {
-    fn tick(&mut self, args: RtArgs, ctx: &mut TreeContext) -> Tick {
+    fn tick(&mut self, args: RtArgs, ctx: TreeContextRef) -> Tick {
         match self {
             SimAction::Success(d) => {
                 std::thread::sleep(Duration::from_millis(*d as u64));

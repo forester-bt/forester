@@ -51,6 +51,15 @@ impl BlackBoard {
             ))),
         }
     }
+
+    pub fn is_locked(&mut self, key: BBKey) -> RtResult<bool> {
+        Ok(match self.storage.get(&key) {
+            Some(Locked(_)) => true,
+            Some(Unlocked(v)) => false,
+            None | Some(Taken) => false,
+        })
+    }
+
     /// Unlock the value enablint any actions including reading writing or taking.
     ///
     /// #Notes:
@@ -120,6 +129,11 @@ impl BlackBoard {
                 self.storage.insert(key, Unlocked(value));
                 Ok(())
             }
+        }
+    }
+    pub fn new(elems: Vec<(BBKey, BBValue)>) -> Self {
+        Self {
+            storage: HashMap::from_iter(elems),
         }
     }
 }

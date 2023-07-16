@@ -1,5 +1,0 @@
-import "std::actions"
-
-root main sequence {
-     http_get_async("http://google.com","b")
-}

@@ -1,5 +1,5 @@
 use crate::runtime::action::builtin::data::{CheckEq, LockUnlockBBKey, StoreData, StoreTick};
-use crate::runtime::action::builtin::http::{HttpGet, HttpGetAsync};
+use crate::runtime::action::builtin::http::HttpGet;
 use crate::runtime::action::builtin::ReturnResult;
 use crate::runtime::action::keeper::ActionKeeper;
 use crate::runtime::action::{Action, ActionName};
@@ -32,7 +32,7 @@ use std::path::{Path, PathBuf};
 ///     fb.register_action("store", Action::sync(StoreData));
 ///     
 ///     fb.tracer(Tracer::default());
-///     fb.bb_load("db/db.json");
+///     fb.bb_load("db/db.json".to_string());
 ///     let forester = fb.build().unwrap();
 /// }
 ///
@@ -155,7 +155,7 @@ impl BuilderBuiltInActions {
             "eq_num" => Ok(Action::sync(CheckEq)),
             "store_tick" => Ok(Action::sync(StoreTick)),
             "http_get" => Ok(Action::sync(HttpGet)),
-            // "http_get_async" => Ok(Action::a_sync(HttpGetAsync)),
+            "http_get_async" => Ok(Action::a_sync(HttpGet)),
             "lock" => Ok(Action::sync(LockUnlockBBKey::Lock)),
             "unlock" => Ok(Action::sync(LockUnlockBBKey::Unlock)),
 

@@ -8,10 +8,12 @@ pub mod forester;
 pub mod rtree;
 
 use crate::runtime::action::Tick;
+use crate::runtime::blackboard::BlackBoard;
 use crate::tree::TreeError;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::Debug;
+use std::sync::{MutexGuard, PoisonError};
 
 /// The major type of every result in Forester.
 pub type RtResult<T> = Result<T, RuntimeError>;
@@ -50,6 +52,7 @@ pub enum RuntimeError {
     Stopped(String),
     RecoveryToFailure(String),
     BlackBoardError(String),
+    MultiThreadError(String),
 }
 
 impl RuntimeError {
@@ -83,5 +86,10 @@ impl From<serde_json::Error> for RuntimeError {
 impl From<std::io::Error> for RuntimeError {
     fn from(value: std::io::Error) -> Self {
         RuntimeError::IOError(value.to_string())
+    }
+}
+impl<T> From<PoisonError<MutexGuard<'_, T>>> for RuntimeError {
+    fn from(value: PoisonError<MutexGuard<'_, T>>) -> Self {
+        RuntimeError::MultiThreadError(value.to_string())
     }
 }

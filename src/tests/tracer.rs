@@ -1,7 +1,7 @@
 use crate::runtime::action::builtin::data::{GenerateData, StoreTick};
 use crate::runtime::action::{Action, Impl, Tick};
 use crate::runtime::args::{RtArgs, RtValue};
-use crate::runtime::context::TreeContext;
+use crate::runtime::context::{TreeContext, TreeContextRef};
 use crate::runtime::TickResult;
 use crate::tests::{fb, test_folder};
 use crate::tracer;
@@ -26,7 +26,7 @@ fn smoke() {
     let result = f.run();
     assert_eq!(result, Ok(TickResult::success()));
 
-    let trace = f.tracer.to_string();
+    let trace = f.tracer.lock().unwrap().to_string();
     assert_eq!(
         trace,
         r#"[1]  1 : Running(cursor=0,len=1)
@@ -191,15 +191,20 @@ fn custom_state() {
     struct CT;
 
     impl Impl for CT {
-        fn tick(&mut self, args: RtArgs, ctx: &mut TreeContext) -> Tick {
+        fn tick(&mut self, args: RtArgs, ctx: TreeContextRef) -> Tick {
             let i = ctx
                 .bb()
+                .lock()
+                .unwrap()
                 .get("k".to_string())?
                 .and_then(|v| v.clone().as_int())
                 .map(|v| v + 1)
                 .unwrap_or_default();
 
-            ctx.bb().put("k".to_string(), RtValue::int(i));
+            ctx.bb()
+                .lock()
+                .unwrap()
+                .put("k".to_string(), RtValue::int(i));
             ctx.trace(Event::Custom(format!("i = {:?}", i)));
             Ok(TickResult::success())
         }
@@ -211,7 +216,7 @@ fn custom_state() {
     let result = f.run();
     assert_eq!(result, Ok(TickResult::success()));
 
-    let trace = f.tracer.to_string();
+    let trace = f.tracer.lock().unwrap().to_string();
     assert_eq!(
         trace,
         r#"[1]  1 : Running(cursor=0,len=1)
@@ -243,15 +248,20 @@ fn file() {
     struct CT;
 
     impl Impl for CT {
-        fn tick(&mut self, args: RtArgs, ctx: &mut TreeContext) -> Tick {
+        fn tick(&mut self, args: RtArgs, ctx: TreeContextRef) -> Tick {
             let i = ctx
                 .bb()
+                .lock()
+                .unwrap()
                 .get("k".to_string())?
                 .and_then(|v| v.clone().as_int())
                 .map(|v| v + 1)
                 .unwrap_or_default();
 
-            ctx.bb().put("k".to_string(), RtValue::int(i));
+            ctx.bb()
+                .lock()
+                .unwrap()
+                .put("k".to_string(), RtValue::int(i));
             ctx.trace(Event::Custom(format!("i = {:?}", i)));
             Ok(TickResult::success())
         }

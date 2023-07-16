@@ -21,7 +21,9 @@ fn simple_inverter() {
         )))
     );
     let x =
-        f.bb.get("key".to_string())
+        f.bb.lock()
+            .unwrap()
+            .get("key".to_string())
             .unwrap()
             .unwrap()
             .clone()
@@ -48,7 +50,9 @@ fn simple_repeat() {
     assert_eq!(result, Ok(TickResult::success()));
 
     let x =
-        f.bb.get("key".to_string())
+        f.bb.lock()
+            .unwrap()
+            .get("key".to_string())
             .unwrap()
             .unwrap()
             .clone()
@@ -72,7 +76,9 @@ fn simple_delay() {
     assert!(duration.as_micros() >= 2000);
 
     let x =
-        f.bb.get("key".to_string())
+        f.bb.lock()
+            .unwrap()
+            .get("key".to_string())
             .unwrap()
             .unwrap()
             .clone()

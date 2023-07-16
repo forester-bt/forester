@@ -1,0 +1,17 @@
+import "std::actions"
+
+root main sequence {
+    fallback {
+        lock("k")
+        store_str("k","v")
+    }
+
+    lock("k")
+
+    fallback {
+        store_str("k","v1")
+        unlock("k")
+    }
+    eq_str("k","v")
+    store_str("k","v2")
+}

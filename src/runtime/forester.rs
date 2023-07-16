@@ -1,10 +1,12 @@
-use crate::runtime::action::flow::{read_cursor, run_with, CURSOR, LEN, P_CURSOR};
+pub mod decorator;
+pub mod flow;
 use crate::runtime::action::keeper::ActionKeeper;
-use crate::runtime::action::{decorator, flow, recover, Tick};
+use crate::runtime::action::{recover, Tick};
 use crate::runtime::args::{RtArgs, RtValue};
 use crate::runtime::blackboard::BlackBoard;
-use crate::runtime::context::{RNodeState, TreeContext};
+use crate::runtime::context::{RNodeState, TreeContext, TreeContextRef};
 use crate::runtime::env::RtEnv;
+use crate::runtime::forester::flow::{read_cursor, run_with, CURSOR, LEN, P_CURSOR};
 use crate::runtime::rtree::rnode::{FlowType, Name, RNode};
 use crate::runtime::rtree::RuntimeTree;
 use crate::runtime::{RtOk, RtResult, RuntimeError, TickResult};
@@ -26,9 +28,9 @@ use std::sync::{Arc, Mutex};
 /// Better to use `ForesterBuilder` to create a Forester.  
 pub struct Forester {
     pub tree: RuntimeTree,
-    pub bb: BlackBoard,
+    pub bb: Arc<Mutex<BlackBoard>>,
+    pub tracer: Arc<Mutex<Tracer>>,
     pub keeper: ActionKeeper,
-    pub tracer: Tracer,
     pub env: RtEnv,
 }
 
@@ -40,6 +42,8 @@ impl Forester {
         tracer: Tracer,
         env: RtEnv,
     ) -> RtResult<Self> {
+        let tracer = Arc::new(Mutex::new(tracer));
+        let bb = Arc::new(Mutex::new(bb));
         Ok(Self {
             tree,
             bb,
@@ -61,8 +65,11 @@ impl Forester {
     pub fn run_until(&mut self, max_tick: Option<usize>) -> Tick {
         // The ctx has a call stack to manage the flow.
         // When the flow goes up it pops the current element and leaps to the parent.
-        let mut ctx =
-            TreeContext::new(&mut self.bb, &mut self.tracer, max_tick.unwrap_or_default());
+        let mut ctx = TreeContext::new(
+            self.bb.clone(),
+            self.tracer.clone(),
+            max_tick.unwrap_or_default(),
+        );
         ctx.push(self.tree.root)?;
         // starts from root and pops up the element when either it is finished
         // or the root needs to make a new tick
@@ -205,7 +212,7 @@ impl Forester {
                             &mut env,
                             f_name.name()?,
                             args.clone(),
-                            &mut ctx,
+                            (&ctx).into(),
                         ))?;
                         let new_state = RNodeState::from(args.clone(), res);
                         debug!(target:"leaf", "tick:{}, the new state: {:?}",ctx.curr_ts(),&new_state);

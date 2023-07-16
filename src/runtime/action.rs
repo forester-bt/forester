@@ -1,10 +1,8 @@
 pub mod builtin;
-pub mod decorator;
-pub mod flow;
 pub mod keeper;
 
 use crate::runtime::args::{RtArgs, RtValue};
-use crate::runtime::context::TreeContext;
+use crate::runtime::context::{TreeContext, TreeContextRef};
 use crate::runtime::{RtResult, RuntimeError, TickResult};
 use std::collections::HashMap;
 use std::rc::Rc;
@@ -109,11 +107,11 @@ impl Action {
 /// }
 /// ```
 pub trait Impl {
-    fn tick(&mut self, args: RtArgs, ctx: &mut TreeContext) -> Tick;
+    fn tick(&mut self, args: RtArgs, ctx: TreeContextRef) -> Tick;
 }
 
 pub trait ImplAsync: Sync + Send {
-    fn tick(&self, args: RtArgs) -> Tick;
+    fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick;
 }
 
 impl From<Box<dyn Impl>> for Action {

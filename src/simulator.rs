@@ -107,7 +107,10 @@ impl Simulator {
         let result = self.forester.run_until(max);
 
         if let Some(bb_dump) = &cfg.bb.dump {
-            self.forester.bb.dump(get_pb(bb_dump, self.root.clone()))?;
+            self.forester
+                .bb
+                .lock()?
+                .dump(get_pb(bb_dump, self.root.clone()))?;
         }
 
         result

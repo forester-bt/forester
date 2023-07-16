@@ -1,22 +1,59 @@
-use crate::runtime::action::flow::REASON;
 use crate::runtime::action::Tick;
 use crate::runtime::args::{RtArgs, RtValue};
 use crate::runtime::blackboard::BlackBoard;
+use crate::runtime::forester::flow::REASON;
 use crate::runtime::rtree::rnode::RNodeId;
 use crate::runtime::{RtOk, RtResult, RuntimeError, TickResult};
 use crate::tracer::Event::NewState;
 use crate::tracer::{Event, Tracer};
 use std::collections::{HashMap, VecDeque};
 use std::fmt::{Display, Formatter};
+use std::sync::Arc;
+use std::sync::Mutex;
 
 pub type Timestamp = usize;
 
+pub struct TreeContextRef {
+    bb: Arc<Mutex<BlackBoard>>,
+    tracer: Arc<Mutex<Tracer>>,
+    curr_ts: Timestamp,
+}
+
+impl From<&TreeContext> for TreeContextRef {
+    fn from(ctx: &TreeContext) -> Self {
+        Self {
+            bb: ctx.bb.clone(),
+            tracer: ctx.tracer.clone(),
+            curr_ts: ctx.curr_ts.clone(),
+        }
+    }
+}
+
+impl TreeContextRef {
+    pub fn trace(&self, ev: Event) -> RtOk {
+        self.tracer.lock()?.trace(self.curr_ts, ev)
+    }
+    pub fn bb(&self) -> Arc<Mutex<BlackBoard>> {
+        self.bb.clone()
+    }
+    pub fn current_tick(&self) -> Timestamp {
+        self.curr_ts
+    }
+    pub fn new(bb: Arc<Mutex<BlackBoard>>, tracer: Arc<Mutex<Tracer>>, curr_ts: Timestamp) -> Self {
+        Self {
+            bb,
+            tracer,
+            curr_ts,
+        }
+    }
+}
+
 /// The runtine context.
-pub struct TreeContext<'a> {
+pub struct TreeContext {
     /// Storage
-    bb: &'a mut BlackBoard,
+    bb: Arc<Mutex<BlackBoard>>,
     /// Tracer to save the tracing information.
-    tracer: &'a mut Tracer,
+    tracer: Arc<Mutex<Tracer>>,
 
     /// The call stack
     stack: VecDeque<RNodeId>,
@@ -34,12 +71,16 @@ pub struct TreeContext<'a> {
     tick_limit: Timestamp,
 }
 
-impl<'a> TreeContext<'a> {
+impl TreeContext {
     /// A pointer to bb struct.
-    pub fn bb(&mut self) -> &mut BlackBoard {
-        self.bb
+    pub fn bb(&mut self) -> Arc<Mutex<BlackBoard>> {
+        self.bb.clone()
     }
-    pub fn new(bb: &'a mut BlackBoard, tracer: &'a mut Tracer, tick_limit: Timestamp) -> Self {
+    pub fn new(
+        bb: Arc<Mutex<BlackBoard>>,
+        tracer: Arc<Mutex<Tracer>>,
+        tick_limit: Timestamp,
+    ) -> Self {
         Self {
             bb,
             tracer,
@@ -52,11 +93,11 @@ impl<'a> TreeContext<'a> {
     }
 }
 
-impl<'a> TreeContext<'a> {
+impl TreeContext {
     /// Adds a custom record to the tracer.
     /// Preferably to use `Event::Custom(..)` for that
     pub fn trace(&mut self, ev: Event) -> RtOk {
-        self.tracer.trace(self.curr_ts, ev)
+        self.tracer.lock()?.trace(self.curr_ts, ev)
     }
 
     pub(crate) fn next_tick(&mut self) -> RtOk {
@@ -91,13 +132,13 @@ impl<'a> TreeContext<'a> {
     }
 
     pub(crate) fn push(&mut self, id: RNodeId) -> RtOk {
-        self.tracer.right();
+        self.tracer.lock()?.right();
         self.stack.push_back(id);
         Ok(())
     }
     pub(crate) fn pop(&mut self) -> RtResult<Option<RNodeId>> {
         let pop_node = self.stack.pop_back();
-        self.tracer.left();
+        self.tracer.lock()?.left();
         Ok(pop_node)
     }
     pub(crate) fn peek(&self) -> RtResult<Option<&RNodeId>> {
