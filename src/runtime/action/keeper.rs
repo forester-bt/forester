@@ -1,4 +1,4 @@
-use crate::runtime::action::Tick;
+use crate::runtime::action::{recover, Tick};
 use crate::runtime::action::{Action, ActionName};
 use crate::runtime::args::RtArgs;
 use crate::runtime::context::{RNodeState, TreeContext};
@@ -43,7 +43,7 @@ impl ActionKeeper {
             Action::Async(ref mut action) => match env.task_state(name)? {
                 TaskState::Absent => {
                     let action = action.clone();
-                    let handle = env.runtime.spawn_blocking(move || action.tick(args));
+                    let handle = env.runtime.spawn_blocking(move || action.tick(args, ctx));
                     env.tasks.insert(name.to_string(), handle);
                     Ok(TickResult::running())
                 }

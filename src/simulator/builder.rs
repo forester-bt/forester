@@ -67,7 +67,7 @@ impl SimulatorBuilder {
     }
 
     /// Build
-    pub fn build(&self) -> RtResult<Simulator> {
+    pub fn build(&mut self) -> RtResult<Simulator> {
         if let Some(root) = &self.root {
             let profile = match &self.profile {
                 None => SimProfile::default(),
@@ -80,8 +80,8 @@ impl SimulatorBuilder {
             };
 
             if let Some(main_file) = &self.main_file {
-                let env = if let Some(e) = self.env {
-                    e
+                let env = if self.env.is_some() {
+                    self.env.take().unwrap()
                 } else {
                     RtEnv::try_new()?
                 };

@@ -1,6 +1,6 @@
 use crate::runtime::action::flow::{read_cursor, run_with, CURSOR, LEN, P_CURSOR};
 use crate::runtime::action::keeper::ActionKeeper;
-use crate::runtime::action::{decorator, flow, Tick};
+use crate::runtime::action::{decorator, flow, recover, Tick};
 use crate::runtime::args::{RtArgs, RtValue};
 use crate::runtime::blackboard::BlackBoard;
 use crate::runtime::context::{RNodeState, TreeContext};
@@ -201,12 +201,12 @@ impl Forester {
                     debug!(target:"leaf","args :{:?}",args);
                     if ctx.state_in_ts(id).is_ready() {
                         let mut env = &mut self.env;
-                        let res = self.keeper.on_tick(
+                        let res = recover(self.keeper.on_tick(
                             &mut env,
                             f_name.name()?,
                             args.clone(),
                             &mut ctx,
-                        )?;
+                        ))?;
                         let new_state = RNodeState::from(args.clone(), res);
                         debug!(target:"leaf", "tick:{}, the new state: {:?}",ctx.curr_ts(),&new_state);
                         ctx.new_state(id, new_state)?;

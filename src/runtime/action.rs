@@ -14,7 +14,7 @@ pub type ActionName = String;
 pub type Tick = RtResult<TickResult>;
 
 /// Recovers the tick depending on the result.
-fn recover(tick: Tick) -> Tick {
+pub fn recover(tick: Tick) -> Tick {
     match tick {
         Err(RuntimeError::RecoveryToFailure(r)) => Ok(TickResult::Failure(r)),
         Err(RuntimeError::BlackBoardError(r)) => Ok(TickResult::Failure(r)),
@@ -113,7 +113,7 @@ pub trait Impl {
 }
 
 pub trait ImplAsync: Sync + Send {
-    fn tick(&self, args: RtArgs) -> Tick;
+    fn tick(&self, args: RtArgs, ctx: &mut TreeContext) -> Tick;
 }
 
 impl From<Box<dyn Impl>> for Action {

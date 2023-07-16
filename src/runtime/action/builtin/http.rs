@@ -38,7 +38,7 @@ impl Impl for HttpGet {
 pub struct HttpGetAsync;
 
 impl ImplAsync for HttpGetAsync {
-    fn tick(&self, args: RtArgs) -> Tick {
+    fn tick(&self, args: RtArgs, ctx: &mut TreeContext) -> Tick {
         match reqwest::blocking::get("http://google.com").and_then(|v| v.text()) {
             Ok(resp) => Ok(TickResult::success()),
             Err(err) => Ok(TickResult::failure(format!("error {}", err))),
