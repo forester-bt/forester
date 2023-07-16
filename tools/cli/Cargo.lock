@@ -316,6 +316,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "f-tree"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "env_logger",
+ "forester-rs",
+ "log",
+]
+
+[[package]]
 name = "fastrand"
 version = "1.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -346,17 +356,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "00b0228411908ca8685dba7fc2cdd70ec9990a6e753e89b6ac91a84c40fbaf4b"
 
 [[package]]
-name = "forest"
-version = "0.1.0"
-dependencies = [
- "clap",
- "env_logger",
- "forester",
- "log",
-]
-
-[[package]]
-name = "forester"
+name = "forester-rs"
 version = "0.1.0"
 dependencies = [
  "env_logger",
@@ -923,7 +923,9 @@ dependencies = [
 
 [[package]]
 name = "parsit"
-version = "0.1.14"
+version = "0.1.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9e5f278f4a828183e64b91a75258dad9a6b4f5ce53bab45efc90782fe0d50155"
 dependencies = [
  "logos",
  "logos-derive",

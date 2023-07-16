@@ -2,33 +2,14 @@
 
 All in all, the framework provides the following components :
 
-```mermaid
-flowchart LR   
-    subgraph Analysis
-        direction LR
-        Visualization 
-        Tracing
-        Simulation
-    end
-    subgraph Scripts
-        direction LR
-        Tree_lang <--> Validations 
-        Validations <--> Optimizations
-        Tooling
-    end
-    
-    subgraph Runtime
-        direction BT
-        Engine <--> Blackboard
-        Blackboard <--> ActionKeeper
-    end
-    
+- Analysis
+  - Visualization
+  - Tracing
+  - Simulatioon
+- Language as an entry point
+- Runtime
+- Console utility and extention
 
-Scripts --> Analysis
-Runtime --> Analysis
-Scripts --> Runtime
-
-```
 
 ## Scripts
 That section describes the language and a way how the users can describe the logic of the trees:
