@@ -48,11 +48,13 @@ pub enum RtValue {
 
 /// Just a utility helping to cast the `RtValue` to the specific type.
 /// ```rust
-///     fn tick(args: RtArgs, ctx: &mut TreeContext) {
+///     use forester_rs::runtime::args::RtArgs;
+///     use forester_rs::runtime::context::TreeContext;
+/// fn tick(args: RtArgs, ctx: &mut TreeContext) {
 ///      match args.first() {
 ///         None => (),
 ///         Some(v) => {
-///             let val = v.cast(ctx.bb()).string()?.unwrap_or_default();
+///             let val = v.cast(ctx.bb()?).string()?.unwrap_or_default();
 ///             println!("{val}");
 ///         }
 ///     }

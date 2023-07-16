@@ -16,7 +16,7 @@ since the visualizations uses it under the hood.
 ### Console utility
 
 ```shell
-forester vis --root project/ --main main.tree --tree main --output viz.svg
+f-tree vis --root project/ --main main.tree --tree main --output viz.svg
 ```
 
 - root can be ommited, the `<pwd>` folder will be taken by default

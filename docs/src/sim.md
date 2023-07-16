@@ -13,7 +13,7 @@ The profile enables to mix in the specific state of blackboard, trace the change
 
 **All paths in the configuration files can be either absolute or relative to the root folder**
 
-The file contains the settings information alongisde with the information about stubbed options.
+The file contains the settings information alongside with the information about stubbed options.
 
 Below, the example of the file:
 
@@ -97,10 +97,10 @@ fn smoke() {
 
 ### In the console
 
-Just use a `forest` console cli to run a simulation
+Just use a `f-tree` console cli to run a simulation
 
 ```shell
-forest sim --root tree\tests\simulator\smoke\  --profile sim.yaml
+f-tree sim --root tree\tests\simulator\smoke\  --profile sim.yaml
 ```
 
 - root can be ommited, the `<pwd>` folder will be taken by default

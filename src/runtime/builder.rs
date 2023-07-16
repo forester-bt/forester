@@ -23,6 +23,10 @@ use std::path::{Path, PathBuf};
 /// use forester::runtime::builder::ForesterBuilder;
 /// use forester::runtime::action::Action;
 /// use forester::runtime::action::builtin::data::StoreData;
+/// use forester_rs::runtime::action::Action;
+/// use forester_rs::runtime::action::builtin::data::StoreData;
+/// use forester_rs::runtime::builder::ForesterBuilder;
+/// use forester_rs::tracer::Tracer;
 /// fn test(root:PathBuf){
 ///     let mut root = PathBuf::new();
 ///
