@@ -2,11 +2,11 @@ use std::ffi::OsString;
 use std::path::PathBuf;
 
 use clap::{arg, value_parser, ArgMatches, Command};
-use forester::runtime::action::Tick;
-use forester::runtime::RtResult;
-use forester::simulator::builder::SimulatorBuilder;
-use forester::tree::TreeError;
-use forester::visualizer::Visualizer;
+use forester_rs::runtime::action::Tick;
+use forester_rs::runtime::RtResult;
+use forester_rs::simulator::builder::SimulatorBuilder;
+use forester_rs::tree::TreeError;
+use forester_rs::visualizer::Visualizer;
 
 #[macro_use]
 extern crate log;
