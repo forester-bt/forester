@@ -55,13 +55,13 @@ impl<'a> TreeContext<'a> {
 impl<'a> TreeContext<'a> {
     /// Adds a custom record to the tracer.
     /// Preferably to use `Event::Custom(..)` for that
-    pub fn trace(&mut self, ev: Event) {
+    pub fn trace(&mut self, ev: Event) -> RtOk {
         self.tracer.trace(self.curr_ts, ev)
     }
 
     pub(crate) fn next_tick(&mut self) -> RtOk {
         self.curr_ts += 1;
-        self.trace(Event::NextTick);
+        self.trace(Event::NextTick)?;
         debug!(target:"root", "tick up the flow to:{}",self.curr_ts);
         if self.tick_limit != 0 && self.curr_ts >= self.tick_limit {
             Err(RuntimeError::Stopped(format!(
@@ -114,7 +114,7 @@ impl<'a> TreeContext<'a> {
         state: RNodeState,
     ) -> RtResult<Option<RNodeState>> {
         self.ts_map.insert(id, self.curr_ts);
-        self.trace(NewState(id, state.clone()));
+        self.trace(NewState(id, state.clone()))?;
         Ok(self.state.insert(id, state))
     }
     pub(crate) fn state_in_ts(&self, id: RNodeId) -> RNodeState {

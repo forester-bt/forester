@@ -1,6 +1,6 @@
 use crate::runtime::context::RNodeState;
 use crate::runtime::rtree::rnode::RNodeId;
-use crate::runtime::RtResult;
+use crate::runtime::{RtOk, RtResult};
 use std::fmt::{Display, Formatter};
 use std::fs;
 use std::fs::OpenOptions;
@@ -111,9 +111,9 @@ impl Tracer {
         }
     }
     /// to add the infromation about the event.
-    pub fn trace(&mut self, tick: usize, ev: Event) {
+    pub fn trace(&mut self, tick: usize, ev: Event) -> RtOk {
         match self {
-            Tracer::Noop => {}
+            Tracer::Noop => Ok(()),
             Tracer::InMemory { events, level, .. } => {
                 let trace = Trace {
                     level: *level,
@@ -121,6 +121,7 @@ impl Tracer {
                     ev,
                 };
                 events.push(trace);
+                Ok(())
             }
             Tracer::InFile { file, level, .. } => {
                 let trace = Trace {
@@ -131,12 +132,10 @@ impl Tracer {
                 let mut file = OpenOptions::new()
                     .append(true)
                     .create(true)
-                    .open(file.clone())
-                    .map_err(|e| error!("error in writing to file {} {:?}", e, file))
-                    .unwrap();
+                    .open(file.clone())?;
 
-                file.write(trace.to_string().as_bytes())
-                    .map_err(|e| error!("error in writing to file {} {:?}", e, file));
+                file.write(trace.to_string().as_bytes())?;
+                Ok(())
             }
         }
     }

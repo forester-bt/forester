@@ -43,7 +43,7 @@ impl ActionKeeper {
             Action::Async(ref mut action) => match env.task_state(name)? {
                 TaskState::Absent => {
                     let action = action.clone();
-                    let handle = env.runtime.spawn_blocking(move || action.tick(args, ctx));
+                    let handle = env.runtime.spawn_blocking(move || action.tick(args));
                     env.tasks.insert(name.to_string(), handle);
                     Ok(TickResult::running())
                 }

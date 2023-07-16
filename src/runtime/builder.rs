@@ -155,7 +155,7 @@ impl BuilderBuiltInActions {
             "eq_num" => Ok(Action::sync(CheckEq)),
             "store_tick" => Ok(Action::sync(StoreTick)),
             "http_get" => Ok(Action::sync(HttpGet)),
-            "http_get_async" => Ok(Action::a_sync(HttpGetAsync)),
+            // "http_get_async" => Ok(Action::a_sync(HttpGetAsync)),
             "lock" => Ok(Action::sync(LockUnlockBBKey::Lock)),
             "unlock" => Ok(Action::sync(LockUnlockBBKey::Unlock)),
 

@@ -113,7 +113,7 @@ pub trait Impl {
 }
 
 pub trait ImplAsync: Sync + Send {
-    fn tick(&self, args: RtArgs, ctx: &mut TreeContext) -> Tick;
+    fn tick(&self, args: RtArgs) -> Tick;
 }
 
 impl From<Box<dyn Impl>> for Action {
