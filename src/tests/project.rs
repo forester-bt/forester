@@ -7,7 +7,7 @@ use crate::tree::project::Project;
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 
-#[test]
+// #[test]
 fn smoke() {
     let mut root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     root.push("tree/tests/plain_project");

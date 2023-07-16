@@ -7,7 +7,7 @@ root main r_sequence{
     sequence {
         incr("a",1)
         r_fallback {
-            eq_num(x, 10)
+            eq_num("tick", 10)
             running()
         }
     }

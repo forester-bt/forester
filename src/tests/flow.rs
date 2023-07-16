@@ -183,7 +183,7 @@ fn sequence_running() {
     );
 
     let mut f = fb.build().unwrap();
-    let result = f.run();
+    let result = f.run_until(Some(10000));
     assert_eq!(result, Ok(TickResult::success()));
 
     let x =
