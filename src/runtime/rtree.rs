@@ -17,6 +17,11 @@ use crate::tree::project::{FileName, Project};
 use crate::tree::{cerr, TreeError};
 use std::collections::{HashMap, HashSet, VecDeque};
 
+pub struct RuntimeTreeStarter {
+    pub tree: RuntimeTree,
+    pub std_actions: HashSet<ActionName>,
+}
+
 /// The runtime tree is a representation of the cimpilation tree supplemented with some runtime information.
 #[derive(Default, Debug, PartialEq)]
 pub struct RuntimeTree {
@@ -26,11 +31,12 @@ pub struct RuntimeTree {
 }
 
 impl RuntimeTree {
-    pub fn build(project: Project) -> Result<RuntimeTree, TreeError> {
+    pub fn build(project: Project) -> Result<RuntimeTreeStarter, TreeError> {
         let (file, name) = &project.main;
         let root = project.find_root(name, file)?;
         let mut builder = Builder::default();
         let mut r_tree = RuntimeTree::default();
+        let mut std_actions = HashSet::new();
 
         let root_id = builder.next();
         builder.add_chain_root(root_id);
@@ -50,7 +56,6 @@ impl RuntimeTree {
 
             let curr_file = &project.find_file(file_name.as_str())?;
             let import_map = ImportMap::build(curr_file)?;
-
             match call {
                 // for lambda there is not many actions since it does not have arguments so just grab a type and children
                 Call::Lambda(tpe, calls) => {
@@ -109,7 +114,7 @@ impl RuntimeTree {
                     None => {
                         let (tree, file) = import_map.find(&name, &project)?;
                         if file == "std::actions" {
-                            r_tree.std_nodes.insert(tree.name.clone());
+                            std_actions.insert(tree.name.clone());
                         }
                         let rt_args = to_rt_args(name.as_str(), args.clone(), tree.params.clone())?;
                         builder.add_chain(id, parent_id, args.clone(), tree.params.clone());
@@ -148,7 +153,10 @@ impl RuntimeTree {
             }
         }
 
-        Ok(r_tree)
+        Ok(RuntimeTreeStarter {
+            tree: r_tree,
+            std_actions,
+        })
     }
 
     pub fn node(&self, id: &RNodeId) -> RtResult<&RNode> {

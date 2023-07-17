@@ -52,7 +52,7 @@ impl<'a> Visualizer {
             }
         };
 
-        let rt = RuntimeTree::build(project)?;
+        let rt = RuntimeTree::build(project)?.tree;
         Visualizer::svg_file(&rt, output_pb)
     }
 

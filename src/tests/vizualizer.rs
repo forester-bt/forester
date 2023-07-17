@@ -13,7 +13,7 @@ fn manual() {
     project_root.push("tree/tests/plain_project");
     let project = Project::build("main.tree".to_string(), project_root).unwrap();
 
-    let tree = RuntimeTree::build(project).unwrap();
+    let tree = RuntimeTree::build(project).unwrap().tree;
 
     graph.push("tree/tests/plain_project/main.svg");
     let _ = Visualizer::svg_file(&tree, graph).unwrap();
@@ -26,7 +26,7 @@ fn manual2() {
     project_root.push("tree/tests/drive_robot");
     let project = Project::build("amr_simple.tree".to_string(), project_root).unwrap();
 
-    let tree = RuntimeTree::build(project).unwrap();
+    let tree = RuntimeTree::build(project).unwrap().tree;
 
     graph.push("tree/tests/drive_robot/amr_simple.svg");
     let _ = Visualizer::svg_file(&tree, graph).unwrap();
@@ -39,7 +39,7 @@ fn manual3() {
     project_root.push("tree/tests/ho_tree");
     let project = Project::build("main.tree".to_string(), project_root).unwrap();
 
-    let tree = RuntimeTree::build(project).unwrap();
+    let tree = RuntimeTree::build(project).unwrap().tree;
 
     graph.push("tree/tests/ho_tree/main.svg");
     let _ = Visualizer::svg_file(&tree, graph).unwrap();
@@ -52,7 +52,7 @@ fn manual4() {
     project_root.push("tree/tests/units/ho");
     let project = Project::build("main.tree".to_string(), project_root).unwrap();
 
-    let tree = RuntimeTree::build(project).unwrap();
+    let tree = RuntimeTree::build(project).unwrap().tree;
 
     graph.push("tree/tests/units/ho/main.svg");
     let _ = Visualizer::svg_file(&tree, graph).unwrap();
@@ -66,7 +66,7 @@ fn manualx() {
     project_root.push("tree/tests/flow/sequence");
     let project = Project::build("main.tree".to_string(), project_root).unwrap();
 
-    let tree = RuntimeTree::build(project).unwrap();
+    let tree = RuntimeTree::build(project).unwrap().tree;
 
     graph.push("tree/tests/flow/sequence/main.svg");
     let svg = graph.to_str().unwrap().to_string();

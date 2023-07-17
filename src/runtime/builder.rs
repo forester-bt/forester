@@ -6,7 +6,7 @@ use crate::runtime::action::{Action, ActionName};
 use crate::runtime::blackboard::BlackBoard;
 use crate::runtime::env::RtEnv;
 use crate::runtime::forester::Forester;
-use crate::runtime::rtree::RuntimeTree;
+use crate::runtime::rtree::{RuntimeTree, RuntimeTreeStarter};
 use crate::runtime::{RtResult, RuntimeError};
 use crate::tracer::Tracer;
 use crate::tree::project::{FileName, Project, TreeName};
@@ -108,10 +108,10 @@ impl ForesterBuilder {
                 )))
             }
         };
-        let tree = RuntimeTree::build(project)?;
+        let RuntimeTreeStarter { tree, std_actions } = RuntimeTree::build(project)?;
         let mut actions = self.actions;
 
-        for action_name in tree.std_nodes.iter() {
+        for action_name in std_actions.iter() {
             let action = BuilderBuiltInActions::action_impl(action_name)?;
             actions.insert(action_name.clone(), action);
         }

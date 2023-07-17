@@ -15,7 +15,7 @@ mod tests {
         root.push("tree/tests");
         root.push(root_dir);
         let project = Project::build(root_file.to_string(), root).unwrap();
-        RuntimeTree::build(project).unwrap()
+        RuntimeTree::build(project).unwrap().tree
     }
 
     #[test]
