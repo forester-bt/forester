@@ -161,14 +161,14 @@ of the different tasks together effective and easy.</p>
 <p>One of the problems that Forester endeavours to solve is to isolate the logic of the orchestration \ 
 from the logic of the tasks implementations and therefore the dsl ('Tree') is provided.<br />
 The Dsl is script based and supports a number of features that can alleviate the writing of the big trees.</p>
-<h4 id="the-framework-provides-the-ability-to-create-async-and-sync-tasks-tbd"><a class="header" href="#the-framework-provides-the-ability-to-create-async-and-sync-tasks-tbd">The framework provides the ability to create async and sync tasks (TBD)</a></h4>
+<h4 id="the-framework-provides-the-ability-to-create-async-and-sync-tasks"><a class="header" href="#the-framework-provides-the-ability-to-create-async-and-sync-tasks">The framework provides the ability to create async and sync tasks</a></h4>
 <p>The tasks (leaves of the tree) can be fulfilled with the asynchronous and synchronous logic.
 The difference here is the async tasks will not block the tree while sync tasks will block the tree.</p>
 <h4 id="the-framework-provides-the-ability-to-create-remote-and-local-tasks-tbd"><a class="header" href="#the-framework-provides-the-ability-to-create-remote-and-local-tasks-tbd">The framework provides the ability to create remote and local tasks (TBD)</a></h4>
 <p>The tasks can represent as a local stateless/stateful blocks of logic as the remote servers or procedures.</p>
-<h4 id="the-tooling-to-visualize-and-trace-the-execution-of-the-tree-tbd"><a class="header" href="#the-tooling-to-visualize-and-trace-the-execution-of-the-tree-tbd">The tooling to visualize and trace the execution of the tree (TBD)</a></h4>
+<h4 id="the-tooling-to-visualize-and-trace-the-execution-of-the-tree"><a class="header" href="#the-tooling-to-visualize-and-trace-the-execution-of-the-tree">The tooling to visualize and trace the execution of the tree</a></h4>
 <p>The tree can be visualized and traced in order to see how it is supposed to be executed.</p>
-<h4 id="the-simulation-mode-is-supposed-to-aid-with-the-design-decisions-tbd"><a class="header" href="#the-simulation-mode-is-supposed-to-aid-with-the-design-decisions-tbd">The simulation mode is supposed to aid with the design decisions (TBD)</a></h4>
+<h4 id="the-simulation-mode-is-supposed-to-aid-with-the-design-decisions"><a class="header" href="#the-simulation-mode-is-supposed-to-aid-with-the-design-decisions">The simulation mode is supposed to aid with the design decisions</a></h4>
 <p>The special simulation mode aims to help, quickly to see how the tree will be unfolding and how it can be designed.</p>
 <h4 id="the-optimizations-and-analysis-of-the-tree-tbd"><a class="header" href="#the-optimizations-and-analysis-of-the-tree-tbd">The optimizations and analysis of the tree (TBD)</a></h4>
 <p>The language provides a set of optimizations and validations to either ensure the logic is correct<br />
@@ -1386,7 +1386,7 @@ see <code>ForesterBuilder</code> for details.</p>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub trait Impl {
-    fn tick(&amp;mut self, args: RtArgs, ctx: TreeContextRef) -&gt; Tick;
+    fn tick(&amp;self, args: RtArgs, ctx: TreeContextRef) -&gt; Tick;
 }
 <span class="boring">}</span></code></pre></pre>
 <h4 id="implasync-for-async-actions"><a class="header" href="#implasync-for-async-actions"><code>ImplAsync</code> for async actions</a></h4>
@@ -1398,6 +1398,9 @@ see <code>ForesterBuilder</code> for details.</p>
 <span class="boring">}</span></code></pre></pre>
 <p>Where <code>args</code> are the given arguments from the tree definition and invocation and <code>ctx</code> 
 is a reference of the invocation context with <code>bb</code> and <code>tracer</code></p>
+<h2 id="mutability"><a class="header" href="#mutability">Mutability</a></h2>
+<p>The actions are intentionally stateless thus they can't mutate.
+Therefore, it is better off to use blackboard to keep some data between the calls.</p>
 <h2 id="how-to-register-action"><a class="header" href="#how-to-register-action">How to register action</a></h2>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {

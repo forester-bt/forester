@@ -17,7 +17,7 @@ There are 2 types of actions available at that moment:
 
 ```rust
 pub trait Impl {
-    fn tick(&mut self, args: RtArgs, ctx: TreeContextRef) -> Tick;
+    fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick;
 }
 ```
 
@@ -31,6 +31,9 @@ pub trait ImplAsync: Sync + Send {
 Where `args` are the given arguments from the tree definition and invocation and `ctx` 
 is a reference of the invocation context with `bb` and `tracer`  
 
+## Mutability
+The actions are intentionally stateless thus they can't mutate.
+Therefore, it is better off to use blackboard to keep some data between the calls.
 
 ## How to register action
 

@@ -28,7 +28,7 @@ impl SimAction {
 }
 
 impl Impl for SimAction {
-    fn tick(&mut self, args: RtArgs, ctx: TreeContextRef) -> Tick {
+    fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
         match self {
             SimAction::Success(d) => {
                 std::thread::sleep(Duration::from_millis(*d as u64));

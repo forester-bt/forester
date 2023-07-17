@@ -164,7 +164,7 @@
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub trait Impl {
-    fn tick(&amp;mut self, args: RtArgs, ctx: TreeContextRef) -&gt; Tick;
+    fn tick(&amp;self, args: RtArgs, ctx: TreeContextRef) -&gt; Tick;
 }
 <span class="boring">}</span></code></pre></pre>
 <h4 id="implasync-for-async-actions"><a class="header" href="#implasync-for-async-actions"><code>ImplAsync</code> for async actions</a></h4>
@@ -176,6 +176,9 @@
 <span class="boring">}</span></code></pre></pre>
 <p>Where <code>args</code> are the given arguments from the tree definition and invocation and <code>ctx</code> 
 is a reference of the invocation context with <code>bb</code> and <code>tracer</code></p>
+<h2 id="mutability"><a class="header" href="#mutability">Mutability</a></h2>
+<p>The actions are intentionally stateless thus they can't mutate.
+Therefore, it is better off to use blackboard to keep some data between the calls.</p>
 <h2 id="how-to-register-action"><a class="header" href="#how-to-register-action">How to register action</a></h2>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {

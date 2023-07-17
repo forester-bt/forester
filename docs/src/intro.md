@@ -19,17 +19,17 @@ One of the problems that Forester endeavours to solve is to isolate the logic of
 from the logic of the tasks implementations and therefore the dsl ('Tree') is provided. \
 The Dsl is script based and supports a number of features that can alleviate the writing of the big trees.
 
-#### The framework provides the ability to create async and sync tasks (TBD)
+#### The framework provides the ability to create async and sync tasks
 The tasks (leaves of the tree) can be fulfilled with the asynchronous and synchronous logic.
 The difference here is the async tasks will not block the tree while sync tasks will block the tree.
 
 #### The framework provides the ability to create remote and local tasks (TBD)
 The tasks can represent as a local stateless/stateful blocks of logic as the remote servers or procedures.
 
-#### The tooling to visualize and trace the execution of the tree (TBD)
+#### The tooling to visualize and trace the execution of the tree
 The tree can be visualized and traced in order to see how it is supposed to be executed.
 
-#### The simulation mode is supposed to aid with the design decisions (TBD)
+#### The simulation mode is supposed to aid with the design decisions
 The special simulation mode aims to help, quickly to see how the tree will be unfolding and how it can be designed.
 
 #### The optimizations and analysis of the tree (TBD)

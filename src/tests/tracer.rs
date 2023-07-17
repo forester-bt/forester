@@ -191,7 +191,7 @@ fn custom_state() {
     struct CT;
 
     impl Impl for CT {
-        fn tick(&mut self, args: RtArgs, ctx: TreeContextRef) -> Tick {
+        fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
             let i = ctx
                 .bb()
                 .lock()
@@ -248,7 +248,7 @@ fn file() {
     struct CT;
 
     impl Impl for CT {
-        fn tick(&mut self, args: RtArgs, ctx: TreeContextRef) -> Tick {
+        fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
             let i = ctx
                 .bb()
                 .lock()

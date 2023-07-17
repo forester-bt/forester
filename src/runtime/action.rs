@@ -61,11 +61,11 @@ impl Action {
 /// # Example
 /// ```rust
 ///
-/// use crate::runtime::action::{recover, Impl, Tick};
-/// use crate::runtime::args::{RtArgs, RtValue};
-/// use crate::runtime::blackboard::{BBKey, BlackBoard};
-/// use crate::runtime::context::TreeContext;
-/// use crate::runtime::{RuntimeError, TickResult};
+/// use forester_rs::runtime::action::{recover, Impl, Tick};
+/// use forester_rs::runtime::args::{RtArgs, RtValue};
+/// use forester_rs::runtime::blackboard::{BBKey, BlackBoard};
+/// use forester_rs::runtime::context::TreeContext;
+/// use forester_rs::runtime::{RuntimeError, TickResult};
 ///
 /// pub struct GenerateData<T>
 /// where
@@ -99,7 +99,7 @@ impl Action {
 ///             .find_or_ith("default".to_string(), 1)
 ///             .ok_or(RuntimeError::fail(format!("the default is expected")))?;
 ///
-///         let mut bb: &mut BlackBoard = ctx.bb();
+///         let mut bb = ctx.bb()?;
 ///         let curr = bb.get(key.clone())?.unwrap_or(&default).clone();
 ///         bb.put(key, (self.generator)(curr))?;
 ///         Ok(TickResult::Success)
@@ -107,7 +107,7 @@ impl Action {
 /// }
 /// ```
 pub trait Impl {
-    fn tick(&mut self, args: RtArgs, ctx: TreeContextRef) -> Tick;
+    fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick;
 }
 
 pub trait ImplAsync: Sync + Send {

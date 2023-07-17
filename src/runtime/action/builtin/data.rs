@@ -11,7 +11,7 @@ pub enum LockUnlockBBKey {
     Unlock,
 }
 impl Impl for LockUnlockBBKey {
-    fn tick(&mut self, args: RtArgs, ctx: TreeContextRef) -> Tick {
+    fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
         let key = args
             .first()
             .and_then(RtValue::as_string)
@@ -28,7 +28,7 @@ impl Impl for LockUnlockBBKey {
 pub struct StoreTick;
 
 impl Impl for StoreTick {
-    fn tick(&mut self, args: RtArgs, ctx: TreeContextRef) -> Tick {
+    fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
         let curr_tick = ctx.current_tick();
         let v = args.first().ok_or(RuntimeError::fail(format!(
             "the store_tick has at least one parameter"
@@ -51,7 +51,7 @@ impl Impl for StoreTick {
 pub struct CheckEq;
 
 impl Impl for CheckEq {
-    fn tick(&mut self, args: RtArgs, ctx: TreeContextRef) -> Tick {
+    fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
         let key = args
             .find_or_ith("key".to_string(), 0)
             .ok_or(RuntimeError::fail(format!("the key is expected ")))?;
@@ -99,7 +99,7 @@ impl<T> Impl for GenerateData<T>
 where
     T: Fn(RtValue) -> RtValue,
 {
-    fn tick(&mut self, args: RtArgs, ctx: TreeContextRef) -> Tick {
+    fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
         let key = args
             .find_or_ith("key".to_string(), 0)
             .and_then(|k| k.as_string())
@@ -122,7 +122,7 @@ where
 pub struct StoreData;
 
 impl Impl for StoreData {
-    fn tick(&mut self, args: RtArgs, ctx: TreeContextRef) -> Tick {
+    fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
         let key = args
             .find_or_ith("key".to_string(), 0)
             .and_then(|k| k.as_string())

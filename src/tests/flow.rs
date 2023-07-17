@@ -9,7 +9,7 @@ use crate::tests::{fb, test_folder, turn_on_logs};
 struct StoreTick;
 
 impl Impl for StoreTick {
-    fn tick(&mut self, args: RtArgs, ctx: TreeContextRef) -> Tick {
+    fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
         let ts = ctx.current_tick();
         ctx.bb()
             .lock()

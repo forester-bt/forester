@@ -36,7 +36,7 @@ impl HttpGet {
 }
 
 impl Impl for HttpGet {
-    fn tick(&mut self, args: RtArgs, ctx: TreeContextRef) -> Tick {
+    fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
         self.on_tick(args, ctx)
     }
 }
