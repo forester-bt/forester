@@ -6,7 +6,7 @@ use std::path::PathBuf;
 
 /// The builder to create a simulator process.
 ///
-/// # Example
+/// # Examples
 /// ```no-run
 /// use std::path::PathBuf;
 /// use forester::simulator::builder::SimulatorBuilder;
@@ -23,6 +23,38 @@ use std::path::PathBuf;
 ///     let mut sim = sb.build().unwrap();
 ///     sim.run().unwrap();
 /// }
+///
+/// fn smoke_from_text() {
+///     let mut sb = SimulatorBuilder::new();
+///
+///     let sim = PathBuf("simulator/smoke/sim.yaml");
+///
+///     sb.profile(sim);
+///     
+///     sb.text(
+///         r#"
+/// import "std::actions"
+///
+/// root main sequence {
+///     store_str("info1", "initial")
+///     retryer(task(config = obj), success())
+///     store_str("info2","finish")
+/// }
+///
+/// fallback retryer(t:tree, default:tree){
+///     retry(5) t(..)
+///     fail("just should fail")
+///     default(..)
+/// }
+///
+/// impl task(config: object);
+///     "#
+///         .to_string(),
+///     );    
+///
+///     let mut sim = sb.build().unwrap();
+///     sim.run().unwrap();
+/// }
 /// ```
 #[derive(Default)]
 pub struct SimulatorBuilder {
@@ -31,6 +63,7 @@ pub struct SimulatorBuilder {
     main_file: Option<String>,
     main_tree: Option<String>,
     env: Option<RtEnv>,
+    text: Option<String>,
 }
 
 impl SimulatorBuilder {
@@ -41,6 +74,7 @@ impl SimulatorBuilder {
             main_file: None,
             main_tree: None,
             env: None,
+            text: None,
         }
     }
     /// Add a simulator profile.
@@ -64,6 +98,15 @@ impl SimulatorBuilder {
     /// By default, creates the default tokio Runtime multi thread
     pub fn rt_env(&mut self, env: RtEnv) {
         self.env = Some(env);
+    }
+
+    /// add script on the fly.
+    /// In that scenario, there is no need in the other attributes like files or root.
+    ///
+    /// Precautions:
+    /// Imports and other files still work only with absolute paths.
+    pub fn text(&mut self, text: String) {
+        self.text = Some(text)
     }
 
     /// Build
@@ -97,6 +140,23 @@ impl SimulatorBuilder {
                     "the main file is not selected"
                 )))
             }
+        } else if let Some(text) = &self.text {
+            let profile = match &self.profile {
+                None => SimProfile::default(),
+                Some(p) if p.is_relative() => {
+                    return Err(RuntimeError::IOError(format!(
+                        "the path to the given profile is relative but the root does not exist. Probably, the option from text has been selected."
+                    )))
+                }
+                Some(p) => SimProfile::parse_file(&p)?,
+            };
+            let env = if self.env.is_some() {
+                self.env.take().unwrap()
+            } else {
+                RtEnv::try_new()?
+            };
+
+            Simulator::build_from_text(profile, text.to_string(), env)
         } else {
             Err(RuntimeError::IOError(format!(
                 "the root directory is not found"

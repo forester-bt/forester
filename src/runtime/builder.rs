@@ -19,14 +19,10 @@ use std::path::{Path, PathBuf};
 ///# Example
 ///```
 /// use std::path::PathBuf;
-/// use forester::tracer::Tracer;
-/// use forester::runtime::builder::ForesterBuilder;
-/// use forester::runtime::action::Action;
-/// use forester::runtime::action::builtin::data::StoreData;
+/// use forester_rs::tracer::Tracer;
+/// use forester_rs::runtime::builder::ForesterBuilder;
 /// use forester_rs::runtime::action::Action;
 /// use forester_rs::runtime::action::builtin::data::StoreData;
-/// use forester_rs::runtime::builder::ForesterBuilder;
-/// use forester_rs::tracer::Tracer;
 /// fn test(root:PathBuf){
 ///     let mut root = PathBuf::new();
 ///
@@ -37,6 +33,16 @@ use std::path::{Path, PathBuf};
 ///     
 ///     fb.tracer(Tracer::default());
 ///     fb.bb_load("db/db.json".to_string());
+///     let forester = fb.build().unwrap();
+/// }
+/// fn test_from_text(){
+///
+///     let mut fb = ForesterBuilder::new();
+///            
+///     fb.text(r#"root main store("hello", "world") "#.to_string());    
+///
+///     fb.register_action("store", Action::sync(StoreData));
+///     
 ///     let forester = fb.build().unwrap();
 /// }
 ///
@@ -50,6 +56,7 @@ pub struct ForesterBuilder {
     tracer: Tracer,
     env: Option<RtEnv>,
     bb_load: Option<String>,
+    text: Option<String>,
 }
 
 impl ForesterBuilder {
@@ -63,11 +70,21 @@ impl ForesterBuilder {
             tracer: Tracer::noop(),
             bb_load: None,
             env: None,
+            text: None,
         }
     }
     /// Add an action accroding to the name.
     pub fn register_action(&mut self, name: &str, action: Action) {
         self.actions.insert(name.to_string(), action);
+    }
+
+    /// add script on the fly.
+    /// In that scenario, there is no need in the other attributes like files or root.
+    ///
+    /// Precautions:
+    /// Imports and other files still work only with absolute paths.
+    pub fn text(&mut self, txt: String) {
+        self.text = Some(txt);
     }
 
     /// Root folder.
@@ -99,13 +116,17 @@ impl ForesterBuilder {
 
     /// The method to build forester
     pub fn build(self) -> RtResult<Forester> {
-        let project = match (self.main, self.root.clone(), self.main_file) {
-            (None, Some(root), Some(mf)) => Project::build(mf, root)?,
-            (Some(mt), Some(root), Some(mf)) => Project::build_with_root(mf, mt, root)?,
-            _ => {
-                return Err(RuntimeError::UnImplementedAction(format!(
-                    "not enough arguments to initialize the project"
-                )))
+        let project = if let Some(t) = self.text.clone() {
+            Project::build_from_text(t)?
+        } else {
+            match (self.main, self.root.clone(), self.main_file) {
+                (None, Some(root), Some(mf)) => Project::build(mf, root)?,
+                (Some(mt), Some(root), Some(mf)) => Project::build_with_root(mf, mt, root)?,
+                _ => {
+                    return Err(RuntimeError::UnImplementedAction(format!(
+                        "not enough arguments to initialize the project"
+                    )))
+                }
             }
         };
         let RuntimeTreeStarter { tree, std_actions } = RuntimeTree::build(project)?;
@@ -120,6 +141,11 @@ impl ForesterBuilder {
         if let Some(bb_load_dump) = self.bb_load {
             let file = PathBuf::from(bb_load_dump);
             let file = if file.is_relative() {
+                if self.text.is_some() && self.root.is_none() {
+                    return Err(RuntimeError::Unexpected(
+                        format!("There is impossible to have a relative path for bb_load since the root is absent and the option from text is setup.")
+                    ));
+                }
                 let mut r = self.root.unwrap().clone();
                 r.push(file);
                 r

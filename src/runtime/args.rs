@@ -54,10 +54,11 @@ pub enum RtValue {
 ///      match args.first() {
 ///         None => (),
 ///         Some(v) => {
-///             let val = v.cast(ctx.bb()?).string()?.unwrap_or_default();
+///             let val = v.cast(ctx.bb()?).string().unwrap().unwrap_or_default();
 ///             println!("{val}");
 ///         }
 ///     }
+/// }
 ///
 /// ```
 pub struct RtValueCast<'a> {

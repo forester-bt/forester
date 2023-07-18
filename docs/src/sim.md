@@ -95,6 +95,44 @@ fn smoke() {
 
 ```
 
+Or using builder, but for small scripts the script can be uploaded straight to the simulator builder
+
+```rust
+use std::path::PathBuf;
+
+#[test]
+fn text() {
+    let mut sb = SimulatorBuilder::new();
+    sb.text(
+        r#"
+import "std::actions"
+
+root main sequence {
+    store_str("info1", "initial")
+    retryer(task(config = obj), success())
+    store_str("info2","finish")
+}
+
+fallback retryer(t:tree, default:tree){
+    retry(5) t(..)
+    fail("just should fail")
+    default(..)
+}
+
+impl task(config: object);
+    "#
+            .to_string(),
+    );
+    let sim = PathBuf("absolute_path_to_sim.yaml");
+
+    sb.profile(sim);
+
+    let mut sim = sb.build().unwrap();
+    sim.run().unwrap();
+}
+```
+
+
 ### In the console
 
 Just use a `f-tree` console cli to run a simulation

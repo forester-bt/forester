@@ -28,13 +28,18 @@ pub fn read_file(pb: &PathBuf) -> RtResult<String> {
         .map_err(|e| RuntimeError::IOError(format!("error:{}, file:{:?}", e.to_string(), pb)))?)
 }
 
-pub(crate) fn get_pb(file: &String, root: PathBuf) -> PathBuf {
+pub(crate) fn get_pb(file: &String, root: PathBuf) -> RtResult<PathBuf> {
     let file_pb = PathBuf::from(file);
     if file_pb.is_relative() {
+        if !root.exists() {
+            return Err(RuntimeError::Unexpected(
+                "the root folder does not exist.".to_string(),
+            ));
+        }
         let mut full_path = root;
         full_path.push(file_pb);
-        full_path
+        Ok(full_path)
     } else {
-        file_pb
+        Ok(file_pb)
     }
 }

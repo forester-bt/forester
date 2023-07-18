@@ -101,3 +101,34 @@ fn smoke() {
     let tracer = &sim.forester.tracer;
     sim.run().unwrap();
 }
+
+#[test]
+fn text() {
+    let mut sb = SimulatorBuilder::new();
+    sb.text(
+        r#"
+import "std::actions"
+
+root main sequence {
+    store_str("info1", "initial")
+    retryer(task(config = obj), success())
+    store_str("info2","finish")
+}
+
+fallback retryer(t:tree, default:tree){
+    retry(5) t(..)
+    fail("just should fail")
+    default(..)
+}
+
+impl task(config: object);
+    "#
+        .to_string(),
+    );
+    let sim = test_folder("simulator/smoke/sim_absolute.yaml");
+
+    sb.profile(sim);
+
+    let mut sim = sb.build().unwrap();
+    sim.run().unwrap();
+}

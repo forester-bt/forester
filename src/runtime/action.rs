@@ -64,7 +64,7 @@ impl Action {
 /// use forester_rs::runtime::action::{recover, Impl, Tick};
 /// use forester_rs::runtime::args::{RtArgs, RtValue};
 /// use forester_rs::runtime::blackboard::{BBKey, BlackBoard};
-/// use forester_rs::runtime::context::TreeContext;
+/// use forester_rs::runtime::context::{TreeContext, TreeContextRef};
 /// use forester_rs::runtime::{RuntimeError, TickResult};
 ///
 /// pub struct GenerateData<T>
@@ -87,7 +87,7 @@ impl Action {
 /// where
 ///     T: Fn(RtValue) -> RtValue,
 /// {
-///     fn tick(&self, args: RtArgs, ctx: &mut TreeContext) -> Tick {
+///     fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
 ///         let key = args
 ///             .find_or_ith("key".to_string(), 0)
 ///             .and_then(|k| k.as_string())
@@ -99,7 +99,7 @@ impl Action {
 ///             .find_or_ith("default".to_string(), 1)
 ///             .ok_or(RuntimeError::fail(format!("the default is expected")))?;
 ///
-///         let mut bb = ctx.bb()?;
+///         let mut bb = ctx.bb()?.unwrap();
 ///         let curr = bb.get(key.clone())?.unwrap_or(&default).clone();
 ///         bb.put(key, (self.generator)(curr))?;
 ///         Ok(TickResult::Success)

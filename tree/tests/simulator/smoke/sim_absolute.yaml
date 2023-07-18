@@ -1,0 +1,13 @@
+config:
+  trace: c:/x/gen/main.trace
+  graph: c:/x/gen/main.svg
+  bb:
+    dump: c:/x/gen/bb.json
+  max_ticks: 10
+
+actions:
+  -
+    name: task
+    stub: failure
+    params:
+      delay: 100

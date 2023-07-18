@@ -42,7 +42,7 @@ impl<'a> Visualizer {
         }?;
 
         let output_pb = match output {
-            Some(path) => get_pb(path, project.root.clone()),
+            Some(path) => get_pb(path, project.root.clone())?,
             None => {
                 let mut output_name = PathBuf::from(project.main.0.clone());
                 let _ = output_name.set_extension("svg");
@@ -95,7 +95,7 @@ impl<'a> Visualizer {
     }
 
     pub fn svg_file(runtime_tree: &RuntimeTree, path: PathBuf) -> Result<String, TreeError> {
-        let mut g = Visualizer::build_graph(runtime_tree)?;
+        let g = Visualizer::build_graph(runtime_tree)?;
         let p = path.to_str().ok_or(TreeError::VisualizationError(format!(
             "{:?} is not applicable",
             &path

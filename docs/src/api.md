@@ -1,4 +1,4 @@
-# Installation
+# Setup
 
 There are two ways to interact with Forester
 
@@ -28,7 +28,7 @@ Options:
   -V, --version  Print version
 ```
 
-## As a dependency to run from a rust code and
+## As a dependency to run from a rust code
 
 ```toml
 forester-rs = "0.1.0"
@@ -47,6 +47,36 @@ fn main() {
     fb.root(PathBuf::from("folder"));
     fb.register_action("cv",Action::sync(ReturnResult::success()));
 
+    let mut forester = fb.build().expect("the params are good");
+
+    let result = forester.run().unwrap();
+    println!("result {:?}",result);
+}
+
+
+```
+
+## On the fly for small scripts
+
+```rust
+
+use forester_rs::runtime::action::builtin::ReturnResult;
+use forester_rs::runtime::action::Action;
+use forester_rs::runtime::action::Tick;
+use forester_rs::runtime::builder::ForesterBuilder;
+use forester_rs::runtime::RtResult;
+
+fn main() {
+    let mut fb = ForesterBuilder::new();
+    fb.register_action("cv",Action::sync(ReturnResult::success()));
+    
+    fb.text(r#"
+        root main sequence {
+            cv()
+            cv()
+            cv()
+        }
+    "#.to_string());
     let mut forester = fb.build().expect("the params are good");
 
     let result = forester.run().unwrap();

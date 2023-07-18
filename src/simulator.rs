@@ -45,6 +45,45 @@ pub struct Simulator {
 }
 
 impl Simulator {
+    pub fn build_from_text(profile: SimProfile, text: String, env: RtEnv) -> RtResult<Self> {
+        let mut fb = ForesterBuilder::new();
+        let pr = profile.clone();
+        fb.rt_env(env);
+
+        if let Some(trace_dump_file) = profile.config.trace {
+            fb.tracer(Tracer::create(TracerConfiguration::in_file(
+                PathBuf::from(trace_dump_file),
+            ))?)
+        };
+
+        if let Some(bb_load_path) = profile.config.bb.load {
+            fb.bb_load(bb_load_path);
+        }
+
+        for action in profile.actions.iter() {
+            fb.register_action(
+                action.name.as_str(),
+                RtAction::sync(SimAction::create(
+                    action.stub.as_str(),
+                    action
+                        .params
+                        .get("delay")
+                        .map(|s| s.parse::<usize>().unwrap_or_default())
+                        .unwrap_or_default(),
+                )?),
+            )
+        }
+        fb.text(text);
+
+        let forester = fb.build()?;
+
+        Ok(Simulator {
+            root: PathBuf::new(),
+            profile: pr,
+            forester,
+        })
+    }
+
     pub fn build(
         profile: SimProfile,
         root: PathBuf,
@@ -65,7 +104,7 @@ impl Simulator {
             fb.tracer(Tracer::create(TracerConfiguration::in_file(get_pb(
                 &trace_dump_file,
                 root.clone(),
-            )))?)
+            )?))?)
         }
 
         if let Some(bb_load_path) = profile.config.bb.load {
@@ -101,7 +140,7 @@ impl Simulator {
 
         if let Some(viz_file) = &cfg.graph {
             let tree = &self.forester.tree;
-            Visualizer::svg_file(tree, get_pb(viz_file, self.root.clone()))?;
+            Visualizer::svg_file(tree, get_pb(viz_file, self.root.clone())?)?;
         }
 
         let result = self.forester.run_until(max);
@@ -110,7 +149,7 @@ impl Simulator {
             self.forester
                 .bb
                 .lock()?
-                .dump(get_pb(bb_dump, self.root.clone()))?;
+                .dump(get_pb(bb_dump, self.root.clone())?)?;
         }
 
         result

@@ -88,6 +88,45 @@ impl<'a> Project {
         project.main = (main_file, main_call);
         Ok(project)
     }
+    pub fn build_from_text(text: String) -> Result<Project, TreeError> {
+        let mut project = Project {
+            root: PathBuf::new(),
+            main: ("".to_string(), "".to_string()),
+            files: Default::default(),
+            std: Default::default(),
+        };
+
+        let _ = project.parse_text(text)?;
+
+        let main_call = project
+            .files
+            .get("_")
+            .and_then(|file| file.definitions.iter().find(|(name, t)| t.is_root()))
+            .map(|(name, _)| name.to_string())
+            .ok_or(TreeError::IOError(format!(
+                "no root operation in the given text",
+            )))?;
+        project.main = ("_".to_string(), main_call);
+        Ok(project)
+    }
+
+    fn parse_text(&mut self, text: String) -> Result<(), TreeError> {
+        let ast_file = Parser::new(text.as_str())?.parse()?;
+
+        let mut file = File::new("_".to_string());
+        for ent in ast_file.0.into_iter() {
+            let _ = match ent {
+                FileEntity::Tree(t) => file.add_def(t)?,
+                FileEntity::Import(i) => {
+                    let _ = self.parse_file(PathBuf::new(), i.f_name().to_string())?;
+                    file.add_import(i)?
+                }
+            };
+        }
+
+        self.files.insert(file.name.clone(), file);
+        Ok(())
+    }
 
     fn parse_file(&mut self, mut root: PathBuf, file: FileName) -> Result<(), TreeError> {
         let text = file_to_str(root.clone(), file.clone())?;
