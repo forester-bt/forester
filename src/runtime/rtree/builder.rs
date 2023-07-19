@@ -14,7 +14,7 @@ use std::collections::{HashMap, VecDeque};
 /// # Note
 /// The internal structure
 #[derive(Default)]
-pub struct Builder {
+pub struct InternalBuilder {
     gen: usize,
     stack: VecDeque<StackItem>,
     chain_map: HashMap<usize, ChainItem>,
@@ -57,7 +57,7 @@ impl ChainItem {
     }
 }
 
-impl Builder {
+impl InternalBuilder {
     pub fn next(&mut self) -> usize {
         self.gen += 1;
         self.gen

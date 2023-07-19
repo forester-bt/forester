@@ -54,7 +54,6 @@ mod tests {
                         )
                     )
                 ]),
-                std_nodes: Default::default(),
             }
         )
     }

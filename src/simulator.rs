@@ -21,7 +21,7 @@ use crate::runtime::env::RtEnv;
 ///
 /// # Example
 /// # Example
-/// ```no-run
+/// ```no_run
 /// use std::path::PathBuf;
 /// use forester::simulator::builder::SimulatorBuilder;
 ///

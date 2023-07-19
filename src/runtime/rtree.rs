@@ -1,11 +1,13 @@
 mod builder;
+pub mod ext_builder;
+pub mod macros;
 pub mod rnode;
 
 use crate::runtime::action::keeper::ActionKeeper;
 use crate::runtime::action::ActionName;
 use crate::runtime::args::transform::{to_dec_rt_args, to_rt_args};
 use crate::runtime::blackboard::BlackBoard;
-use crate::runtime::rtree::builder::{Builder, StackItem};
+use crate::runtime::rtree::builder::{InternalBuilder, StackItem};
 use crate::runtime::rtree::rnode::{DecoratorType, RNode, RNodeId};
 use crate::runtime::{RtResult, RuntimeError};
 use crate::tree::parser::ast::arg::{Argument, Arguments, Param, Params};
@@ -22,19 +24,18 @@ pub struct RuntimeTreeStarter {
     pub std_actions: HashSet<ActionName>,
 }
 
-/// The runtime tree is a representation of the cimpilation tree supplemented with some runtime information.
+/// The runtime tree is a representation of the compilation tree supplemented with some runtime information.
 #[derive(Default, Debug, PartialEq)]
 pub struct RuntimeTree {
     pub root: RNodeId,
     pub nodes: HashMap<RNodeId, RNode>,
-    pub std_nodes: HashSet<ActionName>,
 }
 
 impl RuntimeTree {
     pub fn build(project: Project) -> Result<RuntimeTreeStarter, TreeError> {
         let (file, name) = &project.main;
         let root = project.find_root(name, file)?;
-        let mut builder = Builder::default();
+        let mut builder = InternalBuilder::default();
         let mut r_tree = RuntimeTree::default();
         let mut std_actions = HashSet::new();
 
@@ -158,7 +159,6 @@ impl RuntimeTree {
             std_actions,
         })
     }
-
     pub fn node(&self, id: &RNodeId) -> RtResult<&RNode> {
         self.nodes.get(id).ok_or(RuntimeError::uex(format!(
             "the node {id} is not found in the rt tree"
