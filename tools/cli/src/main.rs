@@ -3,6 +3,7 @@ use std::path::PathBuf;
 
 use clap::{arg, value_parser, ArgMatches, Command};
 use forester_rs::runtime::action::Tick;
+use forester_rs::runtime::builder::ForesterBuilder;
 use forester_rs::runtime::RtResult;
 use forester_rs::simulator::builder::SimulatorBuilder;
 use forester_rs::tree::TreeError;
@@ -16,7 +17,7 @@ fn cli() -> Command {
         .about("A console utility to interact with Forester")
         .subcommand_required(true)
         .arg_required_else_help(true)
-        .version("0.0.1")
+        .version("0.1.2")
         .subcommand(
             Command::new("sim")
                 .about(r#"Runs simulation. Expects a simulation profile"#)
@@ -66,11 +67,16 @@ fn sim(matches: &ArgMatches) {
 
         let mut sb = SimulatorBuilder::new();
         sb.profile(sim);
-        sb.root(root);
-        sb.main_file(main_file);
+        sb.root(root.clone());
+        let mut fb = ForesterBuilder::from_file_system();
+        fb.main_file(main_file);
+        fb.root(root);
+
         if main_tree.is_some() {
-            sb.main_tree(main_tree.unwrap().to_string())
+            fb.main_tree(main_tree.unwrap().to_string())
         }
+
+        sb.forester_builder(fb);
 
         match sb.build() {
             Ok(mut s) => match s.run() {
