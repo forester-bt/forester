@@ -67,69 +67,65 @@ All stubs have the following params:
 
 The simulation can be performed in on of two ways:
 - using console application from console
-- using library from rust code
+- using a library from rust code
 
 ### In the code
 
-Just use the builder and the simulator from the `simulator` module.
+Just use the builder and the simulator from the `simulator` module. For details, 
+please see the doc for `ForesterBuilder` and `SimulatorBuilder`
 
 ```rust
-#[test]
 fn smoke() {
-    let mut sb = SimulatorBuilder::new();
-    
-    let root = test_folder("simulator/smoke");
+     let mut sb = SimulatorBuilder::new();
 
-    sb.root(root);
-    
-    // can be relative to root or absolute.
-    sb.profile(PathBuf::from("sim.yaml"));
-    sb.main_file("main.tree".to_string());
-    
-    // can be ommited if only one root definition in the file
-    sb.main_tree("main".to_string());
-    
-    let mut sim = sb.build().unwrap();
-    sim.run().unwrap();
-}
+     let root = PathBuf::from("simulator/smoke");
 
-```
+     sb.root(root.clone());
+     sb.profile(PathBuf::from("sim.yaml"));
+     
+     let mut fb = ForesterBuilder::from_file_system();
 
-Or using builder, but for small scripts the script can be uploaded straight to the simulator builder
+     fb.main_file("main.tree".to_string());
+     fb.root(root);
 
-```rust
-use std::path::PathBuf;
+     sb.forester_builder(fb);
+     
+     let mut sim = sb.build().unwrap();
+     sim.run().unwrap();
+ }
 
-#[test]
-fn text() {
-    let mut sb = SimulatorBuilder::new();
-    sb.text(
-        r#"
-import "std::actions"
+ fn smoke_from_text() {
+     let mut sb = SimulatorBuilder::new();
 
-root main sequence {
-    store_str("info1", "initial")
-    retryer(task(config = obj), success())
-    store_str("info2","finish")
-}
+     let sim = PathBuf::from("simulator/smoke/sim.yaml");
+     let mut fb = ForesterBuilder::from_text();
+     sb.profile(sim);
+     
+     fb.text(
+         r#"
+ import "std::actions"
 
-fallback retryer(t:tree, default:tree){
-    retry(5) t(..)
-    fail("just should fail")
-    default(..)
-}
+ root main sequence {
+     store_str("info1", "initial")
+     retryer(task(config = obj), success())
+     store_str("info2","finish")
+ }
 
-impl task(config: object);
-    "#
-            .to_string(),
-    );
-    let sim = PathBuf("absolute_path_to_sim.yaml");
+ fallback retryer(t:tree, default:tree){
+     retry(5) t(..)
+     fail("just should fail")
+     default(..)
+ }
 
-    sb.profile(sim);
+ impl task(config: object);
+     "#
+         .to_string(),
+     );    
+     sb.forester_builder(fb);
+     let mut sim = sb.build().unwrap();
+     sim.run().unwrap();
+ }
 
-    let mut sim = sb.build().unwrap();
-    sim.run().unwrap();
-}
 ```
 
 

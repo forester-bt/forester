@@ -28,26 +28,34 @@ Options:
   -V, --version  Print version
 ```
 
+
 ## As a dependency to run from a rust code
 
 ```toml
 forester-rs = "0.1.0"
 ```
 
+
+### From file system
+
 ```rust
 
-use forester_rs::runtime::action::builtin::ReturnResult;
-use forester_rs::runtime::action::Action;
-use forester_rs::runtime::action::Tick;
-use forester_rs::runtime::builder::ForesterBuilder;
-use forester_rs::runtime::RtResult;
+ use std::path::PathBuf;
+ use forester_rs::flow;
+ use forester_rs::tracer::Tracer;
+ use forester_rs::runtime::builder::ForesterBuilder;
+ use forester_rs::runtime::action::Action;
+ use forester_rs::runtime::action::builtin::data::StoreData;
 
 fn main() {
-    let mut fb = ForesterBuilder::new();
-    fb.root(PathBuf::from("folder"));
-    fb.register_action("cv",Action::sync(ReturnResult::success()));
-
-    let mut forester = fb.build().expect("the params are good");
+    let mut fb = ForesterBuilder::from_file_system();
+    fb.main_file("main.tree".to_string());
+    fb.root(root);
+    fb.register_action("store", Action::sync(StoreData));
+    fb.tracer(Tracer::default());
+    fb.bb_load("db/db.json".to_string());
+    
+    let forester = fb.build().unwrap();
 
     let result = forester.run().unwrap();
     println!("result {:?}",result);
@@ -56,18 +64,19 @@ fn main() {
 
 ```
 
-## On the fly for small scripts
+### On the fly for small scripts
 
 ```rust
 
-use forester_rs::runtime::action::builtin::ReturnResult;
-use forester_rs::runtime::action::Action;
-use forester_rs::runtime::action::Tick;
+use std::path::PathBuf;
+use forester_rs::flow;
+use forester_rs::tracer::Tracer;
 use forester_rs::runtime::builder::ForesterBuilder;
-use forester_rs::runtime::RtResult;
+use forester_rs::runtime::action::Action;
+use forester_rs::runtime::action::builtin::data::StoreData;
 
 fn main() {
-    let mut fb = ForesterBuilder::new();
+    let mut fb = ForesterBuilder::from_text();
     fb.register_action("cv",Action::sync(ReturnResult::success()));
     
     fb.text(r#"
@@ -77,7 +86,39 @@ fn main() {
             cv()
         }
     "#.to_string());
-    let mut forester = fb.build().expect("the params are good");
+    let mut forester = fb.build().unwrap();
+
+    let result = forester.run().unwrap();
+    println!("result {:?}",result);
+}
+
+
+```
+
+
+### Manually construct the trees
+
+```rust
+
+use std::path::PathBuf;
+use forester_rs::flow;
+use forester_rs::tracer::Tracer;
+use forester_rs::runtime::builder::ForesterBuilder;
+use forester_rs::runtime::action::Action;
+use forester_rs::runtime::action::builtin::data::StoreData;
+
+fn main() {
+    let mut fb = ForesterBuilder::from_code();
+    fb.register_action("cv",Action::sync(ReturnResult::success()));
+    fb.add_rt_node(
+          flow!(fallback node_name!(), args!();
+              action!(),
+              action!(),
+              action!(),
+              action!()
+          )
+    );
+    let mut forester = fb.build().unwrap();
 
     let result = forester.run().unwrap();
     println!("result {:?}",result);

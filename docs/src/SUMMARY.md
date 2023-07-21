@@ -2,7 +2,7 @@
 
 - [Intro](./intro.md)
 - [Components](./components.md)
-- [Installation](./api.md)
+- [Setup](./api.md)
 - [Tree language](./intro_lang.md)
   - [Syntax](./syntax.md)
   - [Imports](./imports.md)

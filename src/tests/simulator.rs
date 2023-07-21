@@ -1,3 +1,4 @@
+use crate::runtime::builder::ForesterBuilder;
 use crate::simulator::builder::SimulatorBuilder;
 use crate::simulator::config::{Action, BbConfig, SimProfile, SimProfileConfig};
 use crate::simulator::Simulator;
@@ -93,9 +94,14 @@ fn smoke() {
 
     let root = test_folder("simulator/smoke");
 
-    sb.root(root);
+    sb.root(root.clone());
     sb.profile(PathBuf::from("sim.yaml"));
-    sb.main_file("main.tree".to_string());
+
+    let mut fb = ForesterBuilder::from_file_system();
+    fb.main_file("main.tree".to_string());
+    fb.root(root);
+
+    sb.forester_builder(fb);
 
     let mut sim = sb.build().unwrap();
     let tracer = &sim.forester.tracer;
@@ -104,8 +110,9 @@ fn smoke() {
 
 #[test]
 fn text() {
+    let mut fb = ForesterBuilder::from_text();
     let mut sb = SimulatorBuilder::new();
-    sb.text(
+    fb.text(
         r#"
 import "std::actions"
 
@@ -125,6 +132,7 @@ impl task(config: object);
     "#
         .to_string(),
     );
+    sb.forester_builder(fb);
     let sim = test_folder("simulator/smoke/sim_absolute.yaml");
 
     sb.profile(sim);

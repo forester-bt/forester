@@ -78,11 +78,11 @@ fn sim(matches: &ArgMatches) {
                     info!("the process is finished with the result: {:?}", r)
                 }
                 Err(err) => {
-                    error!("the runtime error occured : {:?}", err)
+                    error!("the runtime error occurred : {:?}", err)
                 }
             },
             Err(err) => {
-                error!("the building error occured: {:?}", err)
+                error!("the building error occurred: {:?}", err)
             }
         }
     } else {

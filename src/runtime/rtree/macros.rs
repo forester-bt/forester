@@ -99,18 +99,23 @@ macro_rules! arg {
     }};
 }
 
+/// RtValue::String that accepts &str as argument
 #[macro_export]
 macro_rules! rt_str {
     ($value:expr) => {{
         RtValue::str($value.to_string())
     }};
 }
+
+/// RtValue::Pointer that accepts &str as argument
 #[macro_export]
 macro_rules! rt_ptr {
     ($value:expr) => {{
         RtValue::Pointer($value.to_string())
     }};
 }
+
+/// RtValue::Bool that accepts true | false  as argument
 #[macro_export]
 macro_rules! rt_bool {
     (true) => {{
@@ -120,6 +125,8 @@ macro_rules! rt_bool {
         RtValue::Bool(false)
     }};
 }
+
+/// RtValue::Number that accepts (i i64) | (f f64) | (b usize) (h usize)  as argument
 #[macro_export]
 macro_rules! rt_num {
     (i$value:expr) => {{
@@ -136,6 +143,7 @@ macro_rules! rt_num {
     }};
 }
 
+/// RtValue::Array that has the same behaviour as an array
 #[macro_export]
 macro_rules! rt_array {
     [] => {{
@@ -156,6 +164,8 @@ macro_rules! rt_array {
     }};
 
 }
+
+/// RtValue::Object that has the same behaviour as an json_object
 #[macro_export]
 macro_rules! rt_obj {
     {} => {{
@@ -172,8 +182,35 @@ macro_rules! rt_obj {
     }}
 }
 
+/// Creates RNodeName
+///
+/// # Example
+/// ```
+/// use std::collections::HashMap;
+/// use forester_rs::*;
+/// use forester_rs::runtime::args::{RtArgument, RtValue};
+/// use forester_rs::runtime::args::RtValueNumber;
+/// use forester_rs::runtime::rtree::rnode::{FlowType, RNodeName};
+///
+///  fn test2(){
+///         assert_eq!(
+///           node_name!(),
+///           RNodeName::Lambda  
+///         );
+///         assert_eq!(
+///           node_name!("name"),
+///           RNodeName::Name("name".to_string())  
+///         );
+///         assert_eq!(
+///           node_name!("name", "alias"),
+///           RNodeName::Alias("name".to_string(),"alias".to_string())  
+///         );
+///
+/// }
+///
+/// ```
 #[macro_export]
-macro_rules! n_name {
+macro_rules! node_name {
     () => {{
         RNodeName::Lambda
     }};
@@ -185,10 +222,30 @@ macro_rules! n_name {
     }};
 }
 
+/// Creates RtNodeBuilder::Leaf(..)
+///
+/// # Example
+/// ```
+/// use forester_rs::runtime::args::RtArgs;
+/// use std::collections::HashMap;
+/// use forester_rs::*;
+/// use forester_rs::runtime::args::{RtArgument, RtValue};
+/// use forester_rs::runtime::args::RtValueNumber;
+/// use forester_rs::runtime::rtree::builder::RtNodeBuilder;
+/// use forester_rs::runtime::rtree::rnode::RNodeName;
+///
+///  fn test2(){
+///         let action = action!();
+///         let action = action!(node_name!("name"));
+///         let action = action!(node_name!("name"), args!());
+///
+/// }
+///
+/// ```
 #[macro_export]
 macro_rules! action {
     () => {{
-        RtNodeBuilder::leaf(n_name!(), args!())
+        RtNodeBuilder::leaf(node_name!(), args!())
     }};
     ($name:expr) => {{
         RtNodeBuilder::leaf($name, args!())
@@ -199,6 +256,30 @@ macro_rules! action {
     }};
 }
 
+/// Creates RtNodeBuilder::flow(..)
+///
+/// # Example
+/// ```
+/// use forester_rs::runtime::args::RtArgs;
+/// use std::collections::HashMap;
+/// use forester_rs::*;
+/// use forester_rs::runtime::args::{RtArgument, RtValue};
+/// use forester_rs::runtime::args::RtValueNumber;
+/// use forester_rs::runtime::rtree::builder::RtNodeBuilder;
+/// use forester_rs::runtime::rtree::rnode::{FlowType, RNodeName};
+///
+///  fn test2(){
+///         
+///         let flow = flow!(fallback node_name!(), args!();
+///                         action!(),
+///                         action!(),
+///                         action!(),
+///                         action!()
+///                     );
+///
+/// }
+///
+/// ```
 #[macro_export]
 macro_rules! flow {
     (root $name:expr, $args:expr; $($children:expr),+ ) => {{
@@ -245,6 +326,27 @@ macro_rules! flow {
     }};
 }
 
+/// Creates RtNodeBuilder::decorator(..)
+///
+/// # Example
+/// ```
+/// use forester_rs::runtime::args::RtArgs;
+/// use std::collections::HashMap;
+/// use forester_rs::*;
+/// use forester_rs::runtime::args::{RtArgument, RtValue};
+/// use forester_rs::runtime::args::RtValueNumber;
+/// use forester_rs::runtime::rtree::builder::RtNodeBuilder;
+/// use forester_rs::runtime::rtree::rnode::{FlowType,DecoratorType, RNodeName};
+///
+///  fn test2(){
+///         
+///         let decorator = decorator!(
+///                         inverter args!(),
+///                         flow!(fallback node_name!(), args!(); action!())
+///                      );
+/// }
+///
+/// ```
 #[macro_export]
 macro_rules! decorator {
     (inverter $args:expr, $child:expr ) => {{

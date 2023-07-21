@@ -1,14 +1,14 @@
-mod builder;
-pub mod ext_builder;
+pub mod builder;
 pub mod macros;
 pub mod rnode;
+mod transform;
 
 use crate::runtime::action::keeper::ActionKeeper;
 use crate::runtime::action::ActionName;
 use crate::runtime::args::transform::{to_dec_rt_args, to_rt_args};
 use crate::runtime::blackboard::BlackBoard;
-use crate::runtime::rtree::builder::{InternalBuilder, StackItem};
 use crate::runtime::rtree::rnode::{DecoratorType, RNode, RNodeId};
+use crate::runtime::rtree::transform::{StackItem, Transformer};
 use crate::runtime::{RtResult, RuntimeError};
 use crate::tree::parser::ast::arg::{Argument, Arguments, Param, Params};
 use crate::tree::parser::ast::call::{Call, Calls};
@@ -35,7 +35,7 @@ impl RuntimeTree {
     pub fn build(project: Project) -> Result<RuntimeTreeStarter, TreeError> {
         let (file, name) = &project.main;
         let root = project.find_root(name, file)?;
-        let mut builder = InternalBuilder::default();
+        let mut builder = Transformer::default();
         let mut r_tree = RuntimeTree::default();
         let mut std_actions = HashSet::new();
 
