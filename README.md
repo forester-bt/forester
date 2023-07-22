@@ -106,6 +106,8 @@ A guideline about contributing to Forester can be found in the
 
 Forester is released under the [Apache License, Version 2.0](LICENSE).
 
+## Logo
 
+<a href="https://www.freepik.com/free-vector/logo-with-abstract-tree_29192741.htm#from_view=detail_alsolike">The logo provided by bunny</a> on Freepik
 
 

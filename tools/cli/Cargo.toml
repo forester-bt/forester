@@ -3,7 +3,7 @@ name = "f-tree"
 description = "the cli app to execute the commands from forester."
 version = "0.1.4"
 edition = "2021"
-license-file="../../LICENSE"
+license-file="LICENSE"
 
 [dependencies]
 clap = { version = "4.3.11", features = ["derive"] }

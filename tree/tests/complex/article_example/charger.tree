@@ -4,7 +4,7 @@ r_fallback retry_with_delay(delay:num, attempts:num,trg:tree){
     retry(attempts) fallback {
         trg(..)
         wait(delay)
-        fail()
+        fail_empty()
     }
     wait(delay)
 }
