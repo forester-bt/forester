@@ -325,7 +325,48 @@ impl<'a> Parser<'a> {
         self.inner.token(pos)
     }
 
-    pub fn parse(&'a self) -> Result<AstFile, ParseError<'a>> {
-        self.inner.validate_eof(self.file(0)).into()
+    pub fn parse(&'a self) -> Result<AstFile, TreeError> {
+        let step: Step<AstFile> = self.inner.validate_eof(self.file(0));
+
+        match step.clone() {
+            Step::Success(file, pos) => Ok(file),
+            Step::Fail(pos) => {
+                let env = self.inner.env(&step);
+                Err(TreeError::ParseError(format!(
+                    "Parse error on the position: {pos} with the env: `{env}`"
+                )))
+            }
+            Step::Error(ParseError::BadToken(t, _)) => {
+                let env = self.inner.env(&step);
+                Err(TreeError::ParseError(format!(
+                    "Parse error the token: `{t}` is not recognized with the env: `{env}`"
+                )))
+            }
+            Step::Error(ParseError::ExternalError(ext_t, pos)) => {
+                let env = self.inner.env(&step);
+                Err(TreeError::ParseError(format!(
+                    "Parse error the token: `{ext_t}` on the pos:`{pos}` is not recognized with the env: `{env}`"
+                )))
+            }
+            Step::Error(ParseError::FailedOnValidation(ext_t, pos)) => {
+                let env = self.inner.env(&step);
+                Err(TreeError::ParseError(format!(
+                    "Parse error on the validation `{ext_t}` on the pos:`{pos}` is not recognized with the env: `{env}`"
+                )))
+            }
+            Step::Error(ParseError::ReachedEOF(pos)) => {
+                let env = self.inner.env(&step);
+                Err(TreeError::ParseError(format!(
+                    "Parse error on the pos:`{pos}` is reached eof with the env: `{env}`"
+                )))
+            }
+            Step::Error(ParseError::UnreachedEOF(pos)) => {
+                let env = self.inner.env(&step);
+                Err(TreeError::ParseError(format!(
+                    "Parse error on the pos:`{pos}` is unreached eof with the env: `{env}`"
+                )))
+            }
+            Step::Error(err) => Err(TreeError::ParseError(err.to_string())),
+        }
     }
 }

@@ -53,6 +53,10 @@ impl running();
 // If the cell is locked, returns Result::Failure   
 impl store_str(key:string, value:string);
 
+// Stores the num value in the given key. Returns Result::Success. 
+// If the cell is locked, returns Result::Failure   
+impl store_num(key:string, value:num);
+
 // Compares given string value with what is in the cell:
 // - Returns Result::Success if they are equal
 // - Returns Fail(reason)if they are not equal
