@@ -15,16 +15,24 @@ impl HttpGet {
     fn on_tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
         let url = args
             .find_or_ith("url".to_string(), 0)
-            .and_then(RtValue::as_string)
+            .ok_or(RuntimeError::fail(
+                "url is not found or it is not a string".to_string(),
+            ))
+            .and_then(|v| v.cast(ctx.clone()).str())?
             .ok_or(RuntimeError::fail(
                 "url is not found or it is not a string".to_string(),
             ))?;
+
         let out = args
             .find_or_ith("bb_key".to_string(), 1)
-            .and_then(RtValue::as_string)
+            .ok_or(RuntimeError::fail(
+                "bb_key is not found or it is not a string".to_string(),
+            ))
+            .and_then(|v| v.cast(ctx.clone()).str())?
             .ok_or(RuntimeError::fail(
                 "bb_key is not found or it is not a string".to_string(),
             ))?;
+
         match reqwest::blocking::get(url).and_then(|v| v.text()) {
             Ok(resp) => {
                 ctx.bb().lock()?.put(out, RtValue::str(resp))?;

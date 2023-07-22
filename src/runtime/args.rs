@@ -1,6 +1,7 @@
 pub mod display;
 pub mod transform;
 use crate::runtime::blackboard::{BBKey, BlackBoard};
+use crate::runtime::context::TreeContextRef;
 use crate::runtime::rtree::rnode::DecoratorType;
 use crate::runtime::{RtResult, RuntimeError};
 use crate::tree::parser::ast::arg::{
@@ -13,7 +14,7 @@ use crate::tree::{cerr, TreeError};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::fmt::{Display, Formatter, Write};
+use std::fmt::{format, Display, Formatter, Write};
 
 pub type RtAKey = String;
 
@@ -49,51 +50,51 @@ pub enum RtValue {
 /// Just a utility helping to cast the `RtValue` to the specific type.
 /// ```rust
 ///     use forester_rs::runtime::args::RtArgs;
-///     use forester_rs::runtime::context::TreeContext;
-/// fn tick(args: RtArgs, ctx: &mut TreeContext) {
+///     use forester_rs::runtime::context::{TreeContext, TreeContextRef};
+///  fn tick(args: RtArgs, ctx: TreeContextRef) {
 ///      match args.first() {
 ///         None => (),
 ///         Some(v) => {
-///             let val = v.cast(ctx.bb()?).string().unwrap().unwrap_or_default();
+///             let val = v.cast(ctx.clone()).str().unwrap().unwrap_or_default();
 ///             println!("{val}");
 ///         }
 ///     }
 /// }
 ///
 /// ```
-pub struct RtValueCast<'a> {
+pub struct RtValueCast {
     v: RtValue,
-    bb: &'a BlackBoard,
+    ctx: TreeContextRef,
 }
 
-impl<'a> RtValueCast<'a> {
-    fn chain(self) -> RtResult<RtValue> {
-        self.v.chain(self.bb)
+impl RtValueCast {
+    pub fn with_ptr(self) -> RtResult<RtValue> {
+        self.v.with_ptr(self.ctx)
     }
 
-    pub fn string(self) -> RtResult<Option<String>> {
-        self.chain().map(RtValue::as_string)
+    pub fn str(self) -> RtResult<Option<String>> {
+        self.with_ptr().map(RtValue::as_string)
     }
     pub fn int(self) -> RtResult<Option<i64>> {
-        self.chain().map(RtValue::as_int)
+        self.with_ptr().map(RtValue::as_int)
     }
     pub fn bool(self) -> RtResult<Option<bool>> {
-        self.chain().map(RtValue::as_bool)
+        self.with_ptr().map(RtValue::as_bool)
     }
     pub fn float(self) -> RtResult<Option<f64>> {
-        self.chain().map(RtValue::as_float)
+        self.with_ptr().map(RtValue::as_float)
     }
     pub fn vec<Map, To>(self, map: Map) -> RtResult<Option<Vec<To>>>
     where
         Map: Fn(RtValue) -> To,
     {
-        self.chain().map(|v| v.as_vec(map))
+        self.with_ptr().map(|v| v.as_vec(map))
     }
     pub fn map<Map, To>(self, map: Map) -> RtResult<Option<HashMap<String, To>>>
     where
         Map: Fn((String, RtValue)) -> (String, To),
     {
-        self.chain().map(|v| v.as_map(map))
+        self.with_ptr().map(|v| v.as_map(map))
     }
 }
 
@@ -106,8 +107,8 @@ impl RtValue {
         RtValue::String(s)
     }
 
-    pub fn cast(self, bb: &BlackBoard) -> RtValueCast {
-        RtValueCast { v: self, bb }
+    pub fn cast(self, ctx: TreeContextRef) -> RtValueCast {
+        RtValueCast { v: self, ctx }
     }
 
     pub fn as_string(self) -> Option<String> {
@@ -162,16 +163,13 @@ impl RtValue {
         }
     }
 
-    pub fn chain(self, bb: &BlackBoard) -> RtResult<RtValue> {
+    pub fn with_ptr(self, ctx: TreeContextRef) -> RtResult<RtValue> {
         match self {
-            RtValue::Pointer(p) => {
-                let mut value = bb.get(p)?.expect("something");
-                while let Some(p) = value.clone().as_pointer() {
-                    value = bb.get(p)?.expect("something");
-                    debug!(target:"  chain","{value}");
-                }
-                Ok(value.clone())
-            }
+            RtValue::Pointer(p) => ctx.bb().lock()?.get(p.clone())?.map(|v| v.clone()).ok_or(
+                RuntimeError::BlackBoardError(format!(
+                    "The pointer {p} can not be processed (it is absent)"
+                )),
+            ),
             v => Ok(v),
         }
     }

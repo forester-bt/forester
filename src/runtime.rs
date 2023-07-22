@@ -12,7 +12,7 @@ use crate::runtime::blackboard::BlackBoard;
 use crate::tree::TreeError;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::fmt::Debug;
+use std::fmt::{Debug, Display, Formatter};
 use std::sync::{MutexGuard, PoisonError};
 
 /// The major type of every result in Forester.
@@ -25,6 +25,17 @@ pub enum TickResult {
     Success,
     Failure(String),
     Running,
+}
+
+impl Display for TickResult {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let string = match self {
+            TickResult::Success => "Success".to_string(),
+            TickResult::Failure(r) => format!("Failure: {}", r),
+            TickResult::Running => "Running".to_string(),
+        };
+        f.write_str(string.as_str())
+    }
 }
 
 impl TickResult {

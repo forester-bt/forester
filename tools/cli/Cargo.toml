@@ -1,12 +1,15 @@
 [package]
 name = "f-tree"
 description = "the cli app to execute the commands from forester."
-version = "0.1.4"
+authors = ["BorisZhguchev <zhguchev@hotmail.com>"]
+version = "0.1.5"
 edition = "2021"
 license-file="LICENSE"
+homepage = "https://github.com/besok/forester"
+repository = "https://github.com/besok/forester"
 
 [dependencies]
 clap = { version = "4.3.11", features = ["derive"] }
-forester-rs = "0.1.4"
+forester-rs = "0.1.5"
 log = "0.4"
 env_logger = "0.10.0"

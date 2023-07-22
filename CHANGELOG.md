@@ -11,4 +11,6 @@
   * update the dependencies to improve the parsing error messages.
 * **`0.1.4`**
   * fix a bug in processing ho tree definitions with lambdas
+* **`0.1.5`**
+  * fix pointers in messages
  

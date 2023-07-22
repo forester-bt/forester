@@ -82,15 +82,20 @@ impl Action {
 ///         Self { generator }
 ///     }
 /// }
-///
-/// impl<T> Impl for GenerateData<T>
+///impl<T> Impl for GenerateData<T>
 /// where
 ///     T: Fn(RtValue) -> RtValue,
 /// {
 ///     fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
 ///         let key = args
 ///             .find_or_ith("key".to_string(), 0)
-///             .and_then(|k| k.as_string())
+///             .ok_or(RuntimeError::fail(format!(
+///                 "the key is expected and should be a string"
+///             )))?;
+///
+///         let key = key
+///             .cast(ctx.clone())
+///             .str()?
 ///             .ok_or(RuntimeError::fail(format!(
 ///                 "the key is expected and should be a string"
 ///             )))?;
@@ -99,7 +104,8 @@ impl Action {
 ///             .find_or_ith("default".to_string(), 1)
 ///             .ok_or(RuntimeError::fail(format!("the default is expected")))?;
 ///
-///         let mut bb = ctx.bb()?.unwrap();
+///         let arc_bb = ctx.bb();
+///         let mut bb = arc_bb.lock()?;
 ///         let curr = bb.get(key.clone())?.unwrap_or(&default).clone();
 ///         bb.put(key, (self.generator)(curr))?;
 ///         Ok(TickResult::Success)

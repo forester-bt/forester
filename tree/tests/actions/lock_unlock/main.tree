@@ -12,6 +12,6 @@ root main sequence {
         store_str("k","v1")
         unlock("k")
     }
-    eq_str("k","v")
+    eq_str(k,"v")
     store_str("k","v2")
 }

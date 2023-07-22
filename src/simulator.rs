@@ -23,16 +23,24 @@ use crate::runtime::env::RtEnv;
 /// # Example
 /// ```no_run
 /// use std::path::PathBuf;
-/// use forester::simulator::builder::SimulatorBuilder;
+/// use forester_rs::runtime::builder::ForesterBuilder;
+/// use forester_rs::simulator::builder::SimulatorBuilder;
 ///
 /// fn smoke() {
 ///     let mut sb = SimulatorBuilder::new();
 ///
-///     let root = PathBuf("simulator/smoke");
+///     let root = PathBuf::from("simulator/smoke");
 ///
-///     sb.root(root);
+///     sb.root(root.clone());
 ///     sb.profile(PathBuf::from("sim.yaml"));
-///     sb.main_file("main.tree".to_string());
+///     
+///     let mut fb = ForesterBuilder::from_file_system();
+///     
+///     fb.root(root);    
+///
+///     fb.main_file("main.tree".to_string());
+///     
+///     sb.forester_builder(fb);    
 ///
 ///     let mut sim = sb.build().unwrap();
 ///     sim.run().unwrap();

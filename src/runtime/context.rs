@@ -13,6 +13,7 @@ use std::sync::Mutex;
 
 pub type Timestamp = usize;
 
+#[derive(Clone)]
 pub struct TreeContextRef {
     bb: Arc<Mutex<BlackBoard>>,
     tracer: Arc<Mutex<Tracer>>,

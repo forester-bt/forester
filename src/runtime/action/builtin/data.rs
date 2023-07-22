@@ -14,8 +14,9 @@ impl Impl for LockUnlockBBKey {
     fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
         let key = args
             .first()
-            .and_then(RtValue::as_string)
-            .ok_or(RuntimeError::fail(format!("the key argument is not found")))?;
+            .ok_or(RuntimeError::fail(format!("the key argument is not found")))
+            .and_then(|v| v.cast(ctx.clone()).str())
+            .and_then(|v| v.ok_or(RuntimeError::fail(format!("the key argument is not found"))))?;
 
         match &self {
             LockUnlockBBKey::Lock => ctx.bb().lock()?.lock(key)?,
@@ -34,8 +35,7 @@ impl Impl for StoreTick {
             "the store_tick has at least one parameter"
         )))?;
 
-        // let k = v.clone().cast(ctx.bb()).string()?;
-        let k = v.clone().as_string();
+        let k = v.clone().cast(ctx.clone()).str()?;
         match k {
             None => Ok(TickResult::failure(format!("the {v} is not a string",))),
             Some(key) => ctx
@@ -55,21 +55,16 @@ impl Impl for CheckEq {
         let key = args
             .find_or_ith("key".to_string(), 0)
             .ok_or(RuntimeError::fail(format!("the key is expected ")))?;
+
         let expected = args
             .find_or_ith("expected".to_string(), 1)
             .ok_or(RuntimeError::fail(format!("the key is expected")))?;
 
-        // let option = key.clone().cast(ctx.bb()).string()?;
-        let option = key.clone().as_string();
-        match option {
-            None => Err(RuntimeError::fail(format!("the {key} should be a string"))),
-            Some(k) => match ctx.bb().lock()?.get(k.clone())? {
-                None => Ok(TickResult::failure(
-                    format!("the {key} is not found in bb",),
-                )),
-                Some(actual) if actual == &expected => Ok(TickResult::success()),
-                Some(actual) => Ok(TickResult::failure(format!("{actual} != {expected}"))),
-            },
+        let actual = key.clone().cast(ctx.clone()).with_ptr()?;
+        if actual == expected {
+            Ok(TickResult::success())
+        } else {
+            Ok(TickResult::failure(format!("{actual} != {expected}")))
         }
     }
 }
@@ -102,7 +97,13 @@ where
     fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
         let key = args
             .find_or_ith("key".to_string(), 0)
-            .and_then(|k| k.as_string())
+            .ok_or(RuntimeError::fail(format!(
+                "the key is expected and should be a string"
+            )))?;
+
+        let key = key
+            .cast(ctx.clone())
+            .str()?
             .ok_or(RuntimeError::fail(format!(
                 "the key is expected and should be a string"
             )))?;
@@ -125,7 +126,13 @@ impl Impl for StoreData {
     fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
         let key = args
             .find_or_ith("key".to_string(), 0)
-            .and_then(|k| k.as_string())
+            .ok_or(RuntimeError::fail(format!(
+                "the key is expected and should be a string"
+            )))?;
+
+        let key = key
+            .cast(ctx.clone())
+            .str()?
             .ok_or(RuntimeError::fail(format!(
                 "the key is expected and should be a string"
             )))?;

@@ -31,14 +31,15 @@ use std::path::{Path, PathBuf};
 ///# Example
 ///```
 /// use std::path::PathBuf;
-/// use forester_rs::flow;
 /// use forester_rs::tracer::Tracer;
 /// use forester_rs::runtime::builder::ForesterBuilder;
 /// use forester_rs::runtime::action::Action;
 /// use forester_rs::runtime::action::builtin::data::StoreData;
-///
+/// use forester_rs::runtime::rtree::builder::RtNodeBuilder;
+/// use forester_rs::*;
+/// use forester_rs::runtime::rtree::rnode::{DecoratorType, FlowType, RNodeName};
+/// use forester_rs::runtime::args::RtArgs;
 /// fn from_file(root:PathBuf){
-///
 ///     let mut fb = ForesterBuilder::from_file_system();
 ///     fb.main_file("main.tree".to_string());
 ///     fb.root(root);

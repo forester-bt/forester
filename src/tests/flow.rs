@@ -172,6 +172,7 @@ fn mseq_restart_all_children() {
 
 #[test]
 fn sequence_running() {
+    turn_on_logs();
     let mut fb = fb("flow/sequence_running");
 
     fb.register_action(
@@ -183,7 +184,9 @@ fn sequence_running() {
     );
 
     let mut f = fb.build().unwrap();
-    let result = f.run_until(Some(10000));
+    let result = f.run_until(Some(11));
+
+    f.bb.lock().unwrap().print_dump();
     assert_eq!(result, Ok(TickResult::success()));
 
     let x =
