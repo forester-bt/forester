@@ -11,6 +11,13 @@ pub enum Call {
 }
 
 impl Call {
+    pub fn is_lambda(&self) -> bool {
+        match &self {
+            Call::Lambda(_, _) => true,
+            _ => false,
+        }
+    }
+
     pub fn get_ho_invocation(&self) -> Option<Key> {
         match self {
             Call::HoInvocation(k) => Some(k.clone()),

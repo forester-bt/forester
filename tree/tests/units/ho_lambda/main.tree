@@ -1,0 +1,14 @@
+import "std::actions"
+
+root main
+    x(
+       sequence {
+            success()
+       }
+    )
+
+
+
+r_sequence x(test:tree){
+    test(..)
+}

@@ -70,18 +70,23 @@ impl RuntimeTree {
                 // - the invocation is passed as an argument from the parent (this chain can be long up)
                 //   So we need to find the initially passed call.
                 // - since we found it we transform it into a simple invocation call and process it at the next step.
+                // - if it is lambda we found it
                 Call::HoInvocation(key) => {
                     let call = builder.find_ho_call(&parent_id, &key)?;
-                    let k = call
-                        .key()
-                        .ok_or(cerr(format!("the call {:?} does not have a name", call)))?;
+                    if call.is_lambda() {
+                        builder.push_front(id, call, id, file_name.clone());
+                    } else {
+                        let k = call
+                            .key()
+                            .ok_or(cerr(format!("the call {:?} does not have a name", call)))?;
 
-                    builder.push_front(
-                        id,
-                        Call::invocation(&k, call.arguments()),
-                        id,
-                        file_name.clone(),
-                    );
+                        builder.push_front(
+                            id,
+                            Call::invocation(&k, call.arguments()),
+                            id,
+                            file_name.clone(),
+                        );
+                    }
                 }
                 // just take the arguments and transform them into runtime args and push further
                 Call::Decorator(tpe, decor_args, call) => {

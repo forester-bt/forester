@@ -9,4 +9,6 @@
   * add a set of macros to create runtime tree on a fly
 * **`0.1.3`**
   * update the dependencies to improve the parsing error messages.
+* **`0.1.4`**
+  * fix a bug in processing ho tree definitions with lambdas
  

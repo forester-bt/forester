@@ -17,7 +17,7 @@ fn cli() -> Command {
         .about("A console utility to interact with Forester")
         .subcommand_required(true)
         .arg_required_else_help(true)
-        .version("0.1.2")
+        .version("0.1.4")
         .subcommand(
             Command::new("sim")
                 .about(r#"Runs simulation. Expects a simulation profile"#)

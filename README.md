@@ -96,6 +96,9 @@ The common documentation is available as a [mini-book](https://besok.github.io/f
 
 ## Contributing
 
+Currently, the project is under active development (there are a lot of blind spots), so any help is highly appreciated.
+Any help is highly appreciated at any stage of the project but at now especially.
+
 A guideline about contributing to Forester can be found in the
 [`CONTRIBUTING.md`](CONTRIBUTING.md) file.
 

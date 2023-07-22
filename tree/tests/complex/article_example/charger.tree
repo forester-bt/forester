@@ -1,4 +1,4 @@
-import "std:actions"
+import "std::actions"
 
 r_fallback retry_with_delay(delay:num, attempts:num,trg:tree){
     retry(attempts) fallback {
@@ -24,13 +24,15 @@ r_fallback with_flag(action:tree){
 }
 
 
-cond is_hazard_nearby()
-cond on_target(target:object)
+cond is_hazard_nearby();
+cond stop_flag();
+cond battery_low();
+cond on_target(target:object);
 
 impl do_job();
 impl wait(ms:num);
-impl move_to(target:object)
-impl charge()
+impl move_to(target:object);
+impl charge();
 
 r_fallback to_charger(charger_station:object){
     retry_with_delay(1000, 10,

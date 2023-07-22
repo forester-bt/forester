@@ -59,6 +59,12 @@ mod tests {
     }
 
     #[test]
+    fn lambda_ho_op() {
+        let tree = test_tree("units/ho_lambda", "main.tree");
+        println!("{:?}", tree);
+    }
+
+    #[test]
     fn std_action() {
         let tree = test_tree("actions", "std_actions.tree");
         println!("{:?}", tree);

@@ -1,12 +1,12 @@
 [package]
 name = "f-tree"
 description = "the cli app to execute the commands from forester."
-version = "0.1.3"
+version = "0.1.4"
 edition = "2021"
 license-file="../../LICENSE"
 
 [dependencies]
 clap = { version = "4.3.11", features = ["derive"] }
-forester-rs = "0.1.3"
+forester-rs = "0.1.4"
 log = "0.4"
 env_logger = "0.10.0"
