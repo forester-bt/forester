@@ -1,23 +1,31 @@
 use std::ffi::OsString;
 use std::path::PathBuf;
 
-use clap::{arg, value_parser, ArgMatches, Command};
+use clap::{arg, value_parser, Arg, ArgAction, ArgMatches, Command};
 use forester_rs::runtime::action::Tick;
 use forester_rs::runtime::builder::ForesterBuilder;
 use forester_rs::runtime::RtResult;
 use forester_rs::simulator::builder::SimulatorBuilder;
 use forester_rs::tree::TreeError;
 use forester_rs::visualizer::Visualizer;
+use log::LevelFilter;
 
 #[macro_use]
 extern crate log;
 
 fn cli() -> Command {
-    Command::new("forest")
+    Command::new("f-tree")
         .about("A console utility to interact with Forester")
         .subcommand_required(true)
         .arg_required_else_help(true)
-        .version("0.1.4")
+        .version("0.1.6")
+        .arg(
+            Arg::new("debug")
+                .short('d')
+                .long("debug")
+                .help("Print debug logs")
+                .action(ArgAction::SetTrue)
+        )
         .subcommand(
             Command::new("sim")
                 .about(r#"Runs simulation. Expects a simulation profile"#)
@@ -119,9 +127,17 @@ fn viz(matches: &ArgMatches) {
 }
 
 fn main() {
-    env_logger::init();
-
     let matches = cli().get_matches();
+
+    let mut log_builder = env_logger::builder();
+
+    log_builder.is_test(false);
+    if matches.get_flag("debug") {
+        log_builder.filter_level(LevelFilter::max());
+    }
+
+    let _ = log_builder.try_init();
+
     match matches.subcommand() {
         Some(("sim", args)) => {
             sim(args);

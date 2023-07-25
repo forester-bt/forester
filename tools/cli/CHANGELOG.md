@@ -4,4 +4,6 @@
   * update the version of the forester
 * **`0.1.4`**
   * update the version of the forester
+* **`0.1.6`**
+  * add flag debug to print extra info
  
