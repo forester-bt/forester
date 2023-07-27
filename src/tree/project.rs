@@ -56,6 +56,10 @@ impl<'a> Project {
         main_call: TreeName,
         root: PathBuf,
     ) -> Result<Project, TreeError> {
+        debug!(
+            "built project with root: {:?}, main file: {} and root definition: {} ",
+            &root, main_file, main_call
+        );
         let mut project = Project {
             root: root.clone(),
             main: ("".to_string(), "".to_string()),
@@ -85,6 +89,10 @@ impl<'a> Project {
                 "no root operation in the file {}",
                 main_file.clone()
             )))?;
+        debug!(
+            "built project with root: {:?}, main file: {} and root definition: {} ",
+            &root, main_file, main_call
+        );
         project.main = (main_file, main_call);
         Ok(project)
     }
@@ -106,6 +114,7 @@ impl<'a> Project {
             .ok_or(TreeError::IOError(format!(
                 "no root operation in the given text",
             )))?;
+        debug!("built project from text with root: {}", main_call);
         project.main = ("_".to_string(), main_call);
         Ok(project)
     }

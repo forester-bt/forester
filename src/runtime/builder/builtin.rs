@@ -78,7 +78,6 @@ impl lock(key:string);
 
 // Unlock key in bb
 impl unlock(key:string);
-
 "#
         .to_string()
     }

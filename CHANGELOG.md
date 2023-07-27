@@ -13,4 +13,6 @@
   * fix a bug in processing ho tree definitions with lambdas
 * **`0.1.5`**
   * fix pointers in messages
+* **`0.1.6`**
+  * add extra logging
  

@@ -3,6 +3,7 @@ use std::path::PathBuf;
 
 use clap::{arg, value_parser, Arg, ArgAction, ArgMatches, Command};
 use forester_rs::runtime::action::Tick;
+use forester_rs::runtime::builder::builtin::BuilderBuiltInActions;
 use forester_rs::runtime::builder::ForesterBuilder;
 use forester_rs::runtime::RtResult;
 use forester_rs::simulator::builder::SimulatorBuilder;
@@ -18,7 +19,7 @@ fn cli() -> Command {
         .about("A console utility to interact with Forester")
         .subcommand_required(true)
         .arg_required_else_help(true)
-        .version("0.1.6")
+        .version("0.1.7")
         .arg(
             Arg::new("debug")
                 .short('d')
@@ -26,6 +27,7 @@ fn cli() -> Command {
                 .help("Print debug logs")
                 .action(ArgAction::SetTrue)
         )
+        .subcommand(Command::new("print-std").about("Print the list of std actions from 'import std::actions'"))
         .subcommand(
             Command::new("sim")
                 .about(r#"Runs simulation. Expects a simulation profile"#)
@@ -125,6 +127,10 @@ fn viz(matches: &ArgMatches) {
         }
     }
 }
+fn std() {
+    let f = BuilderBuiltInActions::builtin_actions_file();
+    info!("{f}");
+}
 
 fn main() {
     let matches = cli().get_matches();
@@ -144,6 +150,9 @@ fn main() {
         }
         Some(("vis", args)) => {
             viz(args);
+        }
+        Some(("print-std", _)) => {
+            std();
         }
         Some((e, _)) => {
             error!("the command '{e}' does not match the expected commands. ");

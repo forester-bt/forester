@@ -143,6 +143,7 @@ impl Tracer {
         Tracer::Noop
     }
     pub fn create(cfg: TracerConfiguration) -> RtResult<Self> {
+        debug!("create new tracer from {:?}", cfg);
         match cfg.to_file {
             None => Ok(Tracer::InMemory {
                 events: vec![],

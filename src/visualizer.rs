@@ -40,7 +40,6 @@ impl<'a> Visualizer {
             (Some(file), None) => Project::build(file.to_string(), root),
             _ => Project::build("main.tree".to_string(), root),
         }?;
-
         let output_pb = match output {
             Some(path) => get_pb(&PathBuf::from(path), &Some(project.root.clone()))?,
             None => {
@@ -51,7 +50,7 @@ impl<'a> Visualizer {
                 new_output
             }
         };
-
+        debug!("visualize a given project to a file {:?}", &output);
         let rt = RuntimeTree::build(project)?.tree;
         Visualizer::svg_file(&rt, output_pb)
     }
@@ -88,6 +87,8 @@ impl<'a> Visualizer {
     }
 
     pub fn dot(runtime_tree: &RuntimeTree) -> Result<String, TreeError> {
+        debug!("visualize a given tree ");
+
         Ok(print(
             Visualizer::build_graph(runtime_tree)?,
             &mut PrinterContext::default(),

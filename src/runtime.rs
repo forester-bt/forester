@@ -53,7 +53,7 @@ impl TickResult {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(PartialEq)]
 pub enum RuntimeError {
     CompileError(TreeError),
     UnImplementedAction(String),
@@ -64,6 +64,49 @@ pub enum RuntimeError {
     RecoveryToFailure(String),
     BlackBoardError(String),
     MultiThreadError(String),
+}
+
+impl Debug for RuntimeError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            RuntimeError::CompileError(e) => {
+                let _ = f.write_str(format!("compilation: {:?}", e).as_str());
+            }
+            RuntimeError::UnImplementedAction(e) => {
+                let _ = f.write_str("unimplemented: ");
+                let _ = f.write_str(e.as_str());
+            }
+            RuntimeError::IOError(e) => {
+                let _ = f.write_str("io: ");
+                let _ = f.write_str(e.as_str());
+            }
+            RuntimeError::Unexpected(e) => {
+                let _ = f.write_str("unexpected: ");
+                let _ = f.write_str(e.as_str());
+            }
+            RuntimeError::WrongArgument(e) => {
+                let _ = f.write_str("arg error: ");
+                let _ = f.write_str(e.as_str());
+            }
+            RuntimeError::Stopped(e) => {
+                let _ = f.write_str("stopped: ");
+                let _ = f.write_str(e.as_str());
+            }
+            RuntimeError::RecoveryToFailure(e) => {
+                let _ = f.write_str("recovery: ");
+                let _ = f.write_str(e.as_str());
+            }
+            RuntimeError::BlackBoardError(e) => {
+                let _ = f.write_str("bb: ");
+                let _ = f.write_str(e.as_str());
+            }
+            RuntimeError::MultiThreadError(e) => {
+                let _ = f.write_str("multi thread: ");
+                let _ = f.write_str(e.as_str());
+            }
+        }
+        Ok(())
+    }
 }
 
 impl RuntimeError {
@@ -96,7 +139,7 @@ impl From<serde_json::Error> for RuntimeError {
 }
 impl From<std::io::Error> for RuntimeError {
     fn from(value: std::io::Error) -> Self {
-        RuntimeError::IOError(value.to_string())
+        RuntimeError::IOError(format!("{value}"))
     }
 }
 impl<T> From<PoisonError<MutexGuard<'_, T>>> for RuntimeError {
