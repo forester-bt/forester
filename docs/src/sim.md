@@ -1,7 +1,7 @@
 # Simulation
 
 Forester provides a conception to execute the given tree, replacing the actions to stubs.
-The major intention is to test the tree behaviour and test all branches under the specific conditions
+The major intention is to test the tree behavior and test all branches under the specific conditions
 without coding the implementations at all.
 The profile enables to mix in the specific state of blackboard, trace the changes and visualize the tree.
 
@@ -53,6 +53,11 @@ The actions sections is an array to stub the actions
 | stub         | the stubbed implementation               | should be presented | success |
 | params.delay | denotes the pause before start in millis | 0                   | 100     |
 
+
+#### Default profile
+The simulation can be performed without giving the specific profile.
+In that case, all actions that need to implement will be replaced with the success stub.
+Other artifacts will not be generated. 
 
 ### Stubs
 
@@ -137,6 +142,7 @@ Just use a `f-tree` console cli to run a simulation
 f-tree sim --root tree\tests\simulator\smoke\  --profile sim.yaml
 ```
 
-- root can be ommited, the `<pwd>` folder will be taken by default
-- tree can be ommited if only one root definition in the file
-- main can be ommited, by default, the name `main.tree` will be taken.  
+- root can be omitted, the `<pwd>` folder will be taken by default
+- tree can be omitted if only one root definition in the file
+- main can be omitted, by default, the name `main.tree` will be taken.  
+- profile can be omitted, the default profile will be taken.  
