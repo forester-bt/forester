@@ -19,7 +19,7 @@ fn cli() -> Command {
         .about("A console utility to interact with Forester")
         .subcommand_required(true)
         .arg_required_else_help(true)
-        .version("0.1.8")
+        .version("0.1.9")
         .arg(
             Arg::new("debug")
                 .short('d')
@@ -59,49 +59,47 @@ fn buf(val: &str, relative: PathBuf) -> PathBuf {
 }
 
 fn sim(matches: &ArgMatches) {
+    let pwd = std::env::current_dir().expect("the current directory is presented");
+
+    let root = match matches.get_one::<String>("root") {
+        Some(root) => buf(root.as_str(), pwd),
+        None => pwd,
+    };
+
+    let main_file = matches
+        .get_one::<String>("main")
+        .map(|v| v.to_string())
+        .unwrap_or("main.tree".to_string());
+    let main_tree = matches.get_one::<String>("tree");
+
+    let mut sb = SimulatorBuilder::new();
     if let Some(p) = matches.get_one::<String>("profile") {
-        let pwd = std::env::current_dir().expect("the current directory is presented");
-
-        let root = match matches.get_one::<String>("root") {
-            Some(root) => buf(root.as_str(), pwd),
-            None => pwd,
-        };
-
         let sim = buf(p, root.clone());
-        let main_file = matches
-            .get_one::<String>("main")
-            .map(|v| v.to_string())
-            .unwrap_or("main.tree".to_string());
-        let main_tree = matches.get_one::<String>("tree");
-
-        let mut sb = SimulatorBuilder::new();
         sb.profile(sim);
-        sb.root(root.clone());
-        let mut fb = ForesterBuilder::from_file_system();
-        fb.main_file(main_file);
-        fb.root(root);
+    }
+    sb.root(root.clone());
+    let mut fb = ForesterBuilder::from_file_system();
+    fb.main_file(main_file);
+    fb.root(root);
 
-        if main_tree.is_some() {
-            fb.main_tree(main_tree.unwrap().to_string())
-        }
+    if main_tree.is_some() {
+        fb.main_tree(main_tree.unwrap().to_string())
+    }
 
-        sb.forester_builder(fb);
+    sb.forester_builder(fb);
 
-        match sb.build() {
-            Ok(mut s) => match s.run() {
-                Ok(r) => {
-                    info!("the process is finished with the result: {:?}", r)
-                }
-                Err(err) => {
-                    error!("the runtime error occurred : {:?}", err)
-                }
-            },
-            Err(err) => {
-                error!("the building error occurred: {:?}", err)
+    match sb.build() {
+        Ok(mut s) => match s.run() {
+            Ok(r) => {
+                info!("the process is finished with the result: {:?}", r)
             }
+            Err(err) => {
+                error!("the runtime error occurred : {:?}", err)
+            }
+        },
+        Err(err) => {
+            error!("the building error occurred: {:?}", err)
         }
-    } else {
-        error!("the simulation profile is required")
     }
 }
 fn viz(matches: &ArgMatches) {
