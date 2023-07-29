@@ -21,7 +21,9 @@ use std::collections::{HashMap, HashSet, VecDeque};
 
 pub struct RuntimeTreeStarter {
     pub tree: RuntimeTree,
+    // an action with the same name but the import will be from the diff place and to distinguish we keep track here
     pub std_actions: HashSet<ActionName>,
+    pub actions: HashSet<ActionName>,
 }
 
 /// The runtime tree is a representation of the compilation tree supplemented with some runtime information.
@@ -38,6 +40,7 @@ impl RuntimeTree {
         let mut builder = Transformer::default();
         let mut r_tree = RuntimeTree::default();
         let mut std_actions = HashSet::new();
+        let mut actions = HashSet::new();
 
         let root_id = builder.next();
         builder.add_chain_root(root_id);
@@ -108,6 +111,7 @@ impl RuntimeTree {
                         builder.add_chain(id, parent_id, args.clone(), tree.params.clone());
                         if tree.tpe.is_action() {
                             r_tree.nodes.insert(id, RNode::action(name, rt_args));
+                            actions.insert(tree.name.clone());
                         } else {
                             let children =
                                 builder.push_vec(tree.calls.clone(), id, file_name.clone());
@@ -128,6 +132,7 @@ impl RuntimeTree {
 
                         if &tree.name != &name {
                             if tree.tpe.is_action() {
+                                actions.insert(tree.name.clone());
                                 r_tree.nodes.insert(
                                     id,
                                     RNode::action_alias(tree.name.clone(), name, rt_args),
@@ -146,7 +151,10 @@ impl RuntimeTree {
                             }
                         } else {
                             if tree.tpe.is_action() {
-                                r_tree.nodes.insert(id, RNode::action(name, rt_args));
+                                r_tree
+                                    .nodes
+                                    .insert(id, RNode::action(name.clone(), rt_args));
+                                actions.insert(name);
                             } else {
                                 r_tree.nodes.insert(
                                     id,
@@ -162,6 +170,7 @@ impl RuntimeTree {
         Ok(RuntimeTreeStarter {
             tree: r_tree,
             std_actions,
+            actions,
         })
     }
     pub fn node(&self, id: &RNodeId) -> RtResult<&RNode> {

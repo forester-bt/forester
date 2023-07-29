@@ -3,20 +3,24 @@ use crate::runtime::args::RtArgs;
 use crate::runtime::rtree::rnode::{DecoratorType, FlowType, RNode, RNodeId, RNodeName};
 use crate::runtime::rtree::RuntimeTree;
 use crate::runtime::RtResult;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 pub struct RtTreeBuilder {
     root: RNodeId,
     max: RNodeId,
     nodes: HashMap<RNodeId, RNode>,
+    actions: HashSet<String>,
 }
 
 impl RtTreeBuilder {
-    pub fn build(self) -> RuntimeTree {
-        RuntimeTree {
-            root: self.root,
-            nodes: self.nodes,
-        }
+    pub fn build(self) -> (RuntimeTree, HashSet<String>) {
+        (
+            RuntimeTree {
+                root: self.root,
+                nodes: self.nodes,
+            },
+            self.actions,
+        )
     }
 
     fn next(&mut self) -> RNodeId {
@@ -29,6 +33,7 @@ impl RtTreeBuilder {
             root: 0,
             max: 0,
             nodes: HashMap::new(),
+            actions: HashSet::new(),
         }
     }
 
@@ -43,6 +48,8 @@ impl RtTreeBuilder {
         match node_b {
             RtNodeBuilder::Leaf(n, args) => {
                 let id = self.next();
+                self.actions
+                    .insert(n.name().unwrap_or(&"".to_string()).clone());
                 self.nodes.insert(id, RNode::Leaf(n, args));
                 id
             }
@@ -125,7 +132,7 @@ mod tests {
             )
 
         ));
-        let tree = b.build();
+        let (tree, _) = b.build();
         Visualizer::svg_file(
             &tree,
             PathBuf::from(r#"C:\projects\forester\tools\cli\1.svg"#),

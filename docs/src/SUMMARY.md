@@ -30,3 +30,4 @@
   - [Simulation](./sim.md)
 - [Examples](./f_examples.md)
 - [Tools](./tools.md)
+  - [Intellij plugin](./intellij.md)

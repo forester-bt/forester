@@ -1,15 +1,9 @@
 import "std::actions"
+import "actions.tree"
 
 root main sequence {
     store_str("info1", "initial")
     retryer(task(config = obj), success())
     store_str("info2","finish")
 }
-
-fallback retryer(t:tree, default:tree){
-    retry(5) t(..)
-    fail("just should fail")
-    default(..)
-}
-
 impl task(config: object);

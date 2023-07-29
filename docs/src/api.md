@@ -32,7 +32,7 @@ Options:
 ## As a dependency to run from a rust code
 
 ```toml
-forester-rs = "0.1.0"
+forester-rs = "*"
 ```
 
 

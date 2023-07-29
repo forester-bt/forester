@@ -9,12 +9,12 @@ use crate::runtime::builder::CommonForesterBuilder;
 use crate::runtime::env::RtEnv;
 use crate::runtime::forester::Forester;
 use crate::runtime::rtree::builder::{RtNodeBuilder, RtTreeBuilder};
-use crate::runtime::rtree::rnode::RNodeId;
+use crate::runtime::rtree::rnode::{RNodeId, RNodeName};
 use crate::runtime::rtree::{RuntimeTree, RuntimeTreeStarter};
 use crate::runtime::{RtResult, RuntimeError};
 use crate::tracer::Tracer;
 use crate::tree::project::{FileName, Project, TreeName};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fmt::format;
 use std::path::{Path, PathBuf};
 
@@ -34,7 +34,7 @@ impl CustomForesterBuilder {
     }
 
     /// The method to build forester
-    pub fn build(self) -> RuntimeTree {
+    pub fn build(self) -> (RuntimeTree, HashSet<String>) {
         self.rtb.build()
     }
 }

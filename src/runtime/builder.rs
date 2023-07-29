@@ -7,7 +7,7 @@ use crate::get_pb;
 use crate::runtime::action::builtin::data::{CheckEq, LockUnlockBBKey, StoreData, StoreTick};
 use crate::runtime::action::builtin::http::HttpGet;
 use crate::runtime::action::builtin::ReturnResult;
-use crate::runtime::action::keeper::ActionKeeper;
+use crate::runtime::action::keeper::{ActionImpl, ActionKeeper};
 use crate::runtime::action::{Action, ActionName};
 use crate::runtime::blackboard::BlackBoard;
 use crate::runtime::builder::builtin::BuilderBuiltInActions;
@@ -210,33 +210,73 @@ impl ForesterBuilder {
 
     /// The method to build forester
     pub fn build(self) -> RtResult<Forester> {
+        self.build_with(|| ActionImpl::Absent)
+    }
+
+    /// The method to build forester and provide the implementation for the absent actions
+    pub fn build_with<T>(self, default_action: T) -> RtResult<Forester>
+    where
+        T: Fn() -> ActionImpl,
+    {
         self.error()?;
 
-        let (tree, actions, tr, env, bb_load, root) = match self {
+        let (tree, actions, action_names, tr, env, bb_load, root) = match self {
             ForesterBuilder::Files { delegate, cfb, .. } => {
                 let root = delegate.root.clone();
                 let project = delegate.build()?;
-                let RuntimeTreeStarter { tree, std_actions } = RuntimeTree::build(project)?;
-                let mut actions = cfb.actions;
+                let RuntimeTreeStarter {
+                    tree,
+                    std_actions,
+                    actions,
+                } = RuntimeTree::build(project)?;
+                let mut impl_actions = cfb.actions;
                 for action_name in std_actions.iter() {
                     let action = BuilderBuiltInActions::action_impl(action_name)?;
-                    actions.insert(action_name.clone(), action);
+                    impl_actions.insert(action_name.clone(), action);
                 }
-                (tree, actions, cfb.tracer, cfb.env, cfb.bb_load, root)
+                (
+                    tree,
+                    impl_actions,
+                    actions,
+                    cfb.tracer,
+                    cfb.env,
+                    cfb.bb_load,
+                    root,
+                )
             }
             ForesterBuilder::Text { delegate, cfb, .. } => {
                 let project = delegate.build()?;
-                let RuntimeTreeStarter { tree, std_actions } = RuntimeTree::build(project)?;
-                let mut actions = cfb.actions;
+                let RuntimeTreeStarter {
+                    tree,
+                    std_actions,
+                    actions,
+                } = RuntimeTree::build(project)?;
+                let mut impl_actions = cfb.actions;
                 for action_name in std_actions.iter() {
                     let action = BuilderBuiltInActions::action_impl(action_name)?;
-                    actions.insert(action_name.clone(), action);
+                    impl_actions.insert(action_name.clone(), action);
                 }
-                (tree, actions, cfb.tracer, cfb.env, cfb.bb_load, None)
+                (
+                    tree,
+                    impl_actions,
+                    actions,
+                    cfb.tracer,
+                    cfb.env,
+                    cfb.bb_load,
+                    None,
+                )
             }
             ForesterBuilder::Code { delegate, cfb, .. } => {
-                let tree = delegate.build();
-                (tree, cfb.actions, cfb.tracer, cfb.env, cfb.bb_load, None)
+                let (tree, actions) = delegate.build();
+                (
+                    tree,
+                    cfb.actions,
+                    actions,
+                    cfb.tracer,
+                    cfb.env,
+                    cfb.bb_load,
+                    None,
+                )
             }
         };
 
@@ -253,7 +293,13 @@ impl ForesterBuilder {
         } else {
             RtEnv::try_new()?
         };
-        Forester::new(tree, bb, ActionKeeper::new(actions)?, tr, env)
+        Forester::new(
+            tree,
+            bb,
+            ActionKeeper::new_with(actions, action_names, default_action)?,
+            tr,
+            env,
+        )
     }
 
     fn cfb(&mut self) -> &mut CommonForesterBuilder {

@@ -15,4 +15,7 @@
   * fix pointers in messages
 * **`0.1.6`**
   * add extra logging
+* **`0.1.7`**
+  * add default simulation profile
+  * add default action impl for the absent actions
  

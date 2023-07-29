@@ -1,4 +1,5 @@
 use crate::get_pb;
+use crate::runtime::action::keeper::ActionImpl;
 use crate::runtime::builder::ForesterBuilder;
 use crate::runtime::env::RtEnv;
 use crate::runtime::forester::Forester;
@@ -140,7 +141,8 @@ impl SimulatorBuilder {
             )
         }
 
-        let forester = fb.build()?;
+        let forester =
+            fb.build_with(|| ActionImpl::Present(RtAction::sync(SimAction::Success(0))))?;
         Ok(Simulator::new(self.root.take(), pr, forester))
     }
 }

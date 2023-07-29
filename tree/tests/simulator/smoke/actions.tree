@@ -6,4 +6,4 @@ fallback retryer(t:tree, default:tree){
     default(..)
 }
 
-impl task(config: object);
+

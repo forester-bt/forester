@@ -50,7 +50,7 @@ impl<'a> Visualizer {
                 new_output
             }
         };
-        debug!("visualize a given project to a file {:?}", &output);
+        debug!("visualize a given project to a file {:?}", &output_pb);
         let rt = RuntimeTree::build(project)?.tree;
         Visualizer::svg_file(&rt, output_pb)
     }

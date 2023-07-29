@@ -8,4 +8,6 @@
   * add flag debug to print extra info
 * **`0.1.7`**
   * add print-std to print std file
+* **`0.1.8`**
+  * the sim profile is optional
  

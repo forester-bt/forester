@@ -19,7 +19,7 @@ fn cli() -> Command {
         .about("A console utility to interact with Forester")
         .subcommand_required(true)
         .arg_required_else_help(true)
-        .version("0.1.7")
+        .version("0.1.8")
         .arg(
             Arg::new("debug")
                 .short('d')
@@ -31,11 +31,10 @@ fn cli() -> Command {
         .subcommand(
             Command::new("sim")
                 .about(r#"Runs simulation. Expects a simulation profile"#)
-                .arg(arg!(-p --profile <PATH> "a path to a sim profile"))
+                .arg(arg!(-p --profile <PATH> "a path to a sim profile, empty by default"))
                 .arg(arg!(-r --root <ROOT> "a path to a root folder. The <PWD> folder by default"))
                 .arg(arg!(-m --main <MAIN> "a path to a main file. The 'main.tree' by default"))
                 .arg(arg!(-t --tree <TREE> "a root in a main file. If there is only one root it takes by default"))
-                .arg_required_else_help(true)
         )
         .subcommand(
             Command::new("vis")

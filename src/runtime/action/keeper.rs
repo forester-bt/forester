@@ -7,27 +7,73 @@ use crate::runtime::env::RtEnv;
 use crate::runtime::env::TaskState;
 use crate::runtime::{RtResult, RuntimeError, TickResult};
 use crate::tree::parser::ast::Tree;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 /// Just a simple action map to register and execute the actions.
 pub struct ActionKeeper {
-    actions: HashMap<ActionName, Action>,
+    actions: HashMap<ActionName, ActionImpl>,
+}
+
+pub enum ActionImpl {
+    Present(Action),
+    Absent,
+}
+
+impl ActionImpl {
+    pub fn action(&mut self) -> Option<&mut Action> {
+        match self {
+            ActionImpl::Present(a) => Some(a),
+            ActionImpl::Absent => None,
+        }
+    }
+    pub fn is_absent(&self) -> bool {
+        match self {
+            ActionImpl::Absent => true,
+            _ => false,
+        }
+    }
 }
 
 impl ActionKeeper {
-    pub fn new(actions: HashMap<ActionName, Action>) -> RtResult<Self> {
+    pub fn new_with<T>(
+        impl_actions: HashMap<ActionName, Action>,
+        all_actions: HashSet<ActionName>,
+        default: T,
+    ) -> RtResult<Self>
+    where
+        T: Fn() -> ActionImpl,
+    {
+        let mut impl_actions = impl_actions;
+        let mut actions = HashMap::new();
+        for action_name in all_actions {
+            if let Some(a) = impl_actions.remove(&action_name) {
+                debug!("register action {action_name} with the given impl");
+                actions.insert(action_name, ActionImpl::Present(a));
+            } else {
+                debug!("register action {action_name} with the default impl");
+                let action_impl = default();
+                if action_impl.is_absent() {
+                    debug!("The action {action_name} is absent and the execution will be failed on calling this action.");
+                }
+                actions.insert(action_name, action_impl);
+            }
+        }
+
         Ok(Self { actions })
     }
 }
 
 impl ActionKeeper {
     fn get_mut(&mut self, name: &ActionName) -> RtResult<&mut Action> {
-        self.actions.get_mut(name).ok_or(RuntimeError::uex(format!(
-            "the action {name} is not registered"
-        )))
+        self.actions
+            .get_mut(name)
+            .and_then(|t| t.action())
+            .ok_or(RuntimeError::uex(format!(
+                "the action {name} is not registered"
+            )))
     }
 
     pub fn register(&mut self, name: ActionName, action: Action) -> RtResult<()> {
-        &self.actions.insert(name, action);
+        &self.actions.insert(name, ActionImpl::Present(action));
         Ok(())
     }
 
