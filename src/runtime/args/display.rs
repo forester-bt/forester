@@ -1,4 +1,4 @@
-use crate::runtime::args::{RtArgs, RtArgument, RtValue, RtValueNumber};
+use crate::runtime::args::{RtArgs, RtArgument, RtValue};
 use crate::tree::parser::ast::call::Call;
 use itertools::Itertools;
 use std::fmt::{Display, Formatter};
@@ -33,7 +33,7 @@ impl<'a> Display for ShortDisplayedRtArguments<'a> {
             .0
              .0
             .iter()
-            .map(|a| ShortDisplayedRtArgument(a))
+            .map(ShortDisplayedRtArgument)
             .map(|a| format!("{}", a))
             .join(",");
         if str.is_empty() {

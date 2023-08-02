@@ -5,13 +5,10 @@ pub mod builder;
 pub mod context;
 pub mod env;
 pub mod forester;
+pub mod modification;
 pub mod rtree;
 
-use crate::runtime::action::Tick;
-use crate::runtime::blackboard::BlackBoard;
 use crate::tree::TreeError;
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::fmt::{Debug, Display, Formatter};
 use std::sync::{MutexGuard, PoisonError};
 
@@ -64,6 +61,7 @@ pub enum RuntimeError {
     RecoveryToFailure(String),
     BlackBoardError(String),
     MultiThreadError(String),
+    OptimizationError(String),
 }
 
 impl Debug for RuntimeError {
@@ -102,6 +100,10 @@ impl Debug for RuntimeError {
             }
             RuntimeError::MultiThreadError(e) => {
                 let _ = f.write_str("multi thread: ");
+                let _ = f.write_str(e.as_str());
+            }
+            RuntimeError::OptimizationError(e) => {
+                let _ = f.write_str("optimization error: ");
                 let _ = f.write_str(e.as_str());
             }
         }

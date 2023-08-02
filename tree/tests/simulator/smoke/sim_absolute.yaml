@@ -1,5 +1,5 @@
 config:
-  trace: c:/x/gen/main.trace
+  trace: c:/x/gen/main.log
   graph: c:/x/gen/main.svg
   bb:
     dump: c:/x/gen/bb.json

@@ -1,6 +1,5 @@
 use crate::runtime::RuntimeError;
 use parsit::error::ParseError;
-use parsit::step::Step;
 
 pub mod parser;
 pub mod project;

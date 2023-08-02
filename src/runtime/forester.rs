@@ -1,20 +1,21 @@
 pub mod decorator;
 pub mod flow;
+
 use crate::runtime::action::keeper::ActionKeeper;
 use crate::runtime::action::{recover, Tick};
-use crate::runtime::args::{RtArgs, RtValue};
+use crate::runtime::args::RtArgs;
 use crate::runtime::blackboard::BlackBoard;
-use crate::runtime::context::{RNodeState, TreeContext, TreeContextRef};
+use crate::runtime::context::{RNodeState, TreeContext};
 use crate::runtime::env::RtEnv;
-use crate::runtime::forester::flow::{read_cursor, run_with, CURSOR, LEN, P_CURSOR};
-use crate::runtime::rtree::rnode::{FlowType, Name, RNode};
+use crate::runtime::forester::flow::{read_cursor, run_with};
+use crate::runtime::modification::ModState::{Defer, Proceed, Reject};
+use crate::runtime::modification::{ModState, ModificationQueue, ModificationTask};
+use crate::runtime::rtree::rnode::RNode;
 use crate::runtime::rtree::RuntimeTree;
-use crate::runtime::{RtOk, RtResult, RuntimeError, TickResult};
+use crate::runtime::{RtOk, RtResult, RuntimeError};
 use crate::tracer::Tracer;
-use crate::tree::project::Project;
-use graphviz_rust::attributes::target;
+use crate::tree::parser::ast::message::Bool;
 use log::debug;
-use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
 /// The entry point to process execution.
@@ -23,6 +24,7 @@ use std::sync::{Arc, Mutex};
 /// - Blackboard as a memory layer
 /// - ActionKeeper to execute the actions
 /// - Tracer to store the tracing information
+/// - Optimizer holds tasks to modify the tree or other components on the fly
 ///
 ///# Note:
 /// Better to use `ForesterBuilder` to create a Forester.  
@@ -32,6 +34,7 @@ pub struct Forester {
     pub tracer: Arc<Mutex<Tracer>>,
     pub keeper: ActionKeeper,
     pub env: RtEnv,
+    pub mod_queue: Arc<Mutex<ModificationQueue>>,
 }
 
 impl Forester {
@@ -44,13 +47,65 @@ impl Forester {
     ) -> RtResult<Self> {
         let tracer = Arc::new(Mutex::new(tracer));
         let bb = Arc::new(Mutex::new(bb));
+        let mod_queue = Arc::new(Mutex::new(ModificationQueue::default()));
         Ok(Self {
             tree,
             bb,
             keeper,
             tracer,
             env,
+            mod_queue,
         })
+    }
+
+    /// Tries to apply the next optimization from the optimizer.
+    ///
+    /// The seq of steps is the following:
+    /// - take a task
+    /// - for rt tree opt task
+    /// - check if the task contains nodes that are running and defer the task by pushing it back
+    /// - replace the nodes, dropping the state to ready
+    ///
+    fn try_to_modify(&mut self, ctx: &TreeContext) -> RtOk {
+        let mut mq_guard = self.mod_queue.lock()?;
+        // the tasks that have the running tasks to replace
+        let mut deferred_tasks = vec![];
+        while let Some(task) = mq_guard.pop() {
+            match &task {
+                ModificationTask::RtTree(t) => {
+                    let rt_tree_mod = t.modification(&self.tree)?;
+                    debug!("try to modify the runtime tree with {:?}", rt_tree_mod);
+                    let mut state: ModState = Proceed;
+
+                    for nid in rt_tree_mod.nodes.keys() {
+                        if &self.tree.root == nid {
+                            debug!("the node {nid} is root. The modification of the root is forbidden. The task will be rejected.");
+                            state = Reject;
+                        } else if !self.tree.nodes.contains_key(nid) {
+                            debug!("the node {nid} is not in the tree. The task will be rejected.");
+                            state = Reject;
+                        } else if ctx.state_in_ts(nid).is_running() {
+                            debug!("the node {nid} is running. The task will be deferred.");
+                            state = Defer;
+                        }
+                    }
+
+                    match state {
+                        Defer => deferred_tasks.push(task),
+                        Reject => {}
+                        Proceed => {
+                            for (nid, node) in rt_tree_mod.nodes {
+                                let new = format!("{:?}", node);
+                                let old = self.tree.nodes.insert(nid, node);
+                                debug!("The node {nid} is replaced. The previous node {:?}, the new node {new}", old);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        mq_guard.push_all(deferred_tasks);
+        Ok(())
     }
 
     /// Runs the execution.
@@ -77,7 +132,7 @@ impl Forester {
             let id = *id;
             debug!(target:"loop", "node = {}, tick = {}", id,ctx.curr_ts());
             match self.tree.node(&id)? {
-                RNode::Flow(tpe, n, args, children) => match ctx.state_in_ts(id) {
+                RNode::Flow(tpe, _n, args, children) => match ctx.state_in_ts(&id) {
                     // do nothing, since there are no children
                     RNodeState::Ready(tick_args) if children.is_empty() => {
                         debug!(target:"flow[ready]", "tick:{}, {tpe}. The children are empty. Go to the fin state", ctx.curr_ts());
@@ -100,7 +155,7 @@ impl Forester {
                     RNodeState::Running(tick_args) => {
                         let cursor = read_cursor_as_usize(tick_args.clone())?;
                         let child = children[cursor];
-                        match ctx.state_in_ts(child) {
+                        match ctx.state_in_ts(&child) {
                             // we are about to kick off the child.
                             // Just pass the control to the child
                             RNodeState::Ready(..) => {
@@ -115,6 +170,7 @@ impl Forester {
                                 if tpe.is_root() {
                                     debug!(target:"flow[run]", "tick:{}, {tpe}. The '{child}' is running, tick up the flow. ",ctx.curr_ts());
                                     ctx.next_tick()?;
+                                    self.try_to_modify(&ctx)?;
                                     ctx.push(child)?;
                                 } else {
                                     let next_state =
@@ -148,7 +204,7 @@ impl Forester {
                     }
                 },
                 // similar to the flow except we don't need to handle more than 1 child.
-                RNode::Decorator(tpe, init_args, child) => match ctx.state_in_ts(id) {
+                RNode::Decorator(tpe, init_args, child) => match ctx.state_in_ts(&id) {
                     // since it is ready we need to prepare decorator to start
                     // But then we do nothing but switch the state to running in the current tick.
                     RNodeState::Ready(tick_args) => {
@@ -161,7 +217,7 @@ impl Forester {
                     // - when we are about to start child
                     // - when we have the child finished (with any state)
                     // to figure out where we are, we analyze the child at the current cursor.
-                    RNodeState::Running(tick_args) => match ctx.state_in_ts(*child) {
+                    RNodeState::Running(tick_args) => match ctx.state_in_ts(child) {
                         // we are about to kick off the child.
                         // Just pass the control to the child
                         RNodeState::Ready(..) => {
@@ -206,10 +262,10 @@ impl Forester {
                 // The leaf nodes process atomically.
                 RNode::Leaf(f_name, args) => {
                     debug!(target:"leaf","args :{:?}",args);
-                    if ctx.state_in_ts(id).is_ready() {
-                        let mut env = &mut self.env;
+                    if ctx.state_in_ts(&id).is_ready() {
+                        let env = &mut self.env;
                         let res = recover(self.keeper.on_tick(
-                            &mut env,
+                            env,
                             f_name.name()?,
                             args.clone(),
                             (&ctx).into(),
@@ -227,10 +283,7 @@ impl Forester {
     }
 }
 
-fn type_err(tpe: &str) -> Tick {
-    Err(RuntimeError::uex(format!("the node {tpe} can't be a leaf")))
-}
 fn read_cursor_as_usize(args: RtArgs) -> RtResult<usize> {
     usize::try_from(read_cursor(args)?)
-        .map_err(|e| RuntimeError::uex(format!("cursor is not usize")))
+        .map_err(|_e| RuntimeError::uex("cursor is not usize".to_string()))
 }

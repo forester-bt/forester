@@ -2,22 +2,11 @@ pub mod arg;
 pub mod call;
 pub mod invocation;
 pub mod message;
-use crate::runtime::rtree::rnode::Name;
-use crate::runtime::RuntimeError;
 use crate::tree::parser::ast::invocation::Invocation;
 use crate::tree::project::{AliasName, TreeName};
-use crate::tree::TreeError;
-use arg::ArgumentsType::{Named, Unnamed};
 use arg::{Arguments, Params};
 use call::{Call, Calls};
-use itertools::Itertools;
-use message::Message;
-use parsit::step::Step;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::fmt::{format, write, Display, Formatter, Write};
-use std::str::FromStr;
-use strum::ParseError;
 use strum_macros::Display;
 use strum_macros::EnumString;
 
@@ -48,22 +37,19 @@ pub enum TreeType {
 
 impl TreeType {
     pub fn is_decorator(&self) -> bool {
-        match self {
+        matches!(
+            self,
             TreeType::Inverter
-            | TreeType::ForceSuccess
-            | TreeType::ForceFail
-            | TreeType::Repeat
-            | TreeType::Retry
-            | TreeType::Delay
-            | TreeType::Timeout => true,
-            _ => false,
-        }
+                | TreeType::ForceSuccess
+                | TreeType::ForceFail
+                | TreeType::Repeat
+                | TreeType::Retry
+                | TreeType::Delay
+                | TreeType::Timeout
+        )
     }
     pub fn is_action(&self) -> bool {
-        match self {
-            TreeType::Impl | TreeType::Cond => true,
-            _ => false,
-        }
+        matches!(self, TreeType::Impl | TreeType::Cond)
     }
 }
 
@@ -116,10 +102,7 @@ impl Tree {
 
 impl Tree {
     pub fn is_root(&self) -> bool {
-        match self.tpe {
-            TreeType::Root => true,
-            _ => false,
-        }
+        matches!(self.tpe, TreeType::Root)
     }
     pub fn new(tpe: TreeType, name: Key, params: Params, calls: Calls) -> Self {
         Self {
@@ -168,7 +151,7 @@ impl Import {
     pub fn names(f: &str, names: Vec<&str>) -> Self {
         Import(
             f.to_string(),
-            names.into_iter().map(|v| ImportName::id(v)).collect(),
+            names.into_iter().map(ImportName::id).collect(),
         )
     }
     pub fn names_mixed(f: &str, names: Vec<ImportName>) -> Self {
@@ -185,7 +168,7 @@ pub enum FileEntity {
 #[derive(Clone, Debug, PartialEq)]
 pub struct AstFile(pub Vec<FileEntity>);
 
-impl<'a> AstFile {
+impl AstFile {
     pub fn new(field0: Vec<FileEntity>) -> Self {
         Self(field0)
     }

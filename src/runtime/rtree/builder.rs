@@ -1,8 +1,6 @@
-use crate::args;
 use crate::runtime::args::RtArgs;
 use crate::runtime::rtree::rnode::{DecoratorType, FlowType, RNode, RNodeId, RNodeName};
 use crate::runtime::rtree::RuntimeTree;
-use crate::runtime::RtResult;
 use std::collections::{HashMap, HashSet};
 
 pub struct RtTreeBuilder {
@@ -36,6 +34,14 @@ impl RtTreeBuilder {
             actions: HashSet::new(),
         }
     }
+    pub fn new_from(from: RNodeId) -> Self {
+        Self {
+            root: 0,
+            max: from,
+            nodes: HashMap::new(),
+            actions: HashSet::new(),
+        }
+    }
 
     fn process_child(&mut self, child: RtChild) -> RNodeId {
         match child {
@@ -45,32 +51,32 @@ impl RtTreeBuilder {
     }
 
     pub fn add(&mut self, node_b: RtNodeBuilder) -> RNodeId {
+        let id = self.next();
+        self.set(node_b, id);
+        id
+    }
+
+    pub fn set(&mut self, node_b: RtNodeBuilder, id: RNodeId) {
         match node_b {
             RtNodeBuilder::Leaf(n, args) => {
-                let id = self.next();
                 self.actions
                     .insert(n.name().unwrap_or(&"".to_string()).clone());
                 self.nodes.insert(id, RNode::Leaf(n, args));
-                id
             }
             RtNodeBuilder::Decorator(t, args, child) => {
-                let id = self.process_child(*child);
-                let d_id = self.next();
-                self.nodes.insert(d_id, RNode::Decorator(t, args, id));
-                d_id
+                let cid = self.process_child(*child);
+                self.nodes.insert(id, RNode::Decorator(t, args, cid));
             }
             RtNodeBuilder::Flow(t, name, args, children) => {
                 let mut children_ids = vec![];
                 for c in children {
                     children_ids.push(self.process_child(c));
                 }
-                let id = self.next();
                 if t.is_root() {
                     self.root = id
                 }
                 self.nodes
                     .insert(id, RNode::Flow(t, name, args, children_ids));
-                id
             }
         }
     }

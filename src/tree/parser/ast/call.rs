@@ -12,10 +12,7 @@ pub enum Call {
 
 impl Call {
     pub fn is_lambda(&self) -> bool {
-        match &self {
-            Call::Lambda(_, _) => true,
-            _ => false,
-        }
+        matches!(self, Call::Lambda(_, _))
     }
 
     pub fn get_ho_invocation(&self) -> Option<Key> {

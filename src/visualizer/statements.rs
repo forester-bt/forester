@@ -1,12 +1,8 @@
 use crate::runtime::args::display::ShortDisplayedRtArguments;
 use crate::runtime::rtree::rnode::{FlowType, RNode, RNodeName};
-use crate::tree::parser::ast::arg::{Argument, Arguments};
-use crate::tree::parser::ast::{Key, Tree, TreeType};
 use graphviz_rust::attributes::{color_name, shape, NodeAttributes};
 use graphviz_rust::dot_generator::*;
 use graphviz_rust::dot_structures::*;
-use itertools::Itertools;
-use std::fmt::format;
 
 pub trait ToStmt {
     fn to_stmt(&self, id: String) -> Stmt;
@@ -15,7 +11,7 @@ pub trait ToStmt {
 fn name_to_label(name: &RNodeName) -> String {
     match name {
         RNodeName::Lambda => "".to_string(),
-        RNodeName::Name(name) => format!("{name}"),
+        RNodeName::Name(name) => name.to_string(),
         RNodeName::Alias(n, a) => format!("{n}[{a}]"),
     }
 }

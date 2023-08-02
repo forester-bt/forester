@@ -1,12 +1,10 @@
 pub mod builtin;
 pub mod keeper;
 
-use crate::runtime::args::{RtArgs, RtValue};
-use crate::runtime::context::{TreeContext, TreeContextRef};
+use crate::runtime::args::RtArgs;
+use crate::runtime::context::TreeContextRef;
 use crate::runtime::{RtResult, RuntimeError, TickResult};
-use std::collections::HashMap;
-use std::rc::Rc;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 pub type ActionName = String;
 pub type Tick = RtResult<TickResult>;

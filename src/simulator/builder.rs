@@ -1,16 +1,13 @@
 use crate::get_pb;
 use crate::runtime::action::keeper::ActionImpl;
 use crate::runtime::builder::ForesterBuilder;
-use crate::runtime::env::RtEnv;
-use crate::runtime::forester::Forester;
 use crate::runtime::{RtResult, RuntimeError};
 use crate::simulator::actions::SimAction;
-use crate::simulator::config::SimProfile;
+use crate::simulator::config::{SimProfile, TracerSimConfig};
 use crate::simulator::RtAction;
 use crate::simulator::Simulator;
 use crate::tracer::{Tracer, TracerConfiguration};
-use std::fmt::format;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 /// The builder to create a simulator process.
 ///
@@ -28,7 +25,7 @@ use std::path::{Path, PathBuf};
 ///     sb.root(root.clone());
 ///     sb.profile(PathBuf::from("sim.yaml"));
 ///     
-///     let mut fb = ForesterBuilder::from_file_system();
+///     let mut fb = ForesterBuilder::from_fs();
 ///
 ///     fb.main_file("main.tree".to_string());
 ///     fb.root(root);
@@ -103,10 +100,9 @@ impl SimulatorBuilder {
 
     /// Build
     pub fn build(&mut self) -> RtResult<Simulator> {
-        let mut fb = self
-            .fb
-            .take()
-            .ok_or(RuntimeError::uex(format!("the forester builder is absent")))?;
+        let mut fb = self.fb.take().ok_or(RuntimeError::uex(
+            "the forester builder is absent".to_string(),
+        ))?;
 
         let profile = if let Some(p) = &self.profile {
             SimProfile::parse_file(&get_pb(p, &self.root.clone())?)?
@@ -116,11 +112,16 @@ impl SimulatorBuilder {
 
         let pr = profile.clone();
 
-        if let Some(trace_dump_file) = profile.config.trace {
-            fb.tracer(Tracer::create(TracerConfiguration::in_file(get_pb(
-                &PathBuf::from(trace_dump_file),
-                &self.root.clone(),
-            )?))?)
+        if let TracerSimConfig { file, dt_fmt } = profile.config.tracer {
+            let cfg = match file {
+                None => TracerConfiguration::in_memory(dt_fmt),
+                Some(f) => TracerConfiguration::in_file(
+                    get_pb(&PathBuf::from(f), &self.root.clone())?,
+                    dt_fmt,
+                ),
+            };
+
+            fb.tracer(Tracer::create(cfg)?)
         }
 
         if let Some(bb_load_path) = profile.config.bb.load {

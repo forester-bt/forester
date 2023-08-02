@@ -1,4 +1,3 @@
-use crate::runtime::RuntimeError;
 use crate::tree::parser::ast::arg::ArgumentsType::{Named, Unnamed};
 use crate::tree::parser::ast::call::Call;
 use crate::tree::parser::ast::message::Message;
@@ -65,7 +64,7 @@ impl Display for ArgumentRhs {
                 Call::Lambda(tpe, _) => {
                     write!(f, "{}...", tpe)
                 }
-                Call::Decorator(tpe, args, call) => {
+                Call::Decorator(tpe, args, _call) => {
                     write!(f, "{}({})...", tpe, args)
                 }
             },
@@ -81,10 +80,7 @@ pub enum Argument {
 
 impl Argument {
     pub fn has_name(&self, key: &Key) -> bool {
-        match self {
-            Argument::Assigned(k, _) if k == key => true,
-            _ => false,
-        }
+        matches!(self, Argument::Assigned(k, _) if k == key)
     }
 
     pub fn name(&self) -> Option<&Key> {
@@ -153,9 +149,9 @@ impl Arguments {
                 (Argument::Assigned(_, _), Some(Named)) => {}
                 (Argument::Unassigned(_), Some(Unnamed)) => {}
                 _ => {
-                    return Err(cerr(format!(
-                        "the arguments should be either named ot unnamed but not a mix"
-                    )))
+                    return Err(cerr(
+                        "the arguments should be either named ot unnamed but not a mix".to_string(),
+                    ))
                 }
             }
         }
@@ -170,7 +166,7 @@ impl Display for Arguments {
     }
 }
 
-impl<'a> Arguments {
+impl Arguments {
     pub fn new(args: Vec<Argument>) -> Self {
         Self { args }
     }

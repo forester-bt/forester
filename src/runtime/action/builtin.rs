@@ -4,10 +4,9 @@ pub mod data;
 pub mod http;
 
 use crate::runtime::action::{Impl, Tick};
-use crate::runtime::args::{RtArgs, RtValue};
-use crate::runtime::blackboard::{BBKey, BlackBoard};
-use crate::runtime::context::{TreeContext, TreeContextRef};
-use crate::runtime::{RuntimeError, TickResult};
+use crate::runtime::args::RtArgs;
+use crate::runtime::context::TreeContextRef;
+use crate::runtime::TickResult;
 
 /// Simple implementation to resturn result
 pub struct ReturnResult {
@@ -38,7 +37,7 @@ impl ReturnResult {
 }
 
 impl Impl for ReturnResult {
-    fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
+    fn tick(&self, args: RtArgs, _ctx: TreeContextRef) -> Tick {
         Ok(match &self.res {
             TickResult::Failure(_) => {
                 let mb_str = args.first();

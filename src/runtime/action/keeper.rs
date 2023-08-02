@@ -1,12 +1,10 @@
-use crate::runtime::action::{recover, Tick};
+use crate::runtime::action::Tick;
 use crate::runtime::action::{Action, ActionName};
 use crate::runtime::args::RtArgs;
 use crate::runtime::context::TreeContextRef;
-use crate::runtime::context::{RNodeState, TreeContext};
 use crate::runtime::env::RtEnv;
 use crate::runtime::env::TaskState;
 use crate::runtime::{RtResult, RuntimeError, TickResult};
-use crate::tree::parser::ast::Tree;
 use std::collections::{HashMap, HashSet};
 /// Just a simple action map to register and execute the actions.
 pub struct ActionKeeper {
@@ -26,10 +24,7 @@ impl ActionImpl {
         }
     }
     pub fn is_absent(&self) -> bool {
-        match self {
-            ActionImpl::Absent => true,
-            _ => false,
-        }
+        matches!(self, ActionImpl::Absent)
     }
 }
 
@@ -73,7 +68,7 @@ impl ActionKeeper {
     }
 
     pub fn register(&mut self, name: ActionName, action: Action) -> RtResult<()> {
-        &self.actions.insert(name, ActionImpl::Present(action));
+        let _ = self.actions.insert(name, ActionImpl::Present(action));
         Ok(())
     }
 

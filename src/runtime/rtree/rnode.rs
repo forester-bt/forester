@@ -1,7 +1,6 @@
-use crate::runtime::action::ActionName;
 use crate::runtime::args::RtArgs;
 use crate::runtime::{RtResult, RuntimeError, TickResult};
-use crate::tree::parser::ast::{Tree, TreeType};
+use crate::tree::parser::ast::TreeType;
 
 use crate::tree::{cerr, TreeError};
 use strum_macros::Display;
@@ -36,10 +35,7 @@ pub enum FlowType {
 
 impl FlowType {
     pub fn is_root(&self) -> bool {
-        match self {
-            FlowType::Root => true,
-            _ => false,
-        }
+        matches!(self, FlowType::Root)
     }
 }
 
@@ -86,9 +82,10 @@ pub enum RNodeName {
 impl RNodeName {
     pub fn name(&self) -> RtResult<&Name> {
         match self {
-            RNodeName::Lambda => Err(RuntimeError::uex(format!(
+            RNodeName::Lambda => Err(RuntimeError::uex(
                 "unexpected: lambda is in the unexpected place, the named tree is supposed to be."
-            ))),
+                    .to_string(),
+            )),
             RNodeName::Name(n) => Ok(n),
             RNodeName::Alias(n, _) => Ok(n),
         }
@@ -136,8 +133,4 @@ impl RNode {
     ) -> Self {
         RNode::Flow(f, RNodeName::Alias(name, alias), args, children)
     }
-}
-
-pub struct RNodeState {
-    last_tick: TickResult,
 }

@@ -4,18 +4,12 @@ pub mod imports;
 use crate::read_file;
 use crate::runtime::action::ActionName;
 use crate::runtime::builder::builtin::BuilderBuiltInActions;
-use crate::runtime::RtResult;
-use crate::tree::parser::ast::{AstFile, FileEntity, Import, ImportName, Key, Tree};
+use crate::tree::parser::ast::{FileEntity, Tree};
 use crate::tree::parser::Parser;
 use crate::tree::project::file::File;
 use crate::tree::{cerr, TreeError};
-use itertools::Itertools;
-use parsit::error::ParseError;
-use std::borrow::Cow;
 use std::collections::{HashMap, HashSet};
-use std::fs;
-use std::iter::Map;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 pub type FileName = String;
 pub type TreeName = String;
@@ -67,7 +61,7 @@ impl<'a> Project {
             std: Default::default(),
         };
         project.main = (main_file.clone(), main_call);
-        let _ = project.parse_file(root.clone(), main_file.clone())?;
+        project.parse_file(root, main_file)?;
         Ok(project)
     }
     pub fn build(main_file: FileName, root: PathBuf) -> Result<Project, TreeError> {
@@ -78,12 +72,12 @@ impl<'a> Project {
             std: Default::default(),
         };
 
-        let _ = project.parse_file(root.clone(), main_file.clone())?;
+        project.parse_file(root.clone(), main_file.clone())?;
 
         let main_call = project
             .files
             .get(main_file.as_str())
-            .and_then(|file| file.definitions.iter().find(|(name, t)| t.is_root()))
+            .and_then(|file| file.definitions.iter().find(|(_name, t)| t.is_root()))
             .map(|(name, _)| name.to_string())
             .ok_or(TreeError::IOError(format!(
                 "no root operation in the file {}",
@@ -104,16 +98,16 @@ impl<'a> Project {
             std: Default::default(),
         };
 
-        let _ = project.parse_text(text)?;
+        project.parse_text(text)?;
 
         let main_call = project
             .files
             .get("_")
-            .and_then(|file| file.definitions.iter().find(|(name, t)| t.is_root()))
+            .and_then(|file| file.definitions.iter().find(|(_name, t)| t.is_root()))
             .map(|(name, _)| name.to_string())
-            .ok_or(TreeError::IOError(format!(
-                "no root operation in the given text",
-            )))?;
+            .ok_or(TreeError::IOError(
+                "no root operation in the given text".to_string(),
+            ))?;
         debug!("built project from text with root: {}", main_call);
         project.main = ("_".to_string(), main_call);
         Ok(project)
@@ -124,10 +118,10 @@ impl<'a> Project {
 
         let mut file = File::new("_".to_string());
         for ent in ast_file.0.into_iter() {
-            let _ = match ent {
+            match ent {
                 FileEntity::Tree(t) => file.add_def(t)?,
                 FileEntity::Import(i) => {
-                    let _ = self.parse_file(PathBuf::new(), i.f_name().to_string())?;
+                    self.parse_file(PathBuf::new(), i.f_name().to_string())?;
                     file.add_import(i)?
                 }
             };
@@ -137,18 +131,18 @@ impl<'a> Project {
         Ok(())
     }
 
-    fn parse_file(&mut self, mut root: PathBuf, file: FileName) -> Result<(), TreeError> {
+    fn parse_file(&mut self, root: PathBuf, file: FileName) -> Result<(), TreeError> {
         let text = file_to_str(root.clone(), file.clone())?;
         let ast_file = Parser::new(text.as_str())?.parse()?;
 
         if !self.files.contains_key(file.as_str()) {
-            let mut file = File::new(file.clone());
+            let mut file = File::new(file);
 
             for ent in ast_file.0.into_iter() {
-                let _ = match ent {
+                match ent {
                     FileEntity::Tree(t) => file.add_def(t)?,
                     FileEntity::Import(i) => {
-                        let _ = self.parse_file(root.clone(), i.f_name().to_string())?;
+                        self.parse_file(root.clone(), i.f_name().to_string())?;
                         file.add_import(i)?
                     }
                 };
@@ -159,12 +153,12 @@ impl<'a> Project {
         Ok(())
     }
 }
-fn file_to_str<'a>(root: PathBuf, file: FileName) -> Result<String, TreeError> {
+fn file_to_str(root: PathBuf, file: FileName) -> Result<String, TreeError> {
     if file == "std::actions" {
         Ok(BuilderBuiltInActions::builtin_actions_file())
     } else {
         let mut path = root;
-        path.push(file.clone());
+        path.push(file);
         Ok(read_file(&path)?)
     }
 }

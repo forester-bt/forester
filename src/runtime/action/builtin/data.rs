@@ -1,7 +1,6 @@
 use crate::runtime::action::{Impl, Tick};
 use crate::runtime::args::{RtArgs, RtValue};
-use crate::runtime::blackboard::{BBKey, BlackBoard};
-use crate::runtime::context::{TreeContext, TreeContextRef};
+use crate::runtime::context::TreeContextRef;
 use crate::runtime::{RuntimeError, TickResult};
 
 /// Lock or unlock key in bb
@@ -14,9 +13,15 @@ impl Impl for LockUnlockBBKey {
     fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
         let key = args
             .first()
-            .ok_or(RuntimeError::fail(format!("the key argument is not found")))
+            .ok_or(RuntimeError::fail(
+                "the key argument is not found".to_string(),
+            ))
             .and_then(|v| v.cast(ctx.clone()).str())
-            .and_then(|v| v.ok_or(RuntimeError::fail(format!("the key argument is not found"))))?;
+            .and_then(|v| {
+                v.ok_or(RuntimeError::fail(
+                    "the key argument is not found".to_string(),
+                ))
+            })?;
 
         match &self {
             LockUnlockBBKey::Lock => ctx.bb().lock()?.lock(key)?,
@@ -31,9 +36,9 @@ pub struct StoreTick;
 impl Impl for StoreTick {
     fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
         let curr_tick = ctx.current_tick();
-        let v = args.first().ok_or(RuntimeError::fail(format!(
-            "the store_tick has at least one parameter"
-        )))?;
+        let v = args.first().ok_or(RuntimeError::fail(
+            "the store_tick has at least one parameter".to_string(),
+        ))?;
 
         let k = v.clone().cast(ctx.clone()).str()?;
         match k {
@@ -54,13 +59,13 @@ impl Impl for CheckEq {
     fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
         let key = args
             .find_or_ith("key".to_string(), 0)
-            .ok_or(RuntimeError::fail(format!("the key is expected ")))?;
+            .ok_or(RuntimeError::fail("the key is expected ".to_string()))?;
 
         let expected = args
             .find_or_ith("expected".to_string(), 1)
-            .ok_or(RuntimeError::fail(format!("the key is expected")))?;
+            .ok_or(RuntimeError::fail("the key is expected".to_string()))?;
 
-        let actual = key.clone().cast(ctx.clone()).with_ptr()?;
+        let actual = key.cast(ctx).with_ptr()?;
         if actual == expected {
             Ok(TickResult::success())
         } else {
@@ -97,20 +102,17 @@ where
     fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
         let key = args
             .find_or_ith("key".to_string(), 0)
-            .ok_or(RuntimeError::fail(format!(
-                "the key is expected and should be a string"
-            )))?;
+            .ok_or(RuntimeError::fail(
+                "the key is expected and should be a string".to_string(),
+            ))?;
 
-        let key = key
-            .cast(ctx.clone())
-            .str()?
-            .ok_or(RuntimeError::fail(format!(
-                "the key is expected and should be a string"
-            )))?;
+        let key = key.cast(ctx.clone()).str()?.ok_or(RuntimeError::fail(
+            "the key is expected and should be a string".to_string(),
+        ))?;
 
         let default = args
             .find_or_ith("default".to_string(), 1)
-            .ok_or(RuntimeError::fail(format!("the default is expected")))?;
+            .ok_or(RuntimeError::fail("the default is expected".to_string()))?;
 
         let arc_bb = ctx.bb();
         let mut bb = arc_bb.lock()?;
@@ -126,20 +128,17 @@ impl Impl for StoreData {
     fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
         let key = args
             .find_or_ith("key".to_string(), 0)
-            .ok_or(RuntimeError::fail(format!(
-                "the key is expected and should be a string"
-            )))?;
+            .ok_or(RuntimeError::fail(
+                "the key is expected and should be a string".to_string(),
+            ))?;
 
-        let key = key
-            .cast(ctx.clone())
-            .str()?
-            .ok_or(RuntimeError::fail(format!(
-                "the key is expected and should be a string"
-            )))?;
+        let key = key.cast(ctx.clone()).str()?.ok_or(RuntimeError::fail(
+            "the key is expected and should be a string".to_string(),
+        ))?;
 
         let value = args
             .find_or_ith("value".to_string(), 1)
-            .ok_or(RuntimeError::fail(format!("the value is expected")))?;
+            .ok_or(RuntimeError::fail("the value is expected".to_string()))?;
 
         ctx.bb().lock()?.put(key, value)?;
         Ok(TickResult::Success)

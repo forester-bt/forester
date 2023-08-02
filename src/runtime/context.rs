@@ -25,7 +25,7 @@ impl From<&TreeContext> for TreeContextRef {
         Self {
             bb: ctx.bb.clone(),
             tracer: ctx.tracer.clone(),
-            curr_ts: ctx.curr_ts.clone(),
+            curr_ts: ctx.curr_ts,
         }
     }
 }
@@ -49,7 +49,7 @@ impl TreeContextRef {
     }
 }
 
-/// The runtine context.
+/// The runtime context.
 pub struct TreeContext {
     /// Storage
     bb: Arc<Mutex<BlackBoard>>,
@@ -159,11 +159,11 @@ impl TreeContext {
         self.trace(NewState(id, state.clone()))?;
         Ok(self.state.insert(id, state))
     }
-    pub(crate) fn state_in_ts(&self, id: RNodeId) -> RNodeState {
+    pub(crate) fn state_in_ts(&self, id: &RNodeId) -> RNodeState {
         let actual_state = self
             .state
-            .get(&id)
-            .map(|s| s.clone())
+            .get(id)
+            .cloned()
             .unwrap_or(RNodeState::Ready(RtArgs::default()));
         if self.is_curr_ts(&id) {
             actual_state
@@ -215,9 +215,9 @@ impl RNodeState {
     }
     pub fn to_tick_result(&self) -> RtResult<TickResult> {
         match &self {
-            RNodeState::Ready(_) => Err(RuntimeError::uex(format!(
-                "the ready is the unexpected state for "
-            ))),
+            RNodeState::Ready(_) => Err(RuntimeError::uex(
+                "the ready is the unexpected state for ".to_string(),
+            )),
             RNodeState::Running(_) => Ok(TickResult::running()),
             RNodeState::Success(_) => Ok(TickResult::success()),
             RNodeState::Failure(args) => {
@@ -232,22 +232,13 @@ impl RNodeState {
     }
 
     pub fn is_running(&self) -> bool {
-        match self {
-            RNodeState::Running { .. } => true,
-            _ => false,
-        }
+        matches!(self, RNodeState::Running { .. })
     }
     pub fn is_ready(&self) -> bool {
-        match self {
-            RNodeState::Ready(_) => true,
-            _ => false,
-        }
+        matches!(self, RNodeState::Ready(_))
     }
     pub fn is_finished(&self) -> bool {
-        match self {
-            RNodeState::Success(_) | RNodeState::Failure(_) => true,
-            _ => false,
-        }
+        matches!(self, RNodeState::Success(_) | RNodeState::Failure(_))
     }
 
     pub fn args(&self) -> RtArgs {

@@ -1,18 +1,15 @@
 use crate::runtime::action::Action as RtAction;
 use crate::runtime::action::Tick;
-use crate::runtime::builder::ForesterBuilder;
 use crate::runtime::forester::Forester;
-use crate::runtime::{RtOk, RtResult};
-use crate::simulator::actions::SimAction;
-use crate::simulator::config::{Action, SimProfile, SimProfileConfig};
-use crate::tracer::{Tracer, TracerConfiguration};
+
+use crate::simulator::config::SimProfile;
+
 use crate::visualizer::Visualizer;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 pub mod actions;
 pub mod builder;
 pub mod config;
 use crate::get_pb;
-use crate::runtime::env::RtEnv;
 
 /// Simulator is a  wrapper above Forester that moderates a couple of extra things.
 /// The idea is to stub some actions and to get a control run of the tree
@@ -34,7 +31,7 @@ use crate::runtime::env::RtEnv;
 ///     sb.root(root.clone());
 ///     sb.profile(PathBuf::from("sim.yaml"));
 ///     
-///     let mut fb = ForesterBuilder::from_file_system();
+///     let mut fb = ForesterBuilder::from_fs();
 ///     
 ///     fb.root(root);    
 ///

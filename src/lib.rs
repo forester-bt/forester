@@ -6,10 +6,7 @@
 #[macro_use]
 extern crate log;
 
-use crate::runtime::rtree::RuntimeTree;
-use crate::runtime::{RtOk, RtResult};
-use crate::tree::project::Project;
-use log::LevelFilter;
+use crate::runtime::RtResult;
 use std::fs;
 use std::path::PathBuf;
 
@@ -24,8 +21,7 @@ use crate::runtime::RuntimeError;
 mod tests;
 
 pub fn read_file(pb: &PathBuf) -> RtResult<String> {
-    Ok(fs::read_to_string(pb)
-        .map_err(|e| RuntimeError::IOError(format!("error:{}, file:{:?}", e.to_string(), pb)))?)
+    fs::read_to_string(pb).map_err(|e| RuntimeError::IOError(format!("error:{e}, file:{:?}", pb)))
 }
 
 pub(crate) fn get_pb(file_pb: &PathBuf, root: &Option<PathBuf>) -> RtResult<PathBuf> {

@@ -31,7 +31,7 @@ impl ImportMap {
                         map.trees.insert(v.to_string(), file.to_string());
                     }
                     ImportName::Alias(id, alias) => {
-                        if map.aliases.get(alias).filter(|id| id != id).is_some() {
+                        if map.aliases.get(alias).filter(|idt| *idt != id).is_some() {
                             return Err(cerr(format!(
                                 "the import alias {alias} is already defined for another call "
                             )));

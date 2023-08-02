@@ -1,20 +1,16 @@
 pub mod display;
 pub mod transform;
-use crate::runtime::blackboard::{BBKey, BlackBoard};
+use crate::runtime::blackboard::BBKey;
 use crate::runtime::context::TreeContextRef;
-use crate::runtime::rtree::rnode::DecoratorType;
 use crate::runtime::{RtResult, RuntimeError};
-use crate::tree::parser::ast::arg::{
-    Argument, ArgumentRhs, Arguments, ArgumentsType, MesType, Param, Params,
-};
+use crate::tree::parser::ast::arg::{ArgumentRhs, MesType, Param};
 use crate::tree::parser::ast::call::Call;
 use crate::tree::parser::ast::message::{Message, Number};
-use crate::tree::parser::ast::Key;
 use crate::tree::{cerr, TreeError};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::fmt::{format, Display, Formatter, Write};
+use std::fmt::{Display, Formatter};
 
 pub type RtAKey = String;
 
@@ -128,7 +124,7 @@ impl RtValue {
         Map: Fn(RtValue) -> To,
     {
         match self {
-            RtValue::Array(elems) => Some(elems.into_iter().map(|v| map(v)).collect()),
+            RtValue::Array(elems) => Some(elems.into_iter().map(map).collect()),
             _ => None,
         }
     }
@@ -138,7 +134,7 @@ impl RtValue {
     {
         match self {
             RtValue::Object(elems) => Some(HashMap::from_iter(
-                elems.into_iter().map(|v| map(v)).collect::<Vec<_>>(),
+                elems.into_iter().map(map).collect::<Vec<_>>(),
             )),
             _ => None,
         }
@@ -165,11 +161,15 @@ impl RtValue {
 
     pub fn with_ptr(self, ctx: TreeContextRef) -> RtResult<RtValue> {
         match self {
-            RtValue::Pointer(p) => ctx.bb().lock()?.get(p.clone())?.map(|v| v.clone()).ok_or(
-                RuntimeError::BlackBoardError(format!(
-                    "The pointer {p} can not be processed (it is absent)"
-                )),
-            ),
+            RtValue::Pointer(p) => {
+                ctx.bb()
+                    .lock()?
+                    .get(p.clone())?
+                    .cloned()
+                    .ok_or(RuntimeError::BlackBoardError(format!(
+                        "The pointer {p} can not be processed (it is absent)"
+                    )))
+            }
             v => Ok(v),
         }
     }
@@ -279,8 +279,8 @@ impl Display for RtValue {
                 f.write_str(format!("[{}]", elems).as_str())?;
             }
             RtValue::Number(n) => f.write_str(format!("{}", n).as_str())?,
-            RtValue::Pointer(p) => f.write_str(format!("{}", p).as_str())?,
-            RtValue::Call(_) => f.write_str(format!("<Call>>").as_str())?,
+            RtValue::Pointer(p) => f.write_str(p)?,
+            RtValue::Call(_) => f.write_str("<Call>>")?,
         }
         Ok(())
     }
@@ -314,7 +314,7 @@ impl RtArgument {
     }
 
     pub fn try_from(a: ArgumentRhs, p: Param) -> Result<Option<RtArgument>, TreeError> {
-        let _ = RtArgument::validate_type(a.clone(), p.tpe)?;
+        RtArgument::validate_type(a.clone(), p.tpe)?;
         match &a {
             ArgumentRhs::Id(id) => Ok(Some(RtArgument::new(p.name, RtValue::Pointer(id.clone())))),
             ArgumentRhs::Mes(m) => Ok(Some(RtArgument::new(p.name, m.clone().into()))),

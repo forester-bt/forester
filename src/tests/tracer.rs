@@ -274,6 +274,7 @@ fn file() {
     fb.tracer(
         Tracer::create(TracerConfiguration {
             indent: 2,
+            time_format: None,
             to_file: Some(tracer_log.clone()),
         })
         .unwrap(),

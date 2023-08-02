@@ -1,8 +1,8 @@
 use crate::read_file;
-use crate::runtime::{RtResult, RuntimeError};
+use crate::runtime::RtResult;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::fs;
+
 use std::path::PathBuf;
 
 /// Just a profile to build the simulator
@@ -24,11 +24,19 @@ impl SimProfile {
     }
 }
 
+/// The tracer part
+#[derive(Debug, Default, PartialEq, Clone, Serialize, Deserialize)]
+pub struct TracerSimConfig {
+    pub file: Option<String>,
+    pub dt_fmt: Option<String>,
+}
+
 /// The general part of the profile
-#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, PartialEq, Clone, Serialize, Deserialize)]
 pub struct SimProfileConfig {
-    /// The tracing file parth
-    pub trace: Option<String>,
+    /// The tracer config
+    #[serde(default)]
+    pub tracer: TracerSimConfig,
     /// BB configuration
     #[serde(default)]
     pub bb: BbConfig,
@@ -42,17 +50,6 @@ pub struct SimProfileConfig {
 pub struct BbConfig {
     pub dump: Option<String>,
     pub load: Option<String>,
-}
-
-impl Default for SimProfileConfig {
-    fn default() -> Self {
-        SimProfileConfig {
-            trace: None,
-            bb: BbConfig::default(),
-            graph: None,
-            max_ticks: None,
-        }
-    }
 }
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]

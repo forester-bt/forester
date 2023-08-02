@@ -2,6 +2,7 @@ mod actions;
 mod args;
 mod decorator;
 mod flow;
+mod modifier;
 mod project;
 mod rtree;
 mod simulator;
@@ -32,7 +33,7 @@ pub fn test_folder(path_in: &str) -> PathBuf {
 pub fn fb(folder: &str) -> ForesterBuilder {
     let mut root = test_folder(folder);
 
-    let mut fb = ForesterBuilder::from_file_system();
+    let mut fb = ForesterBuilder::from_fs();
     fb.main_file("main.tree".to_string());
     fb.root(root);
 

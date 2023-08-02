@@ -1,6 +1,6 @@
 use crate::runtime::builder::ForesterBuilder;
 use crate::simulator::builder::SimulatorBuilder;
-use crate::simulator::config::{Action, BbConfig, SimProfile, SimProfileConfig};
+use crate::simulator::config::{Action, BbConfig, SimProfile, SimProfileConfig, TracerSimConfig};
 use crate::simulator::Simulator;
 use crate::tests::test_folder;
 use graphviz_rust::attributes::quadtree::fast;
@@ -15,7 +15,10 @@ fn file() {
     assert_eq!(
         SimProfile {
             config: SimProfileConfig {
-                trace: Some(String::from("main.trace")),
+                tracer: TracerSimConfig {
+                    file: Some(String::from("main.trace")),
+                    dt_fmt: None
+                },
                 graph: Some(String::from("main.svg")),
                 max_ticks: Some(10),
                 bb: BbConfig {
@@ -97,7 +100,7 @@ fn smoke() {
     sb.root(root.clone());
     sb.profile(PathBuf::from("sim.yaml"));
 
-    let mut fb = ForesterBuilder::from_file_system();
+    let mut fb = ForesterBuilder::from_fs();
     fb.main_file("main.tree".to_string());
     fb.root(root);
 

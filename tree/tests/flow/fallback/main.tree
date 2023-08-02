@@ -1,4 +1,4 @@
- import "std::actions"
+import "std::actions"
 impl tick_num_store();
 
 root main fallback {

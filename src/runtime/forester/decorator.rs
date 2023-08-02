@@ -1,9 +1,8 @@
-use crate::runtime::action::Tick;
 use crate::runtime::args::{RtArgs, RtArgument, RtValue, RtValueNumber};
 use crate::runtime::context::{RNodeState, TreeContext};
-use crate::runtime::forester::flow::{run_with, CURSOR, LEN, REASON};
+use crate::runtime::forester::flow::{run_with, LEN, REASON};
 use crate::runtime::rtree::rnode::DecoratorType;
-use crate::runtime::{RtOk, RtResult, RuntimeError, TickResult};
+use crate::runtime::{RtResult, RuntimeError, TickResult};
 use std::thread::sleep;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
@@ -39,7 +38,7 @@ pub(crate) fn monitor(
     match tpe {
         DecoratorType::Timeout => {
             let timeout = init_args.first_as(RtValue::as_int).unwrap_or(0);
-            let err = format!("the decorator timeout does not have a start time");
+            let err = "the decorator timeout does not have a start time".to_string();
             let args = tick_args.clone();
             let start = args
                 .first_as(RtValue::as_int)
@@ -105,7 +104,7 @@ pub(crate) fn finalize(
         DecoratorType::Timeout => match child_res {
             TickResult::Running => {
                 let timeout = init_args.first_as(RtValue::as_int).unwrap_or(0);
-                let err = format!("the decorator timeout does not have a start time");
+                let err = "the decorator timeout does not have a start time".to_string();
                 let args = tick_args.clone();
                 let start = args
                     .first_as(RtValue::as_int)
@@ -156,9 +155,8 @@ fn start_args() -> RtArgs {
     ))])
 }
 fn get_delay(args: RtArgs) -> RtResult<i64> {
-    let err = format!(
-        "the decorator delay accepts one integer param, denoting duration of delay in millis"
-    );
+    let err = "the decorator delay accepts one integer param, denoting duration of delay in millis"
+        .to_string();
     args.first_as(RtValue::as_int)
         .ok_or(RuntimeError::fail(err))
 }

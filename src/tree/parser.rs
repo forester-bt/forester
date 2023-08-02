@@ -12,11 +12,7 @@ use parsit::error::ParseError;
 use parsit::parser::{EmptyToken, Parsit};
 use parsit::step::Step;
 use parsit::{seq, token, wrap};
-use std::borrow::Cow;
 use std::collections::HashMap;
-use std::env::Args;
-use std::fs;
-use std::path::PathBuf;
 use std::str::FromStr;
 
 pub struct Parser<'a> {
@@ -72,7 +68,7 @@ impl<'a> Parser<'a> {
         token!(self.token(pos) => Token::StringLit(v) => StringLit(v.clone()) )
     }
     fn num(&self, pos: usize) -> Step<'a, Number> {
-        token!(self.token(pos) => Token::Digit(n) => n.clone() )
+        token!(self.token(pos) => Token::Digit(n) => *n )
     }
     fn bool(&self, pos: usize) -> Step<'a, Bool> {
         token!(self.token(pos) =>
@@ -98,12 +94,12 @@ impl<'a> Parser<'a> {
 
         let pair = |p| {
             self.str(p)
-                .map(|l| l.0.to_string())
+                .map(|l| l.0)
                 .then_skip(|p| self.colon(p))
                 .then_zip(|p| self.message(p))
         };
 
-        let elems = |p| seq!(p => pair, comma,).map(|v| HashMap::from_iter(v));
+        let elems = |p| seq!(p => pair, comma,).map(HashMap::from_iter);
 
         let def = HashMap::new();
 
@@ -185,7 +181,7 @@ impl<'a> Parser<'a> {
     }
     fn tree_type(&self, pos: usize) -> Step<'a, TreeType> {
         self.id(pos)
-            .flat_map(|p| TreeType::from_str(&p), |pe| Step::Fail(pos))
+            .flat_map(|p| TreeType::from_str(&p), |_pe| Step::Fail(pos))
     }
 
     fn mes_type(&self, pos: usize) -> Step<'a, MesType> {
@@ -329,7 +325,7 @@ impl<'a> Parser<'a> {
         let step: Step<AstFile> = self.inner.validate_eof(self.file(0));
 
         match step.clone() {
-            Step::Success(file, pos) => Ok(file),
+            Step::Success(file, _pos) => Ok(file),
             Step::Fail(pos) => {
                 let env = self.inner.env(&step);
                 Err(TreeError::ParseError(format!(

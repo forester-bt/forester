@@ -1,5 +1,7 @@
 config:
-  trace: gen/main.trace
+  tracer:
+    file: gen/main.log
+    dt_fmt: "%M:%S%.3f"
   graph: gen/main.svg
   bb:
     dump: gen/bb.json

@@ -5,7 +5,6 @@ use crate::runtime::{RtOk, RtResult, RuntimeError};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
-use std::hash::Hash;
 use std::path::PathBuf;
 
 pub type BBKey = String;
@@ -55,7 +54,7 @@ impl BlackBoard {
     pub fn is_locked(&mut self, key: BBKey) -> RtResult<bool> {
         Ok(match self.storage.get(&key) {
             Some(Locked(_)) => true,
-            Some(Unlocked(v)) => false,
+            Some(Unlocked(_)) => false,
             None | Some(Taken) => false,
         })
     }

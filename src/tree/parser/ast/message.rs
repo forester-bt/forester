@@ -70,14 +70,14 @@ impl Display for Message {
 
 impl Message {
     pub fn same(&self, mt: &MesType) -> bool {
-        match (&self, mt) {
-            (Message::Num(_), MesType::Num) => true,
-            (Message::String(_), MesType::String) => true,
-            (Message::Bool(_), MesType::Bool) => true,
-            (Message::Array(_), MesType::Array) => true,
-            (Message::Object(_), MesType::Object) => true,
-            _ => false,
-        }
+        matches!(
+            (&self, mt),
+            (Message::Num(_), MesType::Num)
+                | (Message::String(_), MesType::String)
+                | (Message::Bool(_), MesType::Bool)
+                | (Message::Array(_), MesType::Array)
+                | (Message::Object(_), MesType::Object)
+        )
     }
 
     pub fn str(v: &str) -> Self {

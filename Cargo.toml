@@ -4,7 +4,7 @@ description = "Workflow framework based on the behaviour trees"
 authors = ["BorisZhguchev <zhguchev@hotmail.com>"]
 homepage = "https://github.com/besok/forester"
 repository = "https://github.com/besok/forester"
-version = "0.1.7"
+version = "0.1.8"
 edition = "2021"
 license-file = "LICENSE"
 
@@ -22,3 +22,4 @@ serde_json = { version = "1.0.99" }
 serde_yaml = "0.9.22"
 reqwest = { version = "0.11", features = ["blocking", "json"] }
 tokio = { version = "1.29.1", features = ["full"] }
+chrono = "0.4.26"

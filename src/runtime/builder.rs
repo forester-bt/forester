@@ -4,9 +4,6 @@ pub mod file_builder;
 pub mod text_builder;
 
 use crate::get_pb;
-use crate::runtime::action::builtin::data::{CheckEq, LockUnlockBBKey, StoreData, StoreTick};
-use crate::runtime::action::builtin::http::HttpGet;
-use crate::runtime::action::builtin::ReturnResult;
 use crate::runtime::action::keeper::{ActionImpl, ActionKeeper};
 use crate::runtime::action::{Action, ActionName};
 use crate::runtime::blackboard::BlackBoard;
@@ -21,10 +18,9 @@ use crate::runtime::rtree::rnode::RNodeId;
 use crate::runtime::rtree::{RuntimeTree, RuntimeTreeStarter};
 use crate::runtime::{RtOk, RtResult, RuntimeError};
 use crate::tracer::Tracer;
-use crate::tree::project::{FileName, Project, TreeName};
+use crate::tree::project::{FileName, TreeName};
 use std::collections::HashMap;
-use std::fmt::format;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 /// The builder to create a Forester instance
 ///
@@ -40,7 +36,7 @@ use std::path::{Path, PathBuf};
 /// use forester_rs::runtime::rtree::rnode::{DecoratorType, FlowType, RNodeName};
 /// use forester_rs::runtime::args::RtArgs;
 /// fn from_file(root:PathBuf){
-///     let mut fb = ForesterBuilder::from_file_system();
+///     let mut fb = ForesterBuilder::from_fs();
 ///     fb.main_file("main.tree".to_string());
 ///     fb.root(root);
 ///     fb.register_action("store", Action::sync(StoreData));
@@ -97,7 +93,7 @@ pub enum ForesterBuilder {
 }
 
 impl ForesterBuilder {
-    pub fn from_file_system() -> ForesterBuilder {
+    pub fn from_fs() -> ForesterBuilder {
         ForesterBuilder::Files {
             cfb: CommonForesterBuilder::new(),
             delegate: FileForesterBuilder::new(),
@@ -126,9 +122,7 @@ impl ForesterBuilder {
                 delegate.root(root);
             }
             ForesterBuilder::Text { error, .. } | ForesterBuilder::Code { error, .. } => {
-                let _ = error.insert(format!(
-                    "This type of builder does not accept root folder. Only `from_file_system` builder accept it."
-                ));
+                let _ = error.insert("This type of builder does not accept root folder. Only `from_file_system` builder accept it.".to_string());
             }
         }
     }
@@ -139,9 +133,7 @@ impl ForesterBuilder {
                 delegate.main_file(main_file);
             }
             ForesterBuilder::Text { error, .. } | ForesterBuilder::Code { error, .. } => {
-                let _ = error.insert(format!(
-                    "This type of builder does not accept main_file. Only `from_file_system` builder accept it."
-                ));
+                let _ = error.insert("This type of builder does not accept main_file. Only `from_file_system` builder accept it.".to_string());
             }
         }
     }
@@ -152,9 +144,7 @@ impl ForesterBuilder {
                 delegate.main_tree(main_tree);
             }
             ForesterBuilder::Text { error, .. } | ForesterBuilder::Code { error, .. } => {
-                let _ = error.insert(format!(
-                    "This type of builder does not accept main_tree. Only `from_file_system` builder accept it."
-                ));
+                let _ = error.insert("This type of builder does not accept main_tree. Only `from_file_system` builder accept it.".to_string());
             }
         }
     }
@@ -170,9 +160,7 @@ impl ForesterBuilder {
                 delegate.text(txt);
             }
             ForesterBuilder::Files { error, .. } | ForesterBuilder::Code { error, .. } => {
-                let _ = error.insert(format!(
-                    "This type of builder does not accept code as text. Only `from_text` builder accept it."
-                ));
+                let _ = error.insert("This type of builder does not accept code as text. Only `from_text` builder accept it.".to_string());
             }
         }
     }
@@ -181,9 +169,7 @@ impl ForesterBuilder {
         match self {
             ForesterBuilder::Code { delegate, .. } => delegate.add_rt_node(node_b),
             ForesterBuilder::Files { error, .. } | ForesterBuilder::Text { error, .. } => {
-                let _ = error.insert(format!(
-                    "This type of builder does not accept code as text. Only `from_text` builder accept it."
-                ));
+                let _ = error.insert("This type of builder does not accept code as text. Only `from_text` builder accept it.".to_string());
                 0
             }
         }
@@ -280,7 +266,7 @@ impl ForesterBuilder {
             }
         };
 
-        let mut bb = BlackBoard::default();
+        let bb = BlackBoard::default();
         if let Some(bb_load_dump) = bb_load {
             let file = PathBuf::from(bb_load_dump);
 

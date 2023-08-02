@@ -1,16 +1,15 @@
 use crate::runtime::context::RNodeState;
 use crate::runtime::rtree::rnode::RNodeId;
 use crate::runtime::{RtOk, RtResult};
+use chrono::{DateTime, Utc};
 use std::fmt::{Display, Formatter};
 use std::fs;
 use std::fs::OpenOptions;
 use std::io::Write;
-use std::ops::Range;
 use std::path::PathBuf;
-use std::ptr::write;
 
 #[cfg(windows)]
-pub const LINE_ENDING: &'static str = "\r\n";
+pub const LINE_ENDING: &str = "\r\n";
 #[cfg(not(windows))]
 pub const LINE_ENDING: &'static str = "\n";
 
@@ -55,11 +54,11 @@ pub enum Tracer {
     InMemory {
         events: Vec<Trace>,
         level: usize,
-        indent: usize,
+        cfg: TracerConfiguration,
     },
     InFile {
         level: usize,
-        indent: usize,
+        cfg: TracerConfiguration,
         file: PathBuf,
     },
 }
@@ -73,14 +72,14 @@ impl Default for Tracer {
 impl Display for Tracer {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            Tracer::InMemory { events, .. } => {
+            Tracer::InMemory { events, cfg, .. } => {
                 for e in events {
-                    f.write_str(&e.to_string())?;
+                    f.write_str(&e.to_string(cfg.time_format.clone()))?;
                 }
             }
             Tracer::InFile { .. } => (),
             Tracer::Noop => {
-                f.write_str(
+                let _ = f.write_str(
                     " the noop implementation. does not have any records. \
                 Please, check the configuration, and ensure the tracer option is turned on.",
                 );
@@ -96,8 +95,8 @@ impl Tracer {
     pub fn left(&mut self) {
         match self {
             Tracer::Noop => {}
-            Tracer::InMemory { level, indent, .. } | Tracer::InFile { level, indent, .. } => {
-                *level -= *indent
+            Tracer::InMemory { level, cfg, .. } | Tracer::InFile { level, cfg, .. } => {
+                *level -= cfg.indent
             }
         };
     }
@@ -105,36 +104,36 @@ impl Tracer {
     pub fn right(&mut self) {
         match self {
             Tracer::Noop => {}
-            Tracer::InMemory { level, indent, .. } | Tracer::InFile { level, indent, .. } => {
-                *level += *indent
+            Tracer::InMemory { level, cfg, .. } | Tracer::InFile { level, cfg, .. } => {
+                *level += cfg.indent
             }
         }
     }
-    /// to add the infromation about the event.
+    /// to add the information about the event.
     pub fn trace(&mut self, tick: usize, ev: Event) -> RtOk {
         match self {
             Tracer::Noop => Ok(()),
-            Tracer::InMemory { events, level, .. } => {
-                let trace = Trace {
-                    level: *level,
-                    tick,
-                    ev,
+            Tracer::InMemory { events, level, cfg } => {
+                let trace = if cfg.time_format.is_some() {
+                    Trace::new_with_dt(*level, tick, ev)
+                } else {
+                    Trace::new(*level, tick, ev)
                 };
                 events.push(trace);
                 Ok(())
             }
-            Tracer::InFile { file, level, .. } => {
-                let trace = Trace {
-                    level: *level,
-                    tick,
-                    ev,
+            Tracer::InFile { file, level, cfg } => {
+                let trace = if cfg.time_format.is_some() {
+                    Trace::new_with_dt(*level, tick, ev)
+                } else {
+                    Trace::new(*level, tick, ev)
                 };
                 let mut file = OpenOptions::new()
                     .append(true)
                     .create(true)
                     .open(file.clone())?;
 
-                file.write(trace.to_string().as_bytes())?;
+                file.write_all(trace.to_string(cfg.time_format.clone()).as_bytes())?;
                 Ok(())
             }
         }
@@ -144,23 +143,23 @@ impl Tracer {
     }
     pub fn create(cfg: TracerConfiguration) -> RtResult<Self> {
         debug!("create new tracer from {:?}", cfg);
-        match cfg.to_file {
+        match &cfg.to_file {
             None => Ok(Tracer::InMemory {
                 events: vec![],
                 level: 0,
-                indent: cfg.indent,
+                cfg,
             }),
             Some(file) => {
                 if !&file.exists() {
                     if let Some(parent) = file.parent() {
-                        fs::create_dir_all(parent);
+                        let _ = fs::create_dir_all(parent);
                         fs::File::create(file.clone())?;
                     }
                 }
                 Ok(Tracer::InFile {
                     level: 0,
-                    indent: cfg.indent,
-                    file,
+                    file: file.clone(),
+                    cfg,
                 })
             }
         }
@@ -170,21 +169,31 @@ impl Tracer {
 #[derive(Debug)]
 pub struct TracerConfiguration {
     pub indent: usize,
+    pub time_format: Option<String>,
     pub to_file: Option<PathBuf>,
 }
 
 impl TracerConfiguration {
-    pub fn in_file(file: PathBuf) -> TracerConfiguration {
+    pub fn default_dt_fmt() -> String {
+        "%d %H:%M:%S%.3f".to_string()
+    }
+
+    pub fn in_file(file: PathBuf, dt_fmt: Option<String>) -> TracerConfiguration {
         TracerConfiguration {
             indent: 2,
+            time_format: dt_fmt,
             to_file: Some(file),
         }
     }
-    pub fn in_memory() -> TracerConfiguration {
+    pub fn in_memory(dt_fmt: Option<String>) -> TracerConfiguration {
         TracerConfiguration {
             indent: 2,
+            time_format: dt_fmt,
             to_file: None,
         }
+    }
+    pub fn time_format(&mut self, f: &str) {
+        self.time_format = Some(f.to_string());
     }
 }
 
@@ -192,6 +201,7 @@ impl Default for TracerConfiguration {
     fn default() -> Self {
         TracerConfiguration {
             indent: 2,
+            time_format: None,
             to_file: None,
         }
     }
@@ -212,13 +222,13 @@ impl Display for Event {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             Event::NextTick => {
-                f.write_str("next tick")?;
+                f.write_str(format!("next tick").as_str())?;
             }
             Event::NewState(id, s) => {
                 f.write_str(format!("{} : {}", id, s).as_str())?;
             }
             Event::Custom(s) => {
-                f.write_str(s)?;
+                f.write_str(format!("{s}").as_str())?;
             }
         }
 
@@ -231,18 +241,37 @@ pub struct Trace {
     pub level: usize,
     pub tick: usize,
     pub ev: Event,
+    dts: Option<DateTime<Utc>>,
 }
 
-impl Display for Trace {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let v = format!(
-            "[{tick}]{:indent$}{v}",
+impl Trace {
+    pub fn new(level: usize, tick: usize, ev: Event) -> Self {
+        Self {
+            level,
+            tick,
+            ev,
+            dts: None,
+        }
+    }
+    pub fn new_with_dt(level: usize, tick: usize, ev: Event) -> Self {
+        Self {
+            level,
+            tick,
+            ev,
+            dts: Some(Utc::now()),
+        }
+    }
+    pub fn to_string(&self, dtf: Option<String>) -> String {
+        let dt = dtf
+            .and_then(|f| self.dts.map(|dts| dts.format(f.as_str()).to_string()))
+            .unwrap_or_default();
+
+        format!(
+            "{dt} [{tick}]{:indent$}{v}",
             "",
             tick = self.tick,
             indent = self.level,
             v = format!("{}{}", self.ev, LINE_ENDING),
-        );
-        f.write_str(v.as_str())?;
-        Ok(())
+        )
     }
 }

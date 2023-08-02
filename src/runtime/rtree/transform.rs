@@ -1,5 +1,4 @@
 use crate::runtime::args::transform::find_arg_value;
-use crate::runtime::RuntimeError;
 use crate::tree::parser::ast::arg::{Arguments, Params};
 use crate::tree::parser::ast::call::{Call, Calls};
 use crate::tree::parser::ast::Key;
@@ -81,9 +80,9 @@ impl Transformer {
     /// To process `n(..)` in `another` we have to climb up after  `n=op(..)` until the last ho call.
     pub fn find_ho_call(&self, parent_id: &usize, key: &Key) -> Result<Call, TreeError> {
         let (mut grand_parent, mut parent_args, mut parent_params) =
-            self.get_chain_skip_lambda(&parent_id)?.get_tree();
+            self.get_chain_skip_lambda(parent_id)?.get_tree();
 
-        let mut call = find_arg_value(&key, &parent_params, &parent_args)?.get_call();
+        let mut call = find_arg_value(key, &parent_params, &parent_args)?.get_call();
 
         while let Some(key) = call.clone().and_then(|c| c.get_ho_invocation()) {
             (grand_parent, parent_args, parent_params) =

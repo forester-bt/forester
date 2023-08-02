@@ -18,4 +18,7 @@
 * **`0.1.7`**
   * add default simulation profile
   * add default action impl for the absent actions
+* **`0.1.8`** 
+  * add timestamp to tracer
+  * add tracer config to simulator
  

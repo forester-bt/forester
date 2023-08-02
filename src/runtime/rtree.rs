@@ -3,21 +3,20 @@ pub mod macros;
 pub mod rnode;
 mod transform;
 
-use crate::runtime::action::keeper::ActionKeeper;
 use crate::runtime::action::ActionName;
 use crate::runtime::args::transform::{to_dec_rt_args, to_rt_args};
-use crate::runtime::blackboard::BlackBoard;
+
 use crate::runtime::rtree::rnode::{DecoratorType, RNode, RNodeId};
 use crate::runtime::rtree::transform::{StackItem, Transformer};
-use crate::runtime::{RtResult, RuntimeError};
-use crate::tree::parser::ast::arg::{Argument, Arguments, Param, Params};
-use crate::tree::parser::ast::call::{Call, Calls};
-use crate::tree::parser::ast::Tree;
-use crate::tree::project::file::File;
+use crate::runtime::{RtOk, RtResult, RuntimeError};
+use crate::tree::parser::ast::call::Call;
+
+use crate::runtime::modification::RtTreeTask;
 use crate::tree::project::imports::ImportMap;
-use crate::tree::project::{FileName, Project};
+use crate::tree::project::Project;
 use crate::tree::{cerr, TreeError};
-use std::collections::{HashMap, HashSet, VecDeque};
+use graphviz_rust::dot_structures::Node;
+use std::collections::{HashMap, HashSet};
 
 pub struct RuntimeTreeStarter {
     pub tree: RuntimeTree,
@@ -130,7 +129,7 @@ impl RuntimeTree {
                         builder.add_chain(id, parent_id, args.clone(), tree.params.clone());
                         let children = builder.push_vec(tree.calls.clone(), id, file_name.clone());
 
-                        if &tree.name != &name {
+                        if tree.name != name {
                             if tree.tpe.is_action() {
                                 actions.insert(tree.name.clone());
                                 r_tree.nodes.insert(
@@ -149,18 +148,16 @@ impl RuntimeTree {
                                     ),
                                 );
                             }
+                        } else if tree.tpe.is_action() {
+                            r_tree
+                                .nodes
+                                .insert(id, RNode::action(name.clone(), rt_args));
+                            actions.insert(name);
                         } else {
-                            if tree.tpe.is_action() {
-                                r_tree
-                                    .nodes
-                                    .insert(id, RNode::action(name.clone(), rt_args));
-                                actions.insert(name);
-                            } else {
-                                r_tree.nodes.insert(
-                                    id,
-                                    RNode::flow(tree.tpe.try_into()?, name, rt_args, children),
-                                );
-                            }
+                            r_tree.nodes.insert(
+                                id,
+                                RNode::flow(tree.tpe.try_into()?, name, rt_args, children),
+                            );
                         };
                     }
                 },
@@ -177,5 +174,9 @@ impl RuntimeTree {
         self.nodes.get(id).ok_or(RuntimeError::uex(format!(
             "the node {id} is not found in the rt tree"
         )))
+    }
+
+    pub fn max_id(&self) -> RNodeId {
+        self.nodes.keys().max().cloned().unwrap_or_default()
     }
 }

@@ -3,30 +3,22 @@ mod statements;
 use crate::get_pb;
 use crate::runtime::rtree::rnode::{RNode, RNodeId};
 use crate::runtime::rtree::RuntimeTree;
-use crate::runtime::RtOk;
-use crate::tree::parser::ast::arg::{Arguments, Params};
-use crate::tree::parser::ast::call::Call;
-use crate::tree::parser::ast::{ImportName, Key, Tree};
-use crate::tree::project::file::File;
-use crate::tree::project::imports::ImportMap;
-use crate::tree::project::{AliasName, FileName, Project, TreeName};
-use crate::tree::{cerr, TreeError};
+
+use crate::tree::project::Project;
+use crate::tree::TreeError;
 use crate::visualizer::statements::ToStmt;
 use graphviz_rust::cmd::{CommandArg, Format};
 use graphviz_rust::dot_generator::*;
 use graphviz_rust::dot_structures::*;
 use graphviz_rust::printer::PrinterContext;
-use graphviz_rust::{exec, exec_dot, print};
-use itertools::Itertools;
-use serde_json::to_string;
-use std::collections::{HashMap, HashSet, VecDeque};
-use std::fmt::format;
+use graphviz_rust::{exec, print};
+use std::collections::VecDeque;
 use std::path::PathBuf;
 
 /// The struct to visualize the given runtime tree to graphviz format.
 pub struct Visualizer;
 
-impl<'a> Visualizer {
+impl Visualizer {
     pub fn visualize_to_file(
         root: PathBuf,
         file: Option<&String>,

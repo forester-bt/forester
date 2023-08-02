@@ -88,11 +88,11 @@ pub enum Token {
 }
 
 fn number(lex: &mut Lexer<Token>) -> Option<Number> {
-    lex.slice().parse::<i64>().map(|r| Number::Int(r)).ok()
+    lex.slice().parse::<i64>().map(Number::Int).ok()
 }
 
 fn float(lex: &mut Lexer<Token>) -> Option<Number> {
-    lex.slice().parse::<f64>().map(|r| Number::Float(r)).ok()
+    lex.slice().parse::<f64>().map(Number::Float).ok()
 }
 
 fn binary(lex: &mut Lexer<Token>) -> Option<Number> {
@@ -103,13 +103,13 @@ fn binary(lex: &mut Lexer<Token>) -> Option<Number> {
 
 fn hex(lex: &mut Lexer<Token>) -> Option<Number> {
     i64::from_str_radix(lex.slice().trim_start_matches("0x"), 16)
-        .map(|r| Number::Hex(r))
+        .map(Number::Hex)
         .ok()
 }
 
 fn parse_qt_lit(lexer: &mut Lexer<Token>) -> String {
     let qt_lit: &str = lexer.slice();
-    (&qt_lit[1..qt_lit.len() - 1]).to_string()
+    qt_lit[1..qt_lit.len() - 1].to_string()
 }
 fn parse_id(lexer: &mut Lexer<Token>) -> String {
     let qt_lit: &str = lexer.slice();

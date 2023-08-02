@@ -1,7 +1,7 @@
-use crate::runtime::args::{RtArgs, RtArgument, RtValue};
-use crate::runtime::context::{ChildIndex, RNodeState, TreeContext};
-use crate::runtime::rtree::rnode::{FlowType, RNodeId};
-use crate::runtime::{RtOk, RtResult, RuntimeError, TickResult};
+use crate::runtime::args::{RtArgs, RtValue};
+use crate::runtime::context::{RNodeState, TreeContext};
+use crate::runtime::rtree::rnode::FlowType;
+use crate::runtime::{RtResult, RuntimeError, TickResult};
 use std::cmp::max;
 
 // current child
@@ -73,10 +73,10 @@ impl Into<TickResult> for TickResultFin {
 // It starts when the child is finished and the flow needs to go farther.
 pub fn finalize(
     tpe: &FlowType,
-    args: RtArgs,
+    _args: RtArgs,
     tick_args: RtArgs,
     res: TickResultFin,
-    ctx: &mut TreeContext,
+    _ctx: &mut TreeContext,
 ) -> RtResult<RNodeState> {
     match tpe {
         FlowType::Root => Ok(RNodeState::from(run_with(tick_args, 0, 1), res.into())),
@@ -86,24 +86,15 @@ pub fn finalize(
 
             match res {
                 TickResultFin::Failure(v) => {
-                    let args =
-                        run_with(tick_args.clone(), cursor, len).with(REASON, RtValue::str(v));
+                    let args = run_with(tick_args, cursor, len).with(REASON, RtValue::str(v));
 
                     Ok(RNodeState::Failure(args))
                 }
                 TickResultFin::Success => {
                     if cursor == len - 1 {
-                        Ok(RNodeState::Success(run_with(
-                            tick_args.clone(),
-                            cursor,
-                            len,
-                        )))
+                        Ok(RNodeState::Success(run_with(tick_args, cursor, len)))
                     } else {
-                        Ok(RNodeState::Running(run_with(
-                            tick_args.clone(),
-                            cursor + 1,
-                            len,
-                        )))
+                        Ok(RNodeState::Running(run_with(tick_args, cursor + 1, len)))
                     }
                 }
             }
@@ -114,28 +105,17 @@ pub fn finalize(
 
             match res {
                 TickResultFin::Failure(v) => {
-                    let args = run_with(
-                        tick_args.clone().with(P_CURSOR, RtValue::int(cursor)),
-                        cursor,
-                        len,
-                    )
-                    .with(REASON, RtValue::str(v));
+                    let args =
+                        run_with(tick_args.with(P_CURSOR, RtValue::int(cursor)), cursor, len)
+                            .with(REASON, RtValue::str(v));
 
                     Ok(RNodeState::Failure(args))
                 }
                 TickResultFin::Success => {
                     if cursor == len - 1 {
-                        Ok(RNodeState::Success(run_with(
-                            tick_args.clone(),
-                            cursor,
-                            len,
-                        )))
+                        Ok(RNodeState::Success(run_with(tick_args, cursor, len)))
                     } else {
-                        Ok(RNodeState::Running(run_with(
-                            tick_args.clone(),
-                            cursor + 1,
-                            len,
-                        )))
+                        Ok(RNodeState::Running(run_with(tick_args, cursor + 1, len)))
                     }
                 }
             }
@@ -148,22 +128,13 @@ pub fn finalize(
             match res {
                 TickResultFin::Failure(v) => {
                     if cursor == len - 1 {
-                        let args =
-                            run_with(tick_args.clone(), cursor, len).with(REASON, RtValue::str(v));
+                        let args = run_with(tick_args, cursor, len).with(REASON, RtValue::str(v));
                         Ok(RNodeState::Failure(args))
                     } else {
-                        Ok(RNodeState::Running(run_with(
-                            tick_args.clone(),
-                            cursor + 1,
-                            len,
-                        )))
+                        Ok(RNodeState::Running(run_with(tick_args, cursor + 1, len)))
                     }
                 }
-                TickResultFin::Success => Ok(RNodeState::Success(run_with(
-                    tick_args.clone(),
-                    cursor,
-                    len,
-                ))),
+                TickResultFin::Success => Ok(RNodeState::Success(run_with(tick_args, cursor, len))),
             }
         }
 
@@ -178,9 +149,9 @@ pub fn finalize(
 // This stage handles some peculiarities with the tearing state up and etc
 pub fn monitor(
     tpe: &FlowType,
-    args: RtArgs,
+    _args: RtArgs,
     tick_args: RtArgs,
-    ctx: &mut TreeContext,
+    _ctx: &mut TreeContext,
 ) -> RtResult<RNodeState> {
     match tpe {
         FlowType::Sequence => {
