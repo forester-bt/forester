@@ -5,8 +5,8 @@ pub mod builder;
 pub mod context;
 pub mod env;
 pub mod forester;
-pub mod modification;
 pub mod rtree;
+pub mod trimmer;
 
 use crate::tree::TreeError;
 use std::fmt::{Debug, Display, Formatter};

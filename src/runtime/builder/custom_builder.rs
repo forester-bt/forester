@@ -1,6 +1,7 @@
 use crate::runtime::rtree::builder::{RtNodeBuilder, RtTreeBuilder};
 use crate::runtime::rtree::rnode::RNodeId;
 use crate::runtime::rtree::RuntimeTree;
+use crate::runtime::RtResult;
 use std::collections::HashSet;
 
 pub struct CustomForesterBuilder {
@@ -19,7 +20,7 @@ impl CustomForesterBuilder {
     }
 
     /// The method to build forester
-    pub fn build(self) -> (RuntimeTree, HashSet<String>) {
+    pub fn build(self) -> RtResult<(RuntimeTree, HashSet<String>)> {
         self.rtb.build()
     }
 }

@@ -73,6 +73,10 @@ pub struct TreeContext {
 }
 
 impl TreeContext {
+    pub fn state(&self) -> &HashMap<RNodeId, RNodeState> {
+        &self.state
+    }
+
     /// A pointer to bb struct.
     pub fn bb(&mut self) -> Arc<Mutex<BlackBoard>> {
         self.bb.clone()

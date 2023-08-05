@@ -1,0 +1,18 @@
+import "std::actions"
+
+root main r_fallback {
+    steps()
+    running()
+}
+sequence steps {
+    success()
+    success()
+    success()
+    nested_steps()
+}
+sequence nested_steps(){
+    success()
+    success()
+    success()
+    fail_empty()
+}

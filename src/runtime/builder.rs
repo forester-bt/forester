@@ -253,7 +253,7 @@ impl ForesterBuilder {
                 )
             }
             ForesterBuilder::Code { delegate, cfb, .. } => {
-                let (tree, actions) = delegate.build();
+                let (tree, actions) = delegate.build()?;
                 (
                     tree,
                     cfb.actions,

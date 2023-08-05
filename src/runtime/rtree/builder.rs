@@ -1,24 +1,28 @@
 use crate::runtime::args::RtArgs;
 use crate::runtime::rtree::rnode::{DecoratorType, FlowType, RNode, RNodeId, RNodeName};
 use crate::runtime::rtree::RuntimeTree;
+use crate::runtime::{RtResult, RuntimeError};
 use std::collections::{HashMap, HashSet};
-
+#[derive(Debug)]
 pub struct RtTreeBuilder {
-    root: RNodeId,
-    max: RNodeId,
-    nodes: HashMap<RNodeId, RNode>,
-    actions: HashSet<String>,
+    pub root: Option<RNodeId>,
+    pub max: RNodeId,
+    pub nodes: HashMap<RNodeId, RNode>,
+    pub actions: HashSet<String>,
 }
 
 impl RtTreeBuilder {
-    pub fn build(self) -> (RuntimeTree, HashSet<String>) {
-        (
+    pub fn build(self) -> RtResult<(RuntimeTree, HashSet<String>)> {
+        let root = self
+            .root
+            .ok_or(RuntimeError::uex("root should be presented".to_string()))?;
+        Ok((
             RuntimeTree {
-                root: self.root,
+                root,
                 nodes: self.nodes,
             },
             self.actions,
-        )
+        ))
     }
 
     fn next(&mut self) -> RNodeId {
@@ -28,7 +32,7 @@ impl RtTreeBuilder {
 
     pub fn new() -> Self {
         Self {
-            root: 0,
+            root: None,
             max: 0,
             nodes: HashMap::new(),
             actions: HashSet::new(),
@@ -36,7 +40,7 @@ impl RtTreeBuilder {
     }
     pub fn new_from(from: RNodeId) -> Self {
         Self {
-            root: 0,
+            root: None,
             max: from,
             nodes: HashMap::new(),
             actions: HashSet::new(),
@@ -54,6 +58,15 @@ impl RtTreeBuilder {
         let id = self.next();
         self.set(node_b, id);
         id
+    }
+    pub fn add_as_root(&mut self, node_b: RtNodeBuilder) -> RNodeId {
+        let id = self.add(node_b);
+        self.root = Some(id.clone());
+        id
+    }
+
+    pub fn root(&mut self, id: RNodeId) {
+        self.root = Some(id);
     }
 
     pub fn set(&mut self, node_b: RtNodeBuilder, id: RNodeId) {
@@ -73,12 +86,16 @@ impl RtTreeBuilder {
                     children_ids.push(self.process_child(c));
                 }
                 if t.is_root() {
-                    self.root = id
+                    self.root = Some(id)
                 }
                 self.nodes
                     .insert(id, RNode::Flow(t, name, args, children_ids));
             }
         }
+    }
+    pub fn set_as_root(&mut self, node_b: RtNodeBuilder, id: RNodeId) {
+        self.set(node_b, id.clone());
+        self.root = Some(id)
     }
 }
 
@@ -138,8 +155,8 @@ mod tests {
             )
 
         ));
-        let (tree, _) = b.build();
-        Visualizer::svg_file(
+        let (tree, _) = b.build().unwrap();
+        Visualizer::rt_tree_svg_to_file(
             &tree,
             PathBuf::from(r#"C:\projects\forester\tools\cli\1.svg"#),
         )

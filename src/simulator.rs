@@ -56,7 +56,7 @@ impl Simulator {
 
         if let Some(viz_file) = &cfg.graph {
             let tree = &self.forester.tree;
-            Visualizer::svg_file(tree, get_pb(&PathBuf::from(viz_file), &self.root)?)?;
+            Visualizer::rt_tree_svg_to_file(tree, get_pb(&PathBuf::from(viz_file), &self.root)?)?;
         }
 
         let result = self.forester.run_until(max);

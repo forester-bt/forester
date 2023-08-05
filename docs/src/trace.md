@@ -97,8 +97,9 @@ That will igve the following trace:
 ## Configuration
 
 The tracer has a few settings.
-- indent: the indent of the lines in dependance of the nesting level
+- indent: the indent of the lines depending on the nesting level
 - to_file: if the file is provided, the trace will be redirected into this file.
+- time_format: if provided, the current time format.
 
 ```rust
 #[test]
@@ -109,6 +110,7 @@ fn file() {
     fb.tracer(Tracer::create(TracerConfiguration {
         indent: 2,
         to_file: Some(tracer_log.clone()),
+        time_format: None
     }));
 
     let mut f = fb.build().unwrap();

@@ -6,7 +6,7 @@ use crate::simulator::actions::SimAction;
 use crate::simulator::config::{SimProfile, TracerSimConfig};
 use crate::simulator::RtAction;
 use crate::simulator::Simulator;
-use crate::tracer::{Tracer, TracerConfiguration};
+use crate::tracer::{Tracer, TracerConfig};
 use std::path::PathBuf;
 
 /// The builder to create a simulator process.
@@ -114,11 +114,10 @@ impl SimulatorBuilder {
 
         if let TracerSimConfig { file, dt_fmt } = profile.config.tracer {
             let cfg = match file {
-                None => TracerConfiguration::in_memory(dt_fmt),
-                Some(f) => TracerConfiguration::in_file(
-                    get_pb(&PathBuf::from(f), &self.root.clone())?,
-                    dt_fmt,
-                ),
+                None => TracerConfig::in_memory(dt_fmt),
+                Some(f) => {
+                    TracerConfig::in_file(get_pb(&PathBuf::from(f), &self.root.clone())?, dt_fmt)
+                }
             };
 
             fb.tracer(Tracer::create(cfg)?)

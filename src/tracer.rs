@@ -54,18 +54,18 @@ pub enum Tracer {
     InMemory {
         events: Vec<Trace>,
         level: usize,
-        cfg: TracerConfiguration,
+        cfg: TracerConfig,
     },
     InFile {
         level: usize,
-        cfg: TracerConfiguration,
+        cfg: TracerConfig,
         file: PathBuf,
     },
 }
 
 impl Default for Tracer {
     fn default() -> Self {
-        Tracer::create(TracerConfiguration::default()).unwrap()
+        Tracer::create(TracerConfig::default()).unwrap()
     }
 }
 
@@ -141,7 +141,7 @@ impl Tracer {
     pub fn noop() -> Self {
         Tracer::Noop
     }
-    pub fn create(cfg: TracerConfiguration) -> RtResult<Self> {
+    pub fn create(cfg: TracerConfig) -> RtResult<Self> {
         debug!("create new tracer from {:?}", cfg);
         match &cfg.to_file {
             None => Ok(Tracer::InMemory {
@@ -167,26 +167,26 @@ impl Tracer {
 }
 
 #[derive(Debug)]
-pub struct TracerConfiguration {
+pub struct TracerConfig {
     pub indent: usize,
     pub time_format: Option<String>,
     pub to_file: Option<PathBuf>,
 }
 
-impl TracerConfiguration {
+impl TracerConfig {
     pub fn default_dt_fmt() -> String {
         "%d %H:%M:%S%.3f".to_string()
     }
 
-    pub fn in_file(file: PathBuf, dt_fmt: Option<String>) -> TracerConfiguration {
-        TracerConfiguration {
+    pub fn in_file(file: PathBuf, dt_fmt: Option<String>) -> TracerConfig {
+        TracerConfig {
             indent: 2,
             time_format: dt_fmt,
             to_file: Some(file),
         }
     }
-    pub fn in_memory(dt_fmt: Option<String>) -> TracerConfiguration {
-        TracerConfiguration {
+    pub fn in_memory(dt_fmt: Option<String>) -> TracerConfig {
+        TracerConfig {
             indent: 2,
             time_format: dt_fmt,
             to_file: None,
@@ -197,9 +197,9 @@ impl TracerConfiguration {
     }
 }
 
-impl Default for TracerConfiguration {
+impl Default for TracerConfig {
     fn default() -> Self {
-        TracerConfiguration {
+        TracerConfig {
             indent: 2,
             time_format: None,
             to_file: None,
@@ -216,6 +216,8 @@ pub enum Event {
     NewState(RNodeId, RNodeState),
     /// The custom user information.
     Custom(String),
+
+    Trim(RNodeId, String),
 }
 
 impl Display for Event {
@@ -228,7 +230,10 @@ impl Display for Event {
                 f.write_str(format!("{} : {}", id, s).as_str())?;
             }
             Event::Custom(s) => {
-                f.write_str(format!("{s}").as_str())?;
+                f.write_str(format!("custom: {s}").as_str())?;
+            }
+            Event::Trim(id, txt) => {
+                f.write_str(format!("trim {id} : {txt}").as_str())?;
             }
         }
 

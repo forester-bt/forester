@@ -29,6 +29,10 @@ impl ActionImpl {
 }
 
 impl ActionKeeper {
+    pub fn actions(&self) -> HashSet<&ActionName> {
+        self.actions.keys().collect()
+    }
+
     pub fn new_with<T>(
         impl_actions: HashMap<ActionName, Action>,
         all_actions: HashSet<ActionName>,
@@ -55,9 +59,6 @@ impl ActionKeeper {
 
         Ok(Self { actions })
     }
-}
-
-impl ActionKeeper {
     fn get_mut(&mut self, name: &ActionName) -> RtResult<&mut Action> {
         self.actions
             .get_mut(name)
@@ -68,6 +69,7 @@ impl ActionKeeper {
     }
 
     pub fn register(&mut self, name: ActionName, action: Action) -> RtResult<()> {
+        debug!("A new action {name} is registered");
         let _ = self.actions.insert(name, ActionImpl::Present(action));
         Ok(())
     }

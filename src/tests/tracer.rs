@@ -5,7 +5,7 @@ use crate::runtime::context::{TreeContext, TreeContextRef};
 use crate::runtime::TickResult;
 use crate::tests::{fb, test_folder};
 use crate::tracer;
-use crate::tracer::{Event, Tracer, TracerConfiguration};
+use crate::tracer::{Event, Tracer, TracerConfig};
 use std::alloc::System;
 use std::fs;
 use std::time::SystemTime;
@@ -272,7 +272,7 @@ fn file() {
     let tracer_log = test_folder("tracer/custom/main.trace");
 
     fb.tracer(
-        Tracer::create(TracerConfiguration {
+        Tracer::create(TracerConfig {
             indent: 2,
             time_format: None,
             to_file: Some(tracer_log.clone()),

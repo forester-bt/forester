@@ -100,6 +100,13 @@ pub enum RNode {
 }
 
 impl RNode {
+    pub fn name(&self) -> Option<&RNodeName> {
+        match self {
+            RNode::Leaf(n, _) | RNode::Flow(_, n, _, _) => Some(n),
+            RNode::Decorator(_, _, _) => None,
+        }
+    }
+
     pub fn decorator(t: DecoratorType, args: RtArgs, child: RNodeId) -> Self {
         RNode::Decorator(t, args, child)
     }

@@ -8,13 +8,12 @@ use crate::runtime::blackboard::BlackBoard;
 use crate::runtime::context::{RNodeState, TreeContext};
 use crate::runtime::env::RtEnv;
 use crate::runtime::forester::flow::{read_cursor, run_with};
-use crate::runtime::modification::ModState::{Defer, Proceed, Reject};
-use crate::runtime::modification::{ModState, ModificationQueue, ModificationTask};
 use crate::runtime::rtree::rnode::RNode;
 use crate::runtime::rtree::RuntimeTree;
-use crate::runtime::{RtOk, RtResult, RuntimeError};
-use crate::tracer::Tracer;
-use crate::tree::parser::ast::message::Bool;
+use crate::runtime::trimmer::validator::TrimValidationResult;
+use crate::runtime::trimmer::{RequestBody, TreeSnapshot, TrimRequest, TrimmingQueue};
+use crate::runtime::{trimmer, RtOk, RtResult, RuntimeError};
+use crate::tracer::{Event, Tracer};
 use log::debug;
 use std::sync::{Arc, Mutex};
 
@@ -34,7 +33,7 @@ pub struct Forester {
     pub tracer: Arc<Mutex<Tracer>>,
     pub keeper: ActionKeeper,
     pub env: RtEnv,
-    pub mod_queue: Arc<Mutex<ModificationQueue>>,
+    pub mod_queue: Arc<Mutex<TrimmingQueue>>,
 }
 
 impl Forester {
@@ -47,7 +46,7 @@ impl Forester {
     ) -> RtResult<Self> {
         let tracer = Arc::new(Mutex::new(tracer));
         let bb = Arc::new(Mutex::new(bb));
-        let mod_queue = Arc::new(Mutex::new(ModificationQueue::default()));
+        let mod_queue = Arc::new(Mutex::new(TrimmingQueue::default()));
         Ok(Self {
             tree,
             bb,
@@ -68,42 +67,58 @@ impl Forester {
     ///
     fn try_to_modify(&mut self, ctx: &TreeContext) -> RtOk {
         let mut mq_guard = self.mod_queue.lock()?;
+        debug!(
+            "trying to trim the tree, the number of tasks in the q is {}",
+            mq_guard.len()
+        );
         // the tasks that have the running tasks to replace
         let mut deferred_tasks = vec![];
-        while let Some(task) = mq_guard.pop() {
-            match &task {
-                ModificationTask::RtTree(t) => {
-                    let rt_tree_mod = t.modification(&self.tree)?;
-                    debug!("try to modify the runtime tree with {:?}", rt_tree_mod);
-                    let mut state: ModState = Proceed;
-
-                    for nid in rt_tree_mod.nodes.keys() {
-                        if &self.tree.root == nid {
-                            debug!("the node {nid} is root. The modification of the root is forbidden. The task will be rejected.");
-                            state = Reject;
-                        } else if !self.tree.nodes.contains_key(nid) {
-                            debug!("the node {nid} is not in the tree. The task will be rejected.");
-                            state = Reject;
-                        } else if ctx.state_in_ts(nid).is_running() {
-                            debug!("the node {nid} is running. The task will be deferred.");
-                            state = Defer;
+        while let Some(t) = mq_guard.pop() {
+            let snapshot = TreeSnapshot::new(
+                ctx.curr_ts(),
+                self.bb.clone(),
+                &self.tree,
+                &ctx.state(),
+                self.keeper.actions(),
+            );
+            let request = t.process(snapshot.clone())?;
+            match request {
+                TrimRequest::Reject => {
+                    debug!("a trimming request has rejected by itself");
+                }
+                TrimRequest::Skip => {
+                    debug!("a trimming request has decided to skip this tick");
+                    deferred_tasks.push(t);
+                }
+                TrimRequest::Attempt(r) => {
+                    debug!("attempting to trim the trees with {:?}", r);
+                    match trimmer::validator::validate(&snapshot, &r) {
+                        TrimValidationResult::Defer(reason) => {
+                            debug!("the request is deferred, The reason is '{reason}'");
                         }
-                    }
-
-                    match state {
-                        Defer => deferred_tasks.push(task),
-                        Reject => {}
-                        Proceed => {
-                            for (nid, node) in rt_tree_mod.nodes {
+                        TrimValidationResult::Reject(reason) => {
+                            debug!("the request is rejected, The reason is '{reason}'")
+                        }
+                        TrimValidationResult::Proceed => {
+                            let RequestBody { tree_b, actions } = r;
+                            for (nid, node) in tree_b.nodes {
                                 let new = format!("{:?}", node);
                                 let old = self.tree.nodes.insert(nid, node);
                                 debug!("The node {nid} is replaced. The previous node {:?}, the new node {new}", old);
+                                let text = format!("{:?} >>> {new}", old);
+                                let event = Event::Trim(nid.clone(), text);
+                                self.tracer.lock()?.trace(ctx.curr_ts(), event)?;
                             }
+                            for (an, action) in actions {
+                                self.keeper.register(an, action)?;
+                            }
+                            break;
                         }
                     }
                 }
             }
         }
+
         mq_guard.push_all(deferred_tasks);
         Ok(())
     }

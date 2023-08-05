@@ -2,11 +2,11 @@ mod actions;
 mod args;
 mod decorator;
 mod flow;
-mod modifier;
 mod project;
 mod rtree;
 mod simulator;
 mod tracer;
+mod trimmer;
 mod vizualizer;
 
 use crate::runtime::builder::file_builder::FileForesterBuilder;

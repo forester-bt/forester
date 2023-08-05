@@ -19,7 +19,9 @@ Below, the example of the file:
 
 ```yaml
 config:
-  trace: gen/main.trace
+  tracer: 
+    file: gen/main.trace
+    dt_fmt: "%d %H:%M:%S%.3f"
   graph: gen/main.svg
   bb:
     dump: gen/bb.json
@@ -35,13 +37,14 @@ actions:
 
 Config section:
 
-| Setting   | Description                                      | Default                                  | Example          |
-|-----------|--------------------------------------------------|------------------------------------------|------------------|
-| trace     | the trace file                                   | if it is absent, there will be no action | gen/main.trace   |
-| graph     | the visualization file                           | if it is absent, there will be no action | gen/main.svg     |
-| bb.dump   | the dump of the bb at the end                    | if it is absent, there will be no action | gen/bb.json      |
-| bb.load   | the dump that will be used to init bb before sim | if it is absent, there will be no action | gen/init_bb.json |
-| max_ticks | the maximum amount of ticks to work.             | 0 by default                             | 10               |
+| Setting       | Description                                      | Default                                  | Example           |
+|---------------|--------------------------------------------------|------------------------------------------|-------------------|
+| tracer.file   | the tracer settings to write to a file           | if it is absent, there will be no action | gen/main.trace    |
+| tracer.dt_fmt | the tracer settings to given data format         | if it is absent, there will be no action | "%d %H:%M:%S%.3f" |
+| graph         | the visualization file                           | if it is absent, there will be no action | gen/main.svg      |
+| bb.dump       | the dump of the bb at the end                    | if it is absent, there will be no action | gen/bb.json       |
+| bb.load       | the dump that will be used to init bb before sim | if it is absent, there will be no action | gen/init_bb.json  |
+| max_ticks     | the maximum amount of ticks to work.             | 0 by default                             | 10                |
 
 Actions sections:
 
