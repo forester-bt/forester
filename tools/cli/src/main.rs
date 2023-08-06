@@ -78,7 +78,7 @@ fn sim(matches: &ArgMatches) {
         sb.profile(sim);
     }
     sb.root(root.clone());
-    let mut fb = ForesterBuilder::from_file_system();
+    let mut fb = ForesterBuilder::from_fs();
     fb.main_file(main_file);
     fb.root(root);
 
@@ -110,7 +110,7 @@ fn viz(matches: &ArgMatches) {
         None => pwd,
     };
 
-    match Visualizer::visualize_to_file(
+    match Visualizer::project_svg_to_file(
         root,
         matches.get_one::<String>("main"),
         matches.get_one::<String>("tree"),
