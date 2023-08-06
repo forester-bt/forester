@@ -2,6 +2,7 @@ use crate::runtime::trimmer::{TreeSnapshot, TrimRequest};
 use crate::runtime::RtResult;
 use std::fmt::Debug;
 
+/// The task to trim the tree.
 pub enum TrimTask {
     RtTree(Box<dyn RtTreeTrimTask>),
 }

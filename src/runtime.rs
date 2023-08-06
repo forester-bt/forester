@@ -61,7 +61,7 @@ pub enum RuntimeError {
     RecoveryToFailure(String),
     BlackBoardError(String),
     MultiThreadError(String),
-    OptimizationError(String),
+    TrimmingError(String),
 }
 
 impl Debug for RuntimeError {
@@ -102,7 +102,7 @@ impl Debug for RuntimeError {
                 let _ = f.write_str("multi thread: ");
                 let _ = f.write_str(e.as_str());
             }
-            RuntimeError::OptimizationError(e) => {
+            RuntimeError::TrimmingError(e) => {
                 let _ = f.write_str("optimization error: ");
                 let _ = f.write_str(e.as_str());
             }

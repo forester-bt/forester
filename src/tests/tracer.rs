@@ -221,18 +221,18 @@ fn custom_state() {
         trace,
         r#"[1]  1 : Running(cursor=0,len=1)
 [1]    2 : Running(len=1)
-[1]      i = 0
+[1]      custom: i = 0
 [1]      3 : Success()
 [1]    2 : Running(arg=2,cursor=0,len=1)
 [2]  next tick
 [2]    2 : Running(arg=2,cursor=0,len=1)
-[2]      i = 1
+[2]      custom: i = 1
 [2]      3 : Success()
 [2]    2 : Running(arg=3,cursor=0,len=1)
 [2]  1 : Running(cursor=0,len=1)
 [3]  next tick
 [3]    2 : Running(arg=3,cursor=0,len=1)
-[3]      i = 2
+[3]      custom: i = 2
 [3]      3 : Success()
 [3]    2 : Success(arg=3,cursor=0,len=1)
 [3]  1 : Running(cursor=0,len=1)
@@ -291,18 +291,18 @@ fn file() {
         file_trace,
         r#"[1]  1 : Running(cursor=0,len=1)
 [1]    2 : Running(len=1)
-[1]      i = 0
+[1]      custom: i = 0
 [1]      3 : Success()
 [1]    2 : Running(arg=2,cursor=0,len=1)
 [2]  next tick
 [2]    2 : Running(arg=2,cursor=0,len=1)
-[2]      i = 1
+[2]      custom: i = 1
 [2]      3 : Success()
 [2]    2 : Running(arg=3,cursor=0,len=1)
 [2]  1 : Running(cursor=0,len=1)
 [3]  next tick
 [3]    2 : Running(arg=3,cursor=0,len=1)
-[3]      i = 2
+[3]      custom: i = 2
 [3]      3 : Success()
 [3]    2 : Success(arg=3,cursor=0,len=1)
 [3]  1 : Running(cursor=0,len=1)

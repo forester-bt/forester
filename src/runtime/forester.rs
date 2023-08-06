@@ -10,12 +10,14 @@ use crate::runtime::env::RtEnv;
 use crate::runtime::forester::flow::{read_cursor, run_with};
 use crate::runtime::rtree::rnode::RNode;
 use crate::runtime::rtree::RuntimeTree;
+use crate::runtime::trimmer::task::TrimTask;
 use crate::runtime::trimmer::validator::TrimValidationResult;
 use crate::runtime::trimmer::{RequestBody, TreeSnapshot, TrimRequest, TrimmingQueue};
 use crate::runtime::{trimmer, RtOk, RtResult, RuntimeError};
 use crate::tracer::{Event, Tracer};
 use log::debug;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
+use tokio::task::JoinHandle;
 
 /// The entry point to process execution.
 /// It works with the following components:
@@ -33,7 +35,7 @@ pub struct Forester {
     pub tracer: Arc<Mutex<Tracer>>,
     pub keeper: ActionKeeper,
     pub env: RtEnv,
-    pub mod_queue: Arc<Mutex<TrimmingQueue>>,
+    pub trimmer: Arc<Mutex<TrimmingQueue>>,
 }
 
 impl Forester {
@@ -53,27 +55,24 @@ impl Forester {
             keeper,
             tracer,
             env,
-            mod_queue,
+            trimmer: mod_queue,
         })
     }
 
-    /// Tries to apply the next optimization from the optimizer.
+    /// The function to trim the tree or perform other procedures.
+    /// Initially, the intention is to have an ability to change some components of the current execution on a fly.
+    /// The trimming procedure performs only one task in a tick. Others are either declined or postponed.
     ///
-    /// The seq of steps is the following:
-    /// - take a task
-    /// - for rt tree opt task
-    /// - check if the task contains nodes that are running and defer the task by pushing it back
-    /// - replace the nodes, dropping the state to ready
-    ///
-    fn try_to_modify(&mut self, ctx: &TreeContext) -> RtOk {
-        let mut mq_guard = self.mod_queue.lock()?;
+    /// The task can decide to decline or postpone itself.
+    fn trim(&mut self, ctx: &TreeContext) -> RtOk {
+        let mut mq_guard = self.trimmer.lock()?;
         debug!(
             "trying to trim the tree, the number of tasks in the q is {}",
             mq_guard.len()
         );
-        // the tasks that have the running tasks to replace
+        // the tasks that have decided to skip this tick or they have not passed the validations.
         let mut deferred_tasks = vec![];
-        while let Some(t) = mq_guard.pop() {
+        'top: while let Some(t) = mq_guard.pop() {
             let snapshot = TreeSnapshot::new(
                 ctx.curr_ts(),
                 self.bb.clone(),
@@ -81,8 +80,7 @@ impl Forester {
                 &ctx.state(),
                 self.keeper.actions(),
             );
-            let request = t.process(snapshot.clone())?;
-            match request {
+            match t.process(snapshot.clone())? {
                 TrimRequest::Reject => {
                     debug!("a trimming request has rejected by itself");
                 }
@@ -91,7 +89,7 @@ impl Forester {
                     deferred_tasks.push(t);
                 }
                 TrimRequest::Attempt(r) => {
-                    debug!("attempting to trim the trees with {:?}", r);
+                    debug!("validating the trim request {:?}", r);
                     match trimmer::validator::validate(&snapshot, &r) {
                         TrimValidationResult::Defer(reason) => {
                             debug!("the request is deferred, The reason is '{reason}'");
@@ -105,14 +103,15 @@ impl Forester {
                                 let new = format!("{:?}", node);
                                 let old = self.tree.nodes.insert(nid, node);
                                 debug!("The node {nid} is replaced. The previous node {:?}, the new node {new}", old);
-                                let text = format!("{:?} >>> {new}", old);
-                                let event = Event::Trim(nid.clone(), text);
-                                self.tracer.lock()?.trace(ctx.curr_ts(), event)?;
+                                self.tracer.lock()?.trace(
+                                    ctx.curr_ts(),
+                                    Event::Trim(nid.clone(), format!("{:?} >>> {new}", old)),
+                                )?;
                             }
                             for (an, action) in actions {
                                 self.keeper.register(an, action)?;
                             }
-                            break;
+                            break 'top;
                         }
                     }
                 }
@@ -121,6 +120,15 @@ impl Forester {
 
         mq_guard.push_all(deferred_tasks);
         Ok(())
+    }
+
+    pub fn add_trim_task(&mut self, task: TrimTask) -> JoinHandle<RtOk> {
+        let arc = self.trimmer.clone();
+        self.env.runtime.spawn(async move {
+            arc.lock()
+                .map(|mut t| t.push(task))
+                .map_err(|e| RuntimeError::TrimmingError(e.to_string()))
+        })
     }
 
     /// Runs the execution.
@@ -185,7 +193,7 @@ impl Forester {
                                 if tpe.is_root() {
                                     debug!(target:"flow[run]", "tick:{}, {tpe}. The '{child}' is running, tick up the flow. ",ctx.curr_ts());
                                     ctx.next_tick()?;
-                                    self.try_to_modify(&ctx)?;
+                                    debug!("attempt to trim is  {:?}", self.trim(&ctx));
                                     ctx.push(child)?;
                                 } else {
                                     let next_state =

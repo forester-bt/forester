@@ -73,10 +73,10 @@ impl Transformer {
     }
 
     /// The method finds the next higher order of the call.
-    /// ```norun
-    ///  sequence tree_def(op:tree) another(n = op(..))
-    ///  sequence another(n:tree) n(..)  
-    /// ```
+    ///
+    ///  `sequence tree_def(op:tree) another(n = op(..))`
+    ///  `sequence another(n:tree) n(..)`
+    ///  
     /// To process `n(..)` in `another` we have to climb up after  `n=op(..)` until the last ho call.
     pub fn find_ho_call(&self, parent_id: &usize, key: &Key) -> Result<Call, TreeError> {
         let (mut grand_parent, mut parent_args, mut parent_params) =

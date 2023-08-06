@@ -42,6 +42,6 @@ fn http_get() {
         .unwrap();
 
     assert_eq!(result, Ok(TickResult::success()));
-    assert!(out1.contains("http://httpbin.org/get"));
-    assert!(out2.contains("http://httpbin.org/get"));
+    assert!(out1.contains("https://google.com"));
+    assert!(out2.contains("https://google.com"));
 }

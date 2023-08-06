@@ -24,6 +24,7 @@
   - [Runtime arguments](./rt_args.md)
   - [Blackboard](./bb.md)
   - [Actions](./r_actions.md)
+  - [Trimming](./trimming.md)
 - [Analysis](./analysis.md)
   - [Visualization](./viz.md)
   - [Tracing](./trace.md)

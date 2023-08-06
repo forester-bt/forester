@@ -1,5 +1,6 @@
 config:
-  trace: main.trace
+  tracer:
+    file: main.trace
   graph: main.svg
   bb:
     dump: bb.dump

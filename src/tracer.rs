@@ -269,10 +269,11 @@ impl Trace {
     pub fn to_string(&self, dtf: Option<String>) -> String {
         let dt = dtf
             .and_then(|f| self.dts.map(|dts| dts.format(f.as_str()).to_string()))
+            .map(|s| format!("{s} "))
             .unwrap_or_default();
 
         format!(
-            "{dt} [{tick}]{:indent$}{v}",
+            "{dt}[{tick}]{:indent$}{v}",
             "",
             tick = self.tick,
             indent = self.level,
