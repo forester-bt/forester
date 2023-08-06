@@ -21,4 +21,6 @@
 * **`0.1.8`** 
   * add timestamp to tracer
   * add tracer config to simulator
+* **`0.1.9`**
+  * add trimming
  
