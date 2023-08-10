@@ -2,7 +2,7 @@
 name = "f-tree"
 description = "the cli app to execute the commands from forester."
 authors = ["BorisZhguchev <zhguchev@hotmail.com>"]
-version = "0.2.0"
+version = "0.1.9"
 edition = "2021"
 license-file="LICENSE"
 homepage = "https://github.com/besok/forester"

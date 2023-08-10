@@ -17,7 +17,7 @@ root main  {
 }
 ```
 
-## Common behaviour
+## Common behavior
 - When it gets the first `tick` it switches to state `running`
 - When a child returns `success` it stops the execution and returns `success`
 - If a child returns `running`, the node returns `running` as well

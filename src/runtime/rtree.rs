@@ -1,7 +1,9 @@
+pub mod analyzer;
 pub mod builder;
+pub mod iter;
 pub mod macros;
 pub mod rnode;
-mod transform;
+pub mod transform;
 
 use crate::runtime::action::ActionName;
 use crate::runtime::args::transform::{to_dec_rt_args, to_rt_args};
@@ -11,10 +13,12 @@ use crate::runtime::rtree::transform::{StackItem, Transformer};
 use crate::runtime::{RtResult, RuntimeError};
 use crate::tree::parser::ast::call::Call;
 
+use crate::runtime::rtree::analyzer::RtTreeAnalyzer;
+use crate::runtime::rtree::iter::RtTreeBfsIter;
 use crate::tree::project::imports::ImportMap;
 use crate::tree::project::Project;
 use crate::tree::{cerr, TreeError};
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, VecDeque};
 
 pub struct RuntimeTreeStarter {
     pub tree: RuntimeTree,
@@ -31,6 +35,17 @@ pub struct RuntimeTree {
 }
 
 impl RuntimeTree {
+    pub fn iter(&self) -> RtTreeBfsIter<'_> {
+        RtTreeBfsIter {
+            queue: VecDeque::from(vec![self.root]),
+            tree: &self,
+        }
+    }
+
+    pub fn analyze(&self) -> RtTreeAnalyzer<'_> {
+        RtTreeAnalyzer::new(self)
+    }
+
     pub fn build(project: Project) -> Result<RuntimeTreeStarter, TreeError> {
         let (file, name) = &project.main;
         let root = project.find_root(name, file)?;

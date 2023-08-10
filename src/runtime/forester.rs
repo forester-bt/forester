@@ -67,7 +67,7 @@ impl Forester {
     fn trim(&mut self, ctx: &TreeContext) -> RtOk {
         let mut mq_guard = self.trimmer.lock()?;
         debug!(
-            "trying to trim the tree, the number of tasks in the q is {}",
+            target:"trim","trying to trim the tree, the number of tasks in the q is {}",
             mq_guard.len()
         );
         // the tasks that have decided to skip this tick or they have not passed the validations.
@@ -76,33 +76,34 @@ impl Forester {
             let snapshot = TreeSnapshot::new(
                 ctx.curr_ts(),
                 self.bb.clone(),
+                self.tracer.clone(),
                 &self.tree,
                 &ctx.state(),
                 self.keeper.actions(),
             );
             match t.process(snapshot.clone())? {
                 TrimRequest::Reject => {
-                    debug!("a trimming request has rejected by itself");
+                    debug!(target:"trim","a trimming request has rejected by itself");
                 }
                 TrimRequest::Skip => {
-                    debug!("a trimming request has decided to skip this tick");
+                    debug!(target:"trim","a trimming request has decided to skip this tick");
                     deferred_tasks.push(t);
                 }
                 TrimRequest::Attempt(r) => {
-                    debug!("validating the trim request {:?}", r);
+                    debug!(target:"trim","validating the trim request {:?}", r);
                     match trimmer::validator::validate(&snapshot, &r) {
                         TrimValidationResult::Defer(reason) => {
-                            debug!("the request is deferred, The reason is '{reason}'");
+                            debug!(target:"trim","the request is deferred, The reason is '{reason}'");
                         }
                         TrimValidationResult::Reject(reason) => {
-                            debug!("the request is rejected, The reason is '{reason}'")
+                            debug!(target:"trim","the request is rejected, The reason is '{reason}'")
                         }
                         TrimValidationResult::Proceed => {
                             let RequestBody { tree_b, actions } = r;
                             for (nid, node) in tree_b.nodes {
                                 let new = format!("{:?}", node);
                                 let old = self.tree.nodes.insert(nid, node);
-                                debug!("The node {nid} is replaced. The previous node {:?}, the new node {new}", old);
+                                debug!(target:"trim","The node {nid} is replaced. The previous node {:?}, the new node {new}", old);
                                 self.tracer.lock()?.trace(
                                     ctx.curr_ts(),
                                     Event::Trim(nid.clone(), format!("{:?} >>> {new}", old)),
@@ -193,7 +194,7 @@ impl Forester {
                                 if tpe.is_root() {
                                     debug!(target:"flow[run]", "tick:{}, {tpe}. The '{child}' is running, tick up the flow. ",ctx.curr_ts());
                                     ctx.next_tick()?;
-                                    debug!("attempt to trim is  {:?}", self.trim(&ctx));
+                                    debug!(target:"trim","attempt to trim is  {:?}", self.trim(&ctx));
                                     ctx.push(child)?;
                                 } else {
                                     let next_state =

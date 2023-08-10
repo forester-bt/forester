@@ -41,7 +41,7 @@ The user-defined validations can be useful to restrict some features of the fram
 
 #### Integrations (TBD)
 
-## Why Behaviour trees
+## Why behavior trees
 Firstly, they provide a strong math abstraction over the orchestration logic \
 and enables to separate the business logic and the tree logic itself.
 
@@ -55,5 +55,5 @@ On the other hand, they have only a small set of logically conjucted components 
 ### Useful libraries
 - [BehaviorTree.CPP](https://www.behaviortree.dev/) : the brilliant library provides the implementation on CPP.
 - [Beehave](https://github.com/bitbrain/beehave) :  behavior tree AI for Godot Engine.
-- [Bonsai](https://github.com/Sollimann/bonsai) : the great library for behaviour trees in rust. 
+- [Bonsai](https://github.com/Sollimann/bonsai) : the great library for behavior trees in rust. 
 

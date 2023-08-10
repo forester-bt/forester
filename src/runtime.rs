@@ -131,12 +131,12 @@ impl From<TreeError> for RuntimeError {
 }
 impl From<serde_yaml::Error> for RuntimeError {
     fn from(value: serde_yaml::Error) -> Self {
-        RuntimeError::IOError(value.to_string())
+        RuntimeError::IOError(format!("{value}"))
     }
 }
 impl From<serde_json::Error> for RuntimeError {
     fn from(value: serde_json::Error) -> Self {
-        RuntimeError::IOError(value.to_string())
+        RuntimeError::IOError(format!("{value}"))
     }
 }
 impl From<std::io::Error> for RuntimeError {

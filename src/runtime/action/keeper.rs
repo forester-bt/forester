@@ -45,13 +45,13 @@ impl ActionKeeper {
         let mut actions = HashMap::new();
         for action_name in all_actions {
             if let Some(a) = impl_actions.remove(&action_name) {
-                debug!("register action {action_name} with the given impl");
+                debug!(target:"action","register action {action_name} with the given impl");
                 actions.insert(action_name, ActionImpl::Present(a));
             } else {
-                debug!("register action {action_name} with the default impl");
+                debug!(target:"action","register action {action_name} with the default impl");
                 let action_impl = default();
                 if action_impl.is_absent() {
-                    debug!("The action {action_name} is absent and the execution will be failed on calling this action.");
+                    debug!(target:"action","The action {action_name} is absent and the execution will be failed on calling this action.");
                 }
                 actions.insert(action_name, action_impl);
             }
@@ -69,7 +69,7 @@ impl ActionKeeper {
     }
 
     pub fn register(&mut self, name: ActionName, action: Action) -> RtResult<()> {
-        debug!("A new action {name} is registered");
+        debug!(target:"action","A new action {name} is registered");
         let _ = self.actions.insert(name, ActionImpl::Present(action));
         Ok(())
     }

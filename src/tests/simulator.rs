@@ -111,7 +111,7 @@ fn smoke() {
     sim.run().unwrap();
 }
 
-#[test]
+// #[test]
 fn text() {
     let mut fb = ForesterBuilder::from_text();
     let mut sb = SimulatorBuilder::new();

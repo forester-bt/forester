@@ -347,7 +347,7 @@ dependencies = [
 
 [[package]]
 name = "f-tree"
-version = "0.2.0"
+version = "0.1.9"
 dependencies = [
  "clap",
  "env_logger",

@@ -21,7 +21,8 @@ use crate::runtime::RuntimeError;
 mod tests;
 
 pub fn read_file(pb: &PathBuf) -> RtResult<String> {
-    fs::read_to_string(pb).map_err(|e| RuntimeError::IOError(format!("error:{e}, file:{:?}", pb)))
+    fs::read_to_string(pb)
+        .map_err(|e| RuntimeError::IOError(format!("error:{e}, file:{}", pb.as_path().display())))
 }
 
 pub(crate) fn get_pb(file_pb: &PathBuf, root: &Option<PathBuf>) -> RtResult<PathBuf> {

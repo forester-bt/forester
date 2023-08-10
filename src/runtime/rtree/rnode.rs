@@ -21,6 +21,7 @@ pub enum DecoratorType {
     Timeout,
     Delay,
 }
+
 #[derive(Display, Debug, Clone, Copy, Eq, PartialEq, EnumString)]
 #[strum(serialize_all = "snake_case")]
 pub enum FlowType {
@@ -72,7 +73,8 @@ impl TryFrom<TreeType> for FlowType {
         }
     }
 }
-#[derive(Debug, PartialEq)]
+
+#[derive(Debug, PartialEq, Clone)]
 pub enum RNodeName {
     Lambda,
     Name(Name),
@@ -100,10 +102,31 @@ pub enum RNode {
 }
 
 impl RNode {
+    pub fn is_name(&self, name: &str) -> bool {
+        self.name()
+            .and_then(|n| n.name().ok())
+            .filter(|action| action.as_str() == name)
+            .is_some()
+    }
+    pub fn is_flow(&self, tpe: &FlowType) -> bool {
+        match self {
+            RNode::Flow(t, ..) if t == tpe => true,
+            _ => false,
+        }
+    }
+
     pub fn name(&self) -> Option<&RNodeName> {
         match self {
             RNode::Leaf(n, _) | RNode::Flow(_, n, _, _) => Some(n),
             RNode::Decorator(_, _, _) => None,
+        }
+    }
+
+    pub fn children(&self) -> Vec<RNodeId> {
+        match self {
+            RNode::Leaf(_, _) => vec![],
+            RNode::Flow(_, _, _, children) => children.clone(),
+            RNode::Decorator(_, _, child) => vec![*child],
         }
     }
 

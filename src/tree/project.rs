@@ -51,6 +51,7 @@ impl<'a> Project {
         root: PathBuf,
     ) -> Result<Project, TreeError> {
         debug!(
+            target:"ast",
             "built project with root: {:?}, main file: {} and root definition: {} ",
             &root, main_file, main_call
         );
@@ -84,6 +85,7 @@ impl<'a> Project {
                 main_file.clone()
             )))?;
         debug!(
+           target:"ast",
             "built project with root: {:?}, main file: {} and root definition: {} ",
             &root, main_file, main_call
         );
@@ -108,7 +110,7 @@ impl<'a> Project {
             .ok_or(TreeError::IOError(
                 "no root operation in the given text".to_string(),
             ))?;
-        debug!("built project from text with root: {}", main_call);
+        debug!(target:"ast","built project from text with root: {}", main_call);
         project.main = ("_".to_string(), main_call);
         Ok(project)
     }

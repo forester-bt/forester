@@ -82,7 +82,7 @@ impl Action {
 /// }
 ///impl<T> Impl for GenerateData<T>
 /// where
-///     T: Fn(RtValue) -> RtValue,
+///      T: Fn(RtValue) -> RtValue + Send + Sync,
 /// {
 ///     fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
 ///         let key = args
@@ -110,7 +110,7 @@ impl Action {
 ///     }
 /// }
 /// ```
-pub trait Impl {
+pub trait Impl: Sync + Send {
     fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick;
 }
 

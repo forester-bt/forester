@@ -1,0 +1,16 @@
+import "std::actions"
+
+impl pick(item:object);
+impl validate();
+impl place();
+
+root main r_sequence {
+    work({"x":1, "y":1})
+    // running()
+}
+
+r_fallback work(item:object) {
+    pick(item)
+    validate()
+    place()
+}

@@ -257,7 +257,12 @@ macro_rules! action {
 }
 
 /// Creates RtNodeBuilder::flow(..)
-///
+/// The syntax is the following:
+///  with enlisting
+/// `flow!(type name, args; children...)`
+///  
+///  with given vec
+///  `flow!(type name, args, children_vec)`
 /// # Example
 /// ```
 /// use forester_rs::runtime::args::RtArgs;
@@ -270,12 +275,15 @@ macro_rules! action {
 ///
 ///  fn test2(){
 ///         
-///         let flow = flow!(fallback node_name!(), args!();
+///         let flow_with_enlist = flow!(fallback node_name!(), args!();
 ///                         action!(),
 ///                         action!(),
 ///                         action!(),
 ///                         action!()
 ///                     );
+///
+///         let actions = vec![ action!(), action!(), action!() ];
+///         let flow_with_vec = flow!(fallback node_name!(), args!(), actions);
 ///
 /// }
 ///
@@ -288,15 +296,31 @@ macro_rules! flow {
 
         RtNodeBuilder::flow(FlowType::Root, $name, $args, elems)
     }};
+    (root $name:expr, $args:expr, $children:expr ) => {{
+        let elems = $children.into_iter().map(|v|v.into()).collect();
+        RtNodeBuilder::flow(FlowType::Root, $name, $args, elems)
+    }};
     (parallel $name:expr, $args:expr; $($children:expr),+ ) => {{
         let mut elems = Vec::new();
         $( elems.push($children.into()) ; )+
 
         RtNodeBuilder::flow(FlowType::Parallel, $name, $args, elems)
     }};
+    (parallel $name:expr, $args:expr, $children:expr) => {{
+       let elems = $children.into_iter().map(|v|v.into()).collect();
+        $( elems.push($children.into()) ; )+
+
+        RtNodeBuilder::flow(FlowType::Parallel, $name, $args, elems)
+    }};
+
     (sequence $name:expr, $args:expr; $($children:expr),+ ) => {{
         let mut elems = Vec::new();
         $( elems.push($children.into()) ; )+
+
+        RtNodeBuilder::flow(FlowType::Sequence, $name, $args, elems)
+    }};
+    (sequence $name:expr, $args:expr, $children:expr) => {{
+        let elems = $children.into_iter().map(|v|v.into()).collect();
 
         RtNodeBuilder::flow(FlowType::Sequence, $name, $args, elems)
     }};
@@ -306,9 +330,19 @@ macro_rules! flow {
 
         RtNodeBuilder::flow(FlowType::MSequence, $name, $args, elems)
     }};
+    (m_sequence $name:expr, $args:expr, $children:expr) => {{
+        let elems = $children.into_iter().map(|v|v.into()).collect();
+
+        RtNodeBuilder::flow(FlowType::MSequence, $name, $args, elems)
+    }};
     (r_sequence $name:expr, $args:expr; $($children:expr),+ ) => {{
         let mut elems = Vec::new();
         $( elems.push($children.into()) ; )+
+
+        RtNodeBuilder::flow(FlowType::RSequence, $name, $args, elems)
+    }};
+    (r_sequence $name:expr, $args:expr, $children:expr) => {{
+        let elems = $children.into_iter().map(|v|v.into()).collect();
 
         RtNodeBuilder::flow(FlowType::RSequence, $name, $args, elems)
     }};
@@ -318,9 +352,19 @@ macro_rules! flow {
 
         RtNodeBuilder::flow(FlowType::Fallback, $name, $args, elems)
     }};
+    (fallback $name:expr, $args:expr, $children:expr) => {{
+        let elems = $children.into_iter().map(|v|v.into()).collect();
+
+        RtNodeBuilder::flow(FlowType::Fallback, $name, $args, elems)
+    }};
     (r_fallback $name:expr, $args:expr; $($children:expr),+ ) => {{
         let mut elems = Vec::new();
         $( elems.push($children.into()) ; )+
+
+        RtNodeBuilder::flow(FlowType::RFallback, $name, $args, elems)
+    }};
+    (r_fallback $name:expr, $args:expr, $children:expr) => {{
+        let elems = $children.into_iter().map(|v|v.into()).collect();
 
         RtNodeBuilder::flow(FlowType::RFallback, $name, $args, elems)
     }};

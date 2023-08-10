@@ -51,7 +51,7 @@ impl Visualizer {
     }
 
     pub fn dot(runtime_tree: &RuntimeTree) -> Result<String, TreeError> {
-        debug!("visualize a given tree ");
+        debug!(target:"visualizer","visualize a given tree ");
 
         Ok(print(
             Visualizer::build_graph(runtime_tree)?,
@@ -81,7 +81,7 @@ impl Visualizer {
                 new_output
             }
         };
-        debug!("visualize a given project to a file {:?}", &output_pb);
+        debug!(target:"visualizer","visualize a given project to a file {:?}", &output_pb);
         let rt = RuntimeTree::build(project)?.tree;
         Visualizer::rt_tree_svg_to_file(&rt, output_pb)
     }

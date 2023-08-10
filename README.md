@@ -1,7 +1,7 @@
 <p align="center">
     <img width="255" alt="Logo" src="docs/src/pics/logo.png">
 </p>
-<h1 align="center">Forester - A fast orchestration engine, implementing behaviour trees.</h1>
+<h1 align="center">Forester - A fast orchestration engine, implementing behavior trees.</h1>
 
 
 <p align="center">
@@ -76,16 +76,16 @@ The following set of features is summoned to highlight the framework among the o
 - The tooling to visualize and trace the execution of the tree
 - The simulation mode is supposed to aid with the design decisions
 - The optimizations and analysis of the tree
-- The validations engine allows the users to create the manually defined validations
+- The validation engine allows the users to create the manually defined validations
 
-## Why Behaviour trees
+## Why behavior trees
 
 Firstly, they provide a strong math abstraction over the orchestration logic \
 and enables to separate the business logic and the tree logic itself.
 
 On the other hand, they have only a small set of logically conjucted components making the design easier,
 
-Articles that introduce into the basics of the behaviour trees
+Articles that introduce into the basics of the behavior trees
 - [Chris Simpson’s Behavior trees for AI: How they work](https://outforafight.wordpress.com/2014/07/15/behaviour-behavior-trees-for-ai-dudes-part-1/)
 - [Introduction to behavior trees](https://robohub.org/introduction-to-behavior-trees/)
 - [State Machines vs Behavior Trees](https://www.polymathrobotics.com/blog/state-machines-vs-behavior-trees)

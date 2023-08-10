@@ -23,4 +23,7 @@
   * add tracer config to simulator
 * **`0.1.9`**
   * add trimming
+* **`0.2.0`**
+  * some improvements.
+  * api for runtime tree
  

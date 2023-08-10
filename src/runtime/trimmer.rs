@@ -8,6 +8,7 @@ use crate::runtime::rtree::builder::RtTreeBuilder;
 use crate::runtime::rtree::rnode::RNodeId;
 use crate::runtime::rtree::RuntimeTree;
 use crate::runtime::trimmer::task::TrimTask;
+use crate::tracer::Tracer;
 use itertools::Itertools;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::fmt::{Debug, Formatter};
@@ -100,6 +101,7 @@ impl TrimmingQueue {
 pub struct TreeSnapshot<'a> {
     pub tick: Timestamp,
     pub bb: Arc<Mutex<BlackBoard>>,
+    pub tracer: Arc<Mutex<Tracer>>,
     pub tree: &'a RuntimeTree,
     /// from the ctx
     pub tree_state: &'a HashMap<RNodeId, RNodeState>,
@@ -113,6 +115,7 @@ impl<'a> TreeSnapshot<'a> {
     pub fn new(
         tick: Timestamp,
         bb: Arc<Mutex<BlackBoard>>,
+        tracer: Arc<Mutex<Tracer>>,
         tree: &'a RuntimeTree,
         tree_state: &'a HashMap<RNodeId, RNodeState>,
         actions: HashSet<&'a ActionName>,
@@ -120,6 +123,7 @@ impl<'a> TreeSnapshot<'a> {
         Self {
             tick,
             bb,
+            tracer,
             tree,
             tree_state,
             actions,
