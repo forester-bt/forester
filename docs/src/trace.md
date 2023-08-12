@@ -1,6 +1,6 @@
 # Tracing
-By default the engine tries to trace the information about the tree.
-It can be helpfull in analysing.
+By default, the engine tries to trace the information about the tree.
+It can be helpful in analyzing.
 
 Below, the example how it can be shown in a text form:
 ```text
@@ -63,7 +63,7 @@ root main repeat(3) custom_state()
 
             ctx.bb().put("k".to_string(), RtValue::int(i));
             // the method trace accepts Event::Custom
-            ctx.trace(Event::Custom(format!("i = {:?}", i)));
+            ctx.trace(format!("i = {:?}", i));
             
             Ok(TickResult::success())
         }
@@ -71,7 +71,7 @@ root main repeat(3) custom_state()
 
 ```
 
-That will igve the following trace:
+That will give the following trace:
 
 ```
 [1]  1 : Running(cursor=0,len=1)

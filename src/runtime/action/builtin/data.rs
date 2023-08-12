@@ -152,6 +152,7 @@ mod tests {
     use crate::runtime::args::{RtArgs, RtArgument, RtValue};
     use crate::runtime::blackboard::{BBValue, BlackBoard};
     use crate::runtime::context::{TreeContext, TreeContextRef};
+    use crate::runtime::trimmer::TrimmingQueue;
     use crate::runtime::{RuntimeError, TickResult};
     use crate::tracer::Tracer;
     use log::Level::Trace;
@@ -171,6 +172,7 @@ mod tests {
                 Arc::new(Mutex::new(BlackBoard::default())),
                 Arc::new(Mutex::new(Tracer::Noop)),
                 1,
+                Arc::new(Mutex::new(TrimmingQueue::default())),
             ),
         );
         assert_eq!(
@@ -189,7 +191,12 @@ mod tests {
                 "key".to_string(),
                 RtValue::str("k".to_string()),
             )]),
-            TreeContextRef::new(bb.clone(), Arc::new(Mutex::new(Tracer::Noop)), 1),
+            TreeContextRef::new(
+                bb.clone(),
+                Arc::new(Mutex::new(Tracer::Noop)),
+                1,
+                Arc::new(Mutex::new(TrimmingQueue::default())),
+            ),
         );
         assert_eq!(r, Ok(TickResult::success()));
         assert_eq!(

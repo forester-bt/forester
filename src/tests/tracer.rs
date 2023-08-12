@@ -204,8 +204,9 @@ fn custom_state() {
             ctx.bb()
                 .lock()
                 .unwrap()
-                .put("k".to_string(), RtValue::int(i));
-            ctx.trace(Event::Custom(format!("i = {:?}", i)));
+                .put("k".to_string(), RtValue::int(i))
+                .unwrap();
+            ctx.trace(format!("i = {:?}", i)).unwrap();
             Ok(TickResult::success())
         }
     }
@@ -261,8 +262,9 @@ fn file() {
             ctx.bb()
                 .lock()
                 .unwrap()
-                .put("k".to_string(), RtValue::int(i));
-            ctx.trace(Event::Custom(format!("i = {:?}", i)));
+                .put("k".to_string(), RtValue::int(i))
+                .unwrap();
+            ctx.trace(format!("i = {:?}", i)).unwrap();
             Ok(TickResult::success())
         }
     }

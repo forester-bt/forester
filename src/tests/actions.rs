@@ -1,7 +1,6 @@
 use crate::runtime::args::RtValue;
 use crate::runtime::TickResult;
-use crate::tests::{fb, test_folder, turn_on_logs};
-use crate::tracer::{Tracer, TracerConfig};
+use crate::tests::fb;
 
 #[test]
 fn builtin_actions() {

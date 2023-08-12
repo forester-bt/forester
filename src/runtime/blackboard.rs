@@ -51,6 +51,7 @@ impl BlackBoard {
         }
     }
 
+    #[allow(clippy::wrong_self_convention)]
     pub fn is_locked(&mut self, key: BBKey) -> RtResult<bool> {
         Ok(match self.storage.get(&key) {
             Some(Locked(_)) => true,

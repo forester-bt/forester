@@ -5,7 +5,7 @@ use crate::runtime::action::keeper::ActionKeeper;
 use crate::runtime::action::{recover, Tick};
 use crate::runtime::args::RtArgs;
 use crate::runtime::blackboard::BlackBoard;
-use crate::runtime::context::{RNodeState, TreeContext};
+use crate::runtime::context::{RNodeState, TreeContext, TreeContextRef};
 use crate::runtime::env::RtEnv;
 use crate::runtime::forester::flow::{read_cursor, run_with};
 use crate::runtime::rtree::rnode::RNode;
@@ -16,7 +16,7 @@ use crate::runtime::trimmer::{RequestBody, TreeSnapshot, TrimRequest, TrimmingQu
 use crate::runtime::{trimmer, RtOk, RtResult, RuntimeError};
 use crate::tracer::{Event, Tracer};
 use log::debug;
-use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
+use std::sync::{Arc, Mutex};
 use tokio::task::JoinHandle;
 
 /// The entry point to process execution.
@@ -288,11 +288,12 @@ impl Forester {
                     debug!(target:"leaf","args :{:?}",args);
                     if ctx.state_in_ts(&id).is_ready() {
                         let env = &mut self.env;
+                        let ctx_ref = TreeContextRef::from_ctx(&ctx, self.trimmer.clone());
                         let res = recover(self.keeper.on_tick(
                             env,
                             f_name.name()?,
                             args.clone(),
-                            (&ctx).into(),
+                            ctx_ref,
                         ))?;
                         let new_state = RNodeState::from(args.clone(), res);
                         debug!(target:"leaf", "tick:{}, the new state: {:?}",ctx.curr_ts(),&new_state);

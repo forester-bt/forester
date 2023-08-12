@@ -3,6 +3,7 @@ use crate::runtime::args::{RtArgs, RtValue};
 use crate::runtime::blackboard::BlackBoard;
 use crate::runtime::forester::flow::REASON;
 use crate::runtime::rtree::rnode::RNodeId;
+use crate::runtime::trimmer::TrimmingQueue;
 use crate::runtime::{RtOk, RtResult, RuntimeError, TickResult};
 use crate::tracer::Event::NewState;
 use crate::tracer::{Event, Tracer};
@@ -18,21 +19,16 @@ pub struct TreeContextRef {
     bb: Arc<Mutex<BlackBoard>>,
     tracer: Arc<Mutex<Tracer>>,
     curr_ts: Timestamp,
-}
-
-impl From<&TreeContext> for TreeContextRef {
-    fn from(ctx: &TreeContext) -> Self {
-        Self {
-            bb: ctx.bb.clone(),
-            tracer: ctx.tracer.clone(),
-            curr_ts: ctx.curr_ts,
-        }
-    }
+    trimmer: Arc<Mutex<TrimmingQueue>>,
 }
 
 impl TreeContextRef {
-    pub fn trace(&self, ev: Event) -> RtOk {
-        self.tracer.lock()?.trace(self.curr_ts, ev)
+    pub fn from_ctx(ctx: &TreeContext, trimmer: Arc<Mutex<TrimmingQueue>>) -> Self {
+        TreeContextRef::new(ctx.bb.clone(), ctx.tracer.clone(), ctx.curr_ts, trimmer)
+    }
+
+    pub fn trace(&self, ev: String) -> RtOk {
+        self.tracer.lock()?.trace(self.curr_ts, Event::Custom(ev))
     }
     pub fn bb(&self) -> Arc<Mutex<BlackBoard>> {
         self.bb.clone()
@@ -40,11 +36,17 @@ impl TreeContextRef {
     pub fn current_tick(&self) -> Timestamp {
         self.curr_ts
     }
-    pub fn new(bb: Arc<Mutex<BlackBoard>>, tracer: Arc<Mutex<Tracer>>, curr_ts: Timestamp) -> Self {
+    pub fn new(
+        bb: Arc<Mutex<BlackBoard>>,
+        tracer: Arc<Mutex<Tracer>>,
+        curr_ts: Timestamp,
+        trimmer: Arc<Mutex<TrimmingQueue>>,
+    ) -> Self {
         Self {
             bb,
             tracer,
             curr_ts,
+            trimmer,
         }
     }
 }
