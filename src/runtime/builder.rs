@@ -4,14 +4,16 @@ pub mod file_builder;
 pub mod text_builder;
 
 use crate::get_pb;
+use crate::runtime::action::builtin::remote::{Remote, RemoteHttpAction};
 use crate::runtime::action::keeper::{ActionImpl, ActionKeeper};
-use crate::runtime::action::{Action, ActionName};
+use crate::runtime::action::{Action, ActionName, Impl};
 use crate::runtime::blackboard::BlackBoard;
 use crate::runtime::builder::builtin::BuilderBuiltInActions;
 use crate::runtime::builder::custom_builder::CustomForesterBuilder;
 use crate::runtime::builder::file_builder::FileForesterBuilder;
 use crate::runtime::builder::text_builder::TextForesterBuilder;
 use crate::runtime::env::RtEnv;
+use crate::runtime::forester::http_server::HttpServer;
 use crate::runtime::forester::Forester;
 use crate::runtime::rtree::builder::RtNodeBuilder;
 use crate::runtime::rtree::rnode::RNodeId;
@@ -21,6 +23,7 @@ use crate::tracer::Tracer;
 use crate::tree::project::{FileName, TreeName};
 use std::collections::HashMap;
 use std::path::PathBuf;
+use std::sync::{Arc, Mutex};
 
 /// The builder to create a Forester instance
 ///
@@ -179,6 +182,23 @@ impl ForesterBuilder {
     pub fn register_action(&mut self, name: &str, action: Action) {
         self.cfb().register_action(name, action);
     }
+
+    /// Add an action according to the name but with a promise the action remote.
+    pub fn register_remote_action<A>(&mut self, name: &str, action: A)
+    where
+        A: Impl + Remote + 'static,
+    {
+        self.cfb().register_remote_action(name, action);
+    }
+    /// setup the port for the server
+    pub fn port(&mut self, port: usize) {
+        self.cfb().port(port)
+    }
+    /// setup the http server and the port dynamically(the first open from 10000)
+    pub fn port_dyn(&mut self) {
+        self.cfb().port_dyn()
+    }
+
     /// Tracer that will be used to save the tracing information.
     pub fn tracer(&mut self, tr: Tracer) {
         self.cfb().tracer(tr);
@@ -206,7 +226,7 @@ impl ForesterBuilder {
     {
         self.error()?;
 
-        let (tree, actions, action_names, tr, env, bb_load, root) = match self {
+        let (tree, actions, action_names, tr, env, bb_load, root, port) = match self {
             ForesterBuilder::Files { delegate, cfb, .. } => {
                 let root = delegate.root.clone();
                 let project = delegate.build()?;
@@ -228,6 +248,7 @@ impl ForesterBuilder {
                     cfb.env,
                     cfb.bb_load,
                     root,
+                    cfb.port,
                 )
             }
             ForesterBuilder::Text { delegate, cfb, .. } => {
@@ -250,6 +271,7 @@ impl ForesterBuilder {
                     cfb.env,
                     cfb.bb_load,
                     None,
+                    cfb.port,
                 )
             }
             ForesterBuilder::Code { delegate, cfb, .. } => {
@@ -262,6 +284,7 @@ impl ForesterBuilder {
                     cfb.env,
                     cfb.bb_load,
                     None,
+                    cfb.port,
                 )
             }
         };
@@ -279,13 +302,25 @@ impl ForesterBuilder {
         } else {
             RtEnv::try_new()?
         };
-        Forester::new(
-            tree,
-            bb,
-            ActionKeeper::new_with(actions, action_names, default_action)?,
-            tr,
-            env,
-        )
+
+        let bb = Arc::new(Mutex::new(bb));
+        let tracer = Arc::new(Mutex::new(tr));
+        let keeper = ActionKeeper::new_with(actions, action_names, default_action)?;
+
+        match port {
+            ServerPort::None => {}
+            ServerPort::Dynamic => {
+                let bb_server = bb.clone();
+                let tracer_server = tracer.clone();
+                env.runtime.spawn(async move {
+                    let server = HttpServer::new(port, bb_server, tracer_server);
+                    server.start();
+                });
+            }
+            ServerPort::Static(p) => {}
+        }
+
+        Forester::new(tree, bb, tracer, keeper, env)
     }
 
     fn cfb(&mut self) -> &mut CommonForesterBuilder {
@@ -312,6 +347,7 @@ pub struct CommonForesterBuilder {
     tracer: Tracer,
     bb_load: Option<String>,
     actions: HashMap<ActionName, Action>,
+    port: ServerPort,
 }
 
 impl CommonForesterBuilder {
@@ -321,12 +357,33 @@ impl CommonForesterBuilder {
             tracer: Tracer::noop(),
             bb_load: None,
             actions: HashMap::new(),
+            port: ServerPort::None,
         }
     }
     /// Add an action according to the name.
     pub fn register_action(&mut self, name: &str, action: Action) {
         self.actions.insert(name.to_string(), action);
     }
+    /// Add an action according to the name but with a promise the action remote.
+    pub fn register_remote_action<A>(&mut self, name: &str, action: A)
+    where
+        A: Impl + Remote + 'static,
+    {
+        if let ServerPort::None = self.port {
+            self.port = ServerPort::Dynamic
+        }
+        self.actions
+            .insert(name.to_string(), Action::Sync(Box::new(action)));
+    }
+    /// setup the port for the server
+    pub fn port(&mut self, port: usize) {
+        self.port = ServerPort::Static(port)
+    }
+    /// setup the http server and the port dynamically(the first open from 10000)
+    pub fn port_dyn(&mut self) {
+        self.port = ServerPort::Dynamic
+    }
+
     /// Tracer that will be used to save the tracing information.
     pub fn tracer(&mut self, tr: Tracer) {
         self.tracer = tr;
@@ -341,4 +398,11 @@ impl CommonForesterBuilder {
     pub fn rt_env(&mut self, env: RtEnv) {
         self.env = Some(env);
     }
+}
+
+#[derive(Debug)]
+pub enum ServerPort {
+    None,
+    Dynamic,
+    Static(usize),
 }

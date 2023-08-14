@@ -2,6 +2,7 @@
 /// Also, they are used in the std::actions
 pub mod data;
 pub mod http;
+pub mod remote;
 
 use crate::runtime::action::{Impl, Tick};
 use crate::runtime::args::RtArgs;

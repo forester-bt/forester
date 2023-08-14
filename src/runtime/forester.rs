@@ -1,5 +1,6 @@
 pub mod decorator;
 pub mod flow;
+pub mod http_server;
 
 use crate::runtime::action::keeper::ActionKeeper;
 use crate::runtime::action::{recover, Tick};
@@ -41,13 +42,11 @@ pub struct Forester {
 impl Forester {
     pub(crate) fn new(
         tree: RuntimeTree,
-        bb: BlackBoard,
+        bb: Arc<Mutex<BlackBoard>>,
+        tracer: Arc<Mutex<Tracer>>,
         keeper: ActionKeeper,
-        tracer: Tracer,
         env: RtEnv,
     ) -> RtResult<Self> {
-        let tracer = Arc::new(Mutex::new(tracer));
-        let bb = Arc::new(Mutex::new(bb));
         let mod_queue = Arc::new(Mutex::new(TrimmingQueue::default()));
         Ok(Self {
             tree,
