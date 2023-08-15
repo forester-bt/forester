@@ -2,7 +2,7 @@ use crate::runtime::action::{Impl, ImplAsync, Tick};
 use crate::runtime::args::{RtArgs, RtValue};
 use crate::runtime::context::TreeContextRef;
 use crate::runtime::{RuntimeError, TickResult};
-/// Synchronious http get.
+/// Synchronous http get.
 /// It accepts url for request and key in bb to write the results as string.
 pub struct HttpGet;
 

@@ -24,8 +24,8 @@ impl Impl for StoreTick {
 fn simple_sequence() {
     let mut fb = fb("flow/sequence");
 
-    fb.register_action("store", Action::sync(GenerateData::new(|v| v)));
-    fb.register_action("store_tick", Action::sync(StoreTick));
+    fb.register_sync_action("store", GenerateData::new(|v| v));
+    fb.register_sync_action("store_tick", StoreTick);
 
     let mut f = fb.build().unwrap();
     let result = f.run();
@@ -78,14 +78,14 @@ fn simple_sequence() {
 fn seq_restart_all_children() {
     let mut fb = fb("flow/sequence_restart_children");
 
-    fb.register_action(
+    fb.register_sync_action(
         "gen_store",
-        Action::sync(GenerateData::new(|v| {
+        GenerateData::new(|v| {
             let curr = v.as_int().unwrap_or(0);
             RtValue::int(curr + 1)
-        })),
+        }),
     );
-    fb.register_action("store_tick", Action::sync(StoreTick));
+    fb.register_sync_action("store_tick", StoreTick);
 
     let mut f = fb.build().unwrap();
     let result = f.run();
@@ -126,14 +126,14 @@ fn seq_restart_all_children() {
 fn mseq_restart_all_children() {
     let mut fb = fb("flow/msequence_restart_children");
 
-    fb.register_action(
+    fb.register_sync_action(
         "gen_store",
-        Action::sync(GenerateData::new(|v| {
+        GenerateData::new(|v| {
             let curr = v.as_int().unwrap_or(0);
             RtValue::int(curr + 1)
-        })),
+        }),
     );
-    fb.register_action("store_tick", Action::sync(StoreTick));
+    fb.register_sync_action("store_tick", StoreTick);
 
     let mut f = fb.build().unwrap();
     let result = f.run();
@@ -175,12 +175,12 @@ fn sequence_running() {
     turn_on_logs();
     let mut fb = fb("flow/sequence_running");
 
-    fb.register_action(
+    fb.register_sync_action(
         "incr",
-        Action::sync(GenerateData::new(|v| {
+        GenerateData::new(|v| {
             let curr = v.as_int().unwrap_or(0);
             RtValue::int(curr + 1)
-        })),
+        }),
     );
 
     let mut f = fb.build().unwrap();
@@ -204,7 +204,7 @@ fn sequence_running() {
 fn fallback() {
     let mut fb = fb("flow/fallback");
 
-    fb.register_action("tick_num_store", Action::sync(StoreTick));
+    fb.register_sync_action("tick_num_store", StoreTick);
 
     let mut f = fb.build().unwrap();
     let result = f.run();
@@ -226,7 +226,7 @@ fn fallback_retry() {
 
     let mut fb = fb("flow/fallback_retry");
 
-    fb.register_action("tick_num_store", Action::sync(StoreTick));
+    fb.register_sync_action("tick_num_store", StoreTick);
 
     let mut f = fb.build().unwrap();
     let result = f.run();

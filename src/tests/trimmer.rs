@@ -77,9 +77,9 @@ fn smoke2() {
     fb.main_file("main.tree".to_string());
     fb.root(root.clone());
 
-    fb.register_action("pick", Action::Sync(Box::new(SimAction::Random(1000))));
-    fb.register_action("validate", Action::Sync(Box::new(SimAction::Success(100))));
-    fb.register_action("place", Action::Sync(Box::new(SimAction::Success(100))));
+    fb.register_sync_action("pick", SimAction::Random(1000));
+    fb.register_sync_action("validate", SimAction::Success(100));
+    fb.register_sync_action("place", SimAction::Success(100));
 
     let mut forester = fb.build().unwrap();
     for (n, i) in forester.tree.iter() {

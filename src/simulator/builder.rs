@@ -128,16 +128,16 @@ impl SimulatorBuilder {
         }
 
         for action in profile.actions.iter() {
-            fb.register_action(
+            fb.register_sync_action(
                 action.name.as_str(),
-                RtAction::sync(SimAction::create(
+                SimAction::create(
                     action.stub.as_str(),
                     action
                         .params
                         .get("delay")
                         .map(|s| s.parse::<usize>().unwrap_or_default())
                         .unwrap_or_default(),
-                )?),
+                )?,
             )
         }
 

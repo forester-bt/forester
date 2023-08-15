@@ -6,7 +6,7 @@ pub mod text_builder;
 use crate::get_pb;
 use crate::runtime::action::builtin::remote::{Remote, RemoteHttpAction};
 use crate::runtime::action::keeper::{ActionImpl, ActionKeeper};
-use crate::runtime::action::{Action, ActionName, Impl};
+use crate::runtime::action::{Action, ActionName, Impl, ImplAsync};
 use crate::runtime::blackboard::BlackBoard;
 use crate::runtime::builder::builtin::BuilderBuiltInActions;
 use crate::runtime::builder::custom_builder::CustomForesterBuilder;
@@ -42,7 +42,7 @@ use std::sync::{Arc, Mutex};
 ///     let mut fb = ForesterBuilder::from_fs();
 ///     fb.main_file("main.tree".to_string());
 ///     fb.root(root);
-///     fb.register_action("store", Action::sync(StoreData));
+///     fb.register_sync_action("store", StoreData);
 ///     
 ///     fb.tracer(Tracer::default());
 ///     fb.bb_load("db/db.json".to_string());
@@ -54,7 +54,7 @@ use std::sync::{Arc, Mutex};
 ///            
 ///     fb.text(r#"root main store("hello", "world") "#.to_string());    
 ///
-///     fb.register_action("store", Action::sync(StoreData));
+///     fb.register_sync_action("store", StoreData);
 ///     
 ///     let forester = fb.build().unwrap();
 /// }
@@ -71,7 +71,7 @@ use std::sync::{Arc, Mutex};
 ///                     )
 ///      );
 ///
-///     fb.register_action("store", Action::sync(StoreData));
+///     fb.register_sync_action("store", StoreData);
 ///     
 ///     let forester = fb.build().unwrap();
 /// }
@@ -178,9 +178,19 @@ impl ForesterBuilder {
         }
     }
 
-    /// Add an action according to the name.
-    pub fn register_action(&mut self, name: &str, action: Action) {
-        self.cfb().register_action(name, action);
+    /// Add a sync action according to the name.
+    pub fn register_sync_action<A>(&mut self, name: &str, action: A)
+    where
+        A: Impl + 'static,
+    {
+        self.cfb().register_sync_action(name, action);
+    }
+    /// Add an async action according to the name.
+    pub fn register_async_action<A>(&mut self, name: &str, action: A)
+    where
+        A: ImplAsync + 'static,
+    {
+        self.cfb().register_async_action(name, action);
     }
 
     /// Add an action according to the name but with a promise the action remote.
@@ -360,9 +370,21 @@ impl CommonForesterBuilder {
             port: ServerPort::None,
         }
     }
-    /// Add an action according to the name.
-    pub fn register_action(&mut self, name: &str, action: Action) {
-        self.actions.insert(name.to_string(), action);
+    /// Add an sync action according to the name.
+    pub fn register_sync_action<A>(&mut self, name: &str, action: A)
+    where
+        A: Impl + 'static,
+    {
+        self.actions
+            .insert(name.to_string(), Action::Sync(Box::new(action)));
+    }
+    /// Add an sync action according to the name.
+    pub fn register_async_action<A>(&mut self, name: &str, action: A)
+    where
+        A: ImplAsync + 'static,
+    {
+        self.actions
+            .insert(name.to_string(), Action::Async(Arc::new(action)));
     }
     /// Add an action according to the name but with a promise the action remote.
     pub fn register_remote_action<A>(&mut self, name: &str, action: A)

@@ -14,12 +14,12 @@ use std::time::SystemTime;
 fn smoke() {
     let mut fb = fb("flow/sequence_running");
     fb.tracer(Tracer::default());
-    fb.register_action(
+    fb.register_sync_action(
         "incr",
-        Action::sync(GenerateData::new(|v| {
+        GenerateData::new(|v| {
             let curr = v.as_int().unwrap_or(0);
             RtValue::int(curr + 1)
-        })),
+        }),
     );
 
     let mut f = fb.build().unwrap();
@@ -211,7 +211,7 @@ fn custom_state() {
         }
     }
 
-    fb.register_action("custom_state", Action::sync(CT));
+    fb.register_sync_action("custom_state", CT);
 
     let mut f = fb.build().unwrap();
     let result = f.run();
@@ -269,7 +269,7 @@ fn file() {
         }
     }
 
-    fb.register_action("custom_state", Action::sync(CT));
+    fb.register_sync_action("custom_state", CT);
 
     let tracer_log = test_folder("tracer/custom/main.trace");
 

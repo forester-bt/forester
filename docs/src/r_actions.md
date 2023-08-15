@@ -41,7 +41,7 @@ Therefore, it is better off to use blackboard to keep some data between the call
 fn simple_delay() {
     let mut forester_builder = fb("decorators/simple_delay");
 
-    forester_builder.register_action("store", Action::sync(StoreData));
+    forester_builder.register_sync_action("store", StoreData);
  
 }
 ```

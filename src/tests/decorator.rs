@@ -10,7 +10,7 @@ use std::time::SystemTime;
 fn simple_inverter() {
     let mut fb = fb("decorators/simple_inv");
 
-    fb.register_action("store", Action::sync(StoreData));
+    fb.register_sync_action("store", StoreData);
 
     let mut f = fb.build().unwrap();
     let result = f.run();
@@ -36,12 +36,12 @@ fn simple_inverter() {
 fn simple_repeat() {
     let mut fb = fb("decorators/simple_repeat");
 
-    fb.register_action(
+    fb.register_sync_action(
         "store",
-        Action::sync(GenerateData::new(|v| {
+        GenerateData::new(|v| {
             let curr = v.as_string().unwrap();
             RtValue::String(format!("{curr}1"))
-        })),
+        }),
     );
 
     let mut f = fb.build().unwrap();
@@ -64,7 +64,7 @@ fn simple_repeat() {
 fn simple_delay() {
     let mut fb = fb("decorators/simple_delay");
 
-    fb.register_action("store", Action::sync(StoreData));
+    fb.register_sync_action("store", StoreData);
 
     let before = SystemTime::now();
 
