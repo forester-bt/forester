@@ -1,0 +1,18 @@
+POST http://localhost:10000/tracer/custom
+Content-Type: application/json
+
+{
+  "tick": 999,
+  "text": "content"
+}
+
+### Send POST request with json body
+POST http://localhost:10000/bb/abc
+Content-Type: application/json
+
+{
+  "abc": 1,
+   "bcd" : {"a": 1, "b": [2]}
+}
+
+

@@ -1,5 +1,7 @@
 pub mod display;
+mod sede;
 pub mod transform;
+
 use crate::runtime::blackboard::BBKey;
 use crate::runtime::context::TreeContextRef;
 use crate::runtime::{RtResult, RuntimeError};
@@ -8,7 +10,8 @@ use crate::tree::parser::ast::call::Call;
 use crate::tree::parser::ast::message::{Message, Number};
 use crate::tree::{cerr, TreeError};
 use itertools::Itertools;
-use serde::{Deserialize, Serialize};
+use serde::de::{Error, MapAccess, SeqAccess, Visitor};
+use serde::{Deserialize, Deserializer, Serialize};
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 
@@ -32,7 +35,7 @@ impl From<Number> for RtValueNumber {
         }
     }
 }
-#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum RtValue {
     String(String),
     Bool(bool),

@@ -1,6 +1,6 @@
 pub mod decorator;
 pub mod flow;
-pub mod http_server;
+pub mod serv;
 
 use crate::runtime::action::keeper::ActionKeeper;
 use crate::runtime::action::{recover, Tick};
@@ -9,6 +9,7 @@ use crate::runtime::blackboard::BlackBoard;
 use crate::runtime::context::{RNodeState, TreeContext, TreeContextRef};
 use crate::runtime::env::RtEnv;
 use crate::runtime::forester::flow::{read_cursor, run_with};
+use crate::runtime::forester::serv::ServInfo;
 use crate::runtime::rtree::rnode::RNode;
 use crate::runtime::rtree::RuntimeTree;
 use crate::runtime::trimmer::task::TrimTask;
@@ -18,6 +19,7 @@ use crate::runtime::{trimmer, RtOk, RtResult, RuntimeError};
 use crate::tracer::{Event, Tracer};
 use log::debug;
 use std::sync::{Arc, Mutex};
+use tokio::sync::oneshot::Sender;
 use tokio::task::JoinHandle;
 
 /// The entry point to process execution.
@@ -37,6 +39,7 @@ pub struct Forester {
     pub keeper: ActionKeeper,
     pub env: RtEnv,
     pub trimmer: Arc<Mutex<TrimmingQueue>>,
+    stopper: Option<ServInfo>,
 }
 
 impl Forester {
@@ -46,6 +49,7 @@ impl Forester {
         tracer: Arc<Mutex<Tracer>>,
         keeper: ActionKeeper,
         env: RtEnv,
+        stopper: Option<ServInfo>,
     ) -> RtResult<Self> {
         let mod_queue = Arc::new(Mutex::new(TrimmingQueue::default()));
         Ok(Self {
@@ -55,6 +59,7 @@ impl Forester {
             tracer,
             env,
             trimmer: mod_queue,
+            stopper,
         })
     }
 

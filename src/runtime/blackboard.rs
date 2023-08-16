@@ -132,6 +132,7 @@ impl BlackBoard {
         }
     }
     pub fn new(elems: Vec<(BBKey, BBValue)>) -> Self {
+        debug!(target:"bb", "create an empty bb");
         Self {
             storage: HashMap::from_iter(elems),
         }
@@ -141,7 +142,7 @@ impl BlackBoard {
     /// Drops the snapshot to the file in json format.
     pub fn dump(&self, file: PathBuf) -> RtOk {
         let dump = serde_json::to_string(self)?;
-
+        debug!(target:"bb", "dump snapshot to the file {:?}",file);
         fs::write(file, dump)?;
 
         Ok(())
@@ -156,6 +157,7 @@ impl BlackBoard {
 
     /// Loads the snapshot from the file.
     pub fn load(&self, file: &PathBuf) -> RtResult<BlackBoard> {
+        debug!(target:"bb", "load snapshot from the file {:?}",file);
         let src = read_file(file)?;
         let bb: BlackBoard = serde_json::from_str(src.as_str())?;
         Ok(bb)

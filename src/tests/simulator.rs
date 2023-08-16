@@ -25,6 +25,7 @@ fn file() {
                     dump: Some(String::from("bb.dump")),
                     load: Some(String::from("bb.json")),
                 },
+                port: None,
             },
             actions: vec![
                 Action {

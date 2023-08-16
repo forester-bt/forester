@@ -13,14 +13,15 @@ use crate::runtime::builder::custom_builder::CustomForesterBuilder;
 use crate::runtime::builder::file_builder::FileForesterBuilder;
 use crate::runtime::builder::text_builder::TextForesterBuilder;
 use crate::runtime::env::RtEnv;
-use crate::runtime::forester::http_server::HttpServer;
-use crate::runtime::forester::Forester;
+use crate::runtime::forester::serv::HttpServ;
+use crate::runtime::forester::{serv, Forester};
 use crate::runtime::rtree::builder::RtNodeBuilder;
 use crate::runtime::rtree::rnode::RNodeId;
 use crate::runtime::rtree::{RuntimeTree, RuntimeTreeStarter};
 use crate::runtime::{RtOk, RtResult, RuntimeError};
 use crate::tracer::Tracer;
 use crate::tree::project::{FileName, TreeName};
+use serde::Serialize;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
@@ -201,7 +202,7 @@ impl ForesterBuilder {
         self.cfb().register_remote_action(name, action);
     }
     /// setup the port for the server
-    pub fn port(&mut self, port: usize) {
+    pub fn port(&mut self, port: u16) {
         self.cfb().port(port)
     }
     /// setup the http server and the port dynamically(the first open from 10000)
@@ -317,20 +318,13 @@ impl ForesterBuilder {
         let tracer = Arc::new(Mutex::new(tr));
         let keeper = ActionKeeper::new_with(actions, action_names, default_action)?;
 
-        match port {
-            ServerPort::None => {}
-            ServerPort::Dynamic => {
-                let bb_server = bb.clone();
-                let tracer_server = tracer.clone();
-                env.runtime.spawn(async move {
-                    let server = HttpServer::new(port, bb_server, tracer_server);
-                    server.start();
-                });
-            }
-            ServerPort::Static(p) => {}
-        }
+        let stopper = if port.is_some() {
+            Some(serv::start(&env.runtime, port, bb.clone(), tracer.clone())?)
+        } else {
+            None
+        };
 
-        Forester::new(tree, bb, tracer, keeper, env)
+        Forester::new(tree, bb, tracer, keeper, env, stopper)
     }
 
     fn cfb(&mut self) -> &mut CommonForesterBuilder {
@@ -398,7 +392,7 @@ impl CommonForesterBuilder {
             .insert(name.to_string(), Action::Sync(Box::new(action)));
     }
     /// setup the port for the server
-    pub fn port(&mut self, port: usize) {
+    pub fn port(&mut self, port: u16) {
         self.port = ServerPort::Static(port)
     }
     /// setup the http server and the port dynamically(the first open from 10000)
@@ -422,9 +416,24 @@ impl CommonForesterBuilder {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ServerPort {
     None,
     Dynamic,
-    Static(usize),
+    Static(u16),
+}
+
+impl Default for ServerPort {
+    fn default() -> Self {
+        ServerPort::None
+    }
+}
+
+impl ServerPort {
+    fn is_some(&self) -> bool {
+        match self {
+            ServerPort::None => false,
+            _ => true,
+        }
+    }
 }

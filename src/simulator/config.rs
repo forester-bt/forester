@@ -3,6 +3,7 @@ use crate::runtime::RtResult;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+use crate::runtime::builder::ServerPort;
 use std::path::PathBuf;
 
 /// Just a profile to build the simulator
@@ -44,6 +45,10 @@ pub struct SimProfileConfig {
     pub graph: Option<String>,
     /// The limitation for the Forester on ticks.
     pub max_ticks: Option<usize>,
+
+    /// The port where needs to deploy the server to communicate with the remote actions.
+    #[serde(default)]
+    pub port: Option<u16>,
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Serialize, Deserialize)]
