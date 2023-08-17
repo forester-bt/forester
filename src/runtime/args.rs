@@ -192,7 +192,7 @@ impl From<Message> for RtValue {
     }
 }
 
-#[derive(Default, Debug, PartialEq, Clone)]
+#[derive(Default, Debug, PartialEq, Clone, Deserialize, Serialize)]
 pub struct RtArgs(pub Vec<RtArgument>);
 
 impl RtArgs {
@@ -252,7 +252,7 @@ impl Display for RtArgs {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Deserialize, Serialize)]
 pub struct RtArgument {
     name: RtAKey,
     value: RtValue,

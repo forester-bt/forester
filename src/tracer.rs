@@ -2,10 +2,11 @@ use crate::runtime::context::RNodeState;
 use crate::runtime::rtree::rnode::RNodeId;
 use crate::runtime::{RtOk, RtResult};
 use chrono::{DateTime, Utc};
+use serde::ser::Error;
 use std::fmt::{Display, Formatter};
 use std::fs;
 use std::fs::OpenOptions;
-use std::io::Write;
+use std::io::{Read, Write};
 use std::path::PathBuf;
 
 #[cfg(windows)]
@@ -77,7 +78,38 @@ impl Display for Tracer {
                     f.write_str(&e.to_string(cfg.time_format.clone()))?;
                 }
             }
-            Tracer::InFile { .. } => (),
+            Tracer::InFile { file, .. } => {
+                let file_size = fs::metadata(file)
+                    .map_err(|e| std::fmt::Error::custom(e.to_string()))?
+                    .len();
+                // if file size is bigger then 1 mb then read and print only 100 last lines
+                if file_size > 1_000_000 {
+                    let mut file =
+                        fs::File::open(file).map_err(|e| std::fmt::Error::custom(e.to_string()))?;
+                    let mut buffer = Vec::new();
+                    file.read_to_end(&mut buffer)
+                        .map_err(|e| std::fmt::Error::custom(e.to_string()))?;
+                    let mut lines = buffer
+                        .split(|&x| x == b'\n')
+                        .rev()
+                        .map(|x| String::from_utf8_lossy(x).to_string())
+                        .take(100)
+                        .collect::<Vec<_>>();
+                    lines.reverse();
+                    f.write_str("...")?;
+                    for line in lines {
+                        f.write_str(&line)?;
+                    }
+                } else {
+                    let mut file =
+                        fs::File::open(file).map_err(|e| std::fmt::Error::custom(e.to_string()))?;
+                    let mut buffer = String::new();
+                    file.read_to_string(&mut buffer)
+                        .map_err(|e| std::fmt::Error::custom(e.to_string()))?;
+                    f.write_str(&buffer)
+                        .map_err(|e| std::fmt::Error::custom(e.to_string()))?;
+                }
+            }
             Tracer::Noop => {
                 let _ = f.write_str(
                     " the noop implementation. does not have any records. \

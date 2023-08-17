@@ -39,7 +39,7 @@ pub struct Forester {
     pub keeper: ActionKeeper,
     pub env: RtEnv,
     pub trimmer: Arc<Mutex<TrimmingQueue>>,
-    stopper: Option<ServInfo>,
+    serv: Option<ServInfo>,
 }
 
 impl Forester {
@@ -49,17 +49,17 @@ impl Forester {
         tracer: Arc<Mutex<Tracer>>,
         keeper: ActionKeeper,
         env: RtEnv,
-        stopper: Option<ServInfo>,
+        serv: Option<ServInfo>,
     ) -> RtResult<Self> {
-        let mod_queue = Arc::new(Mutex::new(TrimmingQueue::default()));
+        let trimmer = Arc::new(Mutex::new(TrimmingQueue::default()));
         Ok(Self {
             tree,
             bb,
             keeper,
             tracer,
             env,
-            trimmer: mod_queue,
-            stopper,
+            trimmer,
+            serv,
         })
     }
 
@@ -307,7 +307,17 @@ impl Forester {
                 }
             }
         }
-
+        // try to stop the remote server
+        if let Some(serv) = self.serv.take() {
+            match serv.stop() {
+                Ok(_) => {
+                    debug!(target:"forester","Tree is finished. The server for remote actions is stopped")
+                }
+                Err(_) => {
+                    debug!(target:"forester", "Tree is finished. The server for remote actions is stopped with error")
+                }
+            }
+        }
         ctx.root_state(self.tree.root)
     }
 }

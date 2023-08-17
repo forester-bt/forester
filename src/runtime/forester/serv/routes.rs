@@ -76,3 +76,12 @@ pub(crate) async fn trace(State(s): State<HttpServ>, Json(event): Json<CustomEve
             .map(|_| StatusCode::OK),
     )
 }
+pub(crate) async fn print_trace(State(s): State<HttpServ>) -> Response {
+    err_handler(
+        s.tracer
+            .lock()
+            .map_err(|e| Into::<RuntimeError>::into(e))
+            .map(|mut t| t.to_string())
+            .map(|s| (StatusCode::OK, s)),
+    )
+}

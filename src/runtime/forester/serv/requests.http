@@ -1,13 +1,19 @@
-POST http://localhost:10000/tracer/custom
+
+### add a tracer ev
+POST http://{{host}}:10000/tracer/custom
 Content-Type: application/json
 
 {
   "tick": 999,
   "text": "content"
 }
+### print a tracer
+GET http://{{host}}:10000/tracer/print
+Content-Type: application/json
 
-### Send POST request with json body
-POST http://localhost:10000/bb/abc
+
+### Put to bb
+POST http://{{host}}:10000/bb/{{bb_key1}}
 Content-Type: application/json
 
 {
@@ -15,4 +21,26 @@ Content-Type: application/json
    "bcd" : {"a": 1, "b": [2]}
 }
 
+### get from bb
+GET http://{{host}}:10000/bb/{{bb_key1}}
+Accept: application/json
 
+### take from bb
+GET http://{{host}}:10000/bb/{{bb_key1}}/take
+Accept: application/json
+
+### Lock in bb
+GET http://{{host}}:10000/bb/{{bb_key1}}/lock
+Accept: application/json
+
+### Unlock in bb
+GET http://{{host}}:10000/bb/{{bb_key1}}/unlock
+Accept: application/json
+
+### Check if it is locked
+GET http://{{host}}:10000/bb/{{bb_key1}}/locked
+Accept: application/json
+
+### Check if it contains in bb
+GET http://{{host}}:10000/bb/{{bb_key1}}/contains
+Accept: application/json

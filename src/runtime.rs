@@ -9,6 +9,7 @@ pub mod rtree;
 pub mod trimmer;
 
 use crate::tree::TreeError;
+use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display, Formatter};
 use std::sync::{MutexGuard, PoisonError};
 
@@ -17,7 +18,7 @@ pub type RtResult<T> = Result<T, RuntimeError>;
 pub type RtOk = Result<(), RuntimeError>;
 
 /// The result that the node returns
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum TickResult {
     Success,
     Failure(String),
@@ -142,6 +143,11 @@ impl From<serde_json::Error> for RuntimeError {
 impl From<std::io::Error> for RuntimeError {
     fn from(value: std::io::Error) -> Self {
         RuntimeError::IOError(format!("{value}"))
+    }
+}
+impl From<reqwest::Error> for RuntimeError {
+    fn from(value: reqwest::Error) -> Self {
+        RuntimeError::fail(format!("{value}"))
     }
 }
 impl<T> From<PoisonError<MutexGuard<'_, T>>> for RuntimeError {

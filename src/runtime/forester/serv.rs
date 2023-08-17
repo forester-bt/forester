@@ -20,21 +20,50 @@ use tokio::runtime::Runtime;
 use tokio::sync::oneshot::Sender;
 use tokio::task::JoinHandle;
 
+/// The struct defines the http server that can be used to interface the remote actions.
+/// By default, the server is deployed to the localhost.
+/// The port is selected dynamically if it is not specified.
+///
+/// #Notes
+/// The main purpose of the server is to provide the api for blackboard and tracer.
+/// The server is started automatically if there is at least one remote action registered.
 #[derive(Clone)]
 pub struct HttpServ {
     bb: Arc<Mutex<BlackBoard>>,
     tracer: Arc<Mutex<Tracer>>,
 }
 
-pub struct ServInfo(JoinHandle<RtOk>, StopCmd);
+/// The struct defines the information of the server.
+/// It is used to stop the server and get the status of the server.
+pub struct ServInfo {
+    pub status: JoinHandle<RtOk>,
+    pub stop_cmd: StopCmd,
+}
+
+impl ServInfo {
+    pub fn stop(mut self) -> Result<(), ()> {
+        self.stop_cmd.send(())
+    }
+}
 
 pub type StopCmd = Sender<()>;
 
 impl HttpServ {
-    pub fn new(bb: Arc<Mutex<BlackBoard>>, tracer: Arc<Mutex<Tracer>>) -> Self {
+    fn new(bb: Arc<Mutex<BlackBoard>>, tracer: Arc<Mutex<Tracer>>) -> Self {
         Self { bb, tracer }
     }
 }
+
+/// starts the server for access from remote actions
+///
+/// # Parameters
+/// - `rt` - the runtime for the server. Typically can be obtained from Forester instance
+/// - `port` - the port for the server. If it is not specified, the port is selected dynamically.
+/// - `bb` - the blackboard that is used to store the data
+/// - `tracer` - the tracer that is used to store the trace events
+///
+/// # Returns
+/// the information of the server
 pub fn start(
     rt: &Runtime,
     port: ServerPort,
@@ -67,7 +96,10 @@ pub fn start(
         }
     });
 
-    Ok(ServInfo(handle, tx))
+    Ok(ServInfo {
+        status: handle,
+        stop_cmd: tx,
+    })
 }
 fn bind(port: ServerPort) -> Result<Builder<AddrIncoming>, RuntimeError> {
     match port {
@@ -87,6 +119,7 @@ fn routing(delegate: HttpServ) -> Router {
     Router::new()
         .route("/", get(|| async { "OK" }))
         .route("/tracer/custom", post(trace))
+        .route("/tracer/print", get(print_trace))
         .route("/bb/:key/lock", get(bb_lock))
         .route("/bb/:key/unlock", get(bb_unlock))
         .route("/bb/:key/locked", get(bb_is_locked))

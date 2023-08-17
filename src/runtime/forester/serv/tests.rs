@@ -5,8 +5,6 @@ use crate::runtime::env::RtEnv;
 use crate::runtime::forester::serv::{start, HttpServ};
 use crate::tests::turn_on_logs;
 use crate::tracer::Tracer;
-use axum::Json;
-use serde::Serialize;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
@@ -19,7 +17,7 @@ fn smoke_stop() {
     let rt = RtEnv::try_new().unwrap().runtime;
 
     let info = start(&rt, ServerPort::Static(10000), bb.clone(), tr.clone()).unwrap();
-    let stop = info.1;
+    let stop = info.stop_cmd;
 
     rt.spawn(async {
         tokio::time::sleep(Duration::from_secs(2)).await;
@@ -27,29 +25,6 @@ fn smoke_stop() {
     });
 
     rt.block_on(async {
-        info.0.await.unwrap().unwrap();
+        info.status.await.unwrap().unwrap();
     })
-}
-#[test]
-fn smoke() {
-    turn_on_logs();
-    let value = RtValue::String("aaa".to_string());
-    let json = Json(value);
-    println!("{:?}", json);
-    // let bb = Arc::new(Mutex::new(BlackBoard::default()));
-    // let tr = Arc::new(Mutex::new(Tracer::default()));
-    //
-    // let rt = RtEnv::try_new().unwrap().runtime;
-    //
-    // let info = start(&rt, ServerPort::Static(10000), bb.clone(), tr.clone()).unwrap();
-    // let stop = info.1;
-    //
-    // rt.spawn(async {
-    //     tokio::time::sleep(Duration::from_secs(2)).await;
-    //     stop.send(()).unwrap();
-    // });
-    //
-    // rt.block_on(async {
-    //     info.0.await.unwrap().unwrap();
-    // })
 }
