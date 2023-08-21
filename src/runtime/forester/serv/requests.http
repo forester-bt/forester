@@ -44,3 +44,23 @@ Accept: application/json
 ### Check if it contains in bb
 GET http://{{host}}:10000/bb/{{bb_key1}}/contains
 Accept: application/json
+
+### Proxy
+POST http://{{host}}:9999/remote
+Content-Type: application/json
+
+{
+  "tick": 1,
+  "args": [],
+  "url": "http://localhost:10000/action"
+}
+
+### Proxy
+POST http://{{host}}:10000/action
+Content-Type: application/json
+
+{
+  "tick": 1,
+  "args": [],
+  "url": "http://localhost:10000/action"
+}

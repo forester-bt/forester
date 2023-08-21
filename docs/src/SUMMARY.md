@@ -32,3 +32,4 @@
 - [Examples](./f_examples.md)
 - [Tools](./tools.md)
   - [Intellij plugin](./intellij.md)
+  - [Remote action](./rem_action.md)

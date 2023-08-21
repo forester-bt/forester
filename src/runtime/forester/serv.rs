@@ -1,5 +1,4 @@
 mod routes;
-mod tests;
 
 use crate::runtime::blackboard::BlackBoard;
 use crate::runtime::builder::ServerPort;
@@ -11,11 +10,13 @@ use crate::runtime::forester::serv::routes::*;
 use crate::runtime::{RtOk, RtResult, RuntimeError};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
+use hyper::client::HttpConnector;
 use hyper::server::conn::AddrIncoming;
 use hyper::server::Builder;
+use hyper::{Body, Client};
 use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
-use std::sync::{Arc, LockResult, Mutex};
+use std::sync::{Arc, Mutex};
 use tokio::runtime::Runtime;
 use tokio::sync::oneshot::Sender;
 use tokio::task::JoinHandle;
@@ -27,16 +28,19 @@ use tokio::task::JoinHandle;
 /// #Notes
 /// The main purpose of the server is to provide the api for blackboard and tracer.
 /// The server is started automatically if there is at least one remote action registered.
+/// When forester is finished it is automatically stops the server as well.
 #[derive(Clone)]
 pub struct HttpServ {
     bb: Arc<Mutex<BlackBoard>>,
     tracer: Arc<Mutex<Tracer>>,
+    client: Client<HttpConnector, Body>,
 }
 
 /// The struct defines the information of the server.
 /// It is used to stop the server and get the status of the server.
 pub struct ServInfo {
     pub status: JoinHandle<RtOk>,
+    pub serv_port: u16,
     pub stop_cmd: StopCmd,
 }
 
@@ -49,8 +53,12 @@ impl ServInfo {
 pub type StopCmd = Sender<()>;
 
 impl HttpServ {
-    fn new(bb: Arc<Mutex<BlackBoard>>, tracer: Arc<Mutex<Tracer>>) -> Self {
-        Self { bb, tracer }
+    fn new(
+        bb: Arc<Mutex<BlackBoard>>,
+        tracer: Arc<Mutex<Tracer>>,
+        client: Client<HttpConnector, Body>,
+    ) -> Self {
+        Self { bb, tracer, client }
     }
 }
 
@@ -71,33 +79,40 @@ pub fn start(
     tracer: Arc<Mutex<Tracer>>,
 ) -> RtResult<ServInfo> {
     let (tx, rx) = tokio::sync::oneshot::channel::<()>();
-
+    let loc_port = if let ServerPort::Static(p) = port.clone() {
+        p
+    } else {
+        0
+    };
     let handle: JoinHandle<RtOk> = rt.spawn(async {
         match bind(port) {
             Ok(builder) => {
-                let service = routing(HttpServ::new(bb, tracer)).into_make_service();
+                let client:Client<HttpConnector,Body> = hyper::Client::builder().build(HttpConnector::new());
+                let service = routing(HttpServ::new(bb, tracer, client))
+                    .into_make_service();
                 let server = builder.serve(service);
 
-                debug!(target:"http_server", " the server is deployed to {} ",server.local_addr().port());
+                debug!(target:"http_server", " the server is deployed to {} ", &server.local_addr().port());
                 let serv_with_shutdown = server.with_graceful_shutdown(async {
                     rx.await.ok();
                 });
                 if let Err(e) = serv_with_shutdown.await {
                     debug!(target:"http_server", "server error: {}", e);
-                    Err(RuntimeError::MultiThreadError(format!("{}", e.to_string())))
+                    Err(RuntimeError::IOError(format!("{}", e.to_string())))
                 } else {
                     Ok(())
                 }
             }
             Err(e) => {
                 debug!(target:"http_server", "server error: {:?}", e);
-                Err(RuntimeError::MultiThreadError(format!("{:?}", e)))
+                Err(RuntimeError::IOError(format!("{:?}", e)))
             }
         }
     });
 
     Ok(ServInfo {
         status: handle,
+        serv_port: loc_port,
         stop_cmd: tx,
     })
 }
@@ -106,8 +121,6 @@ fn bind(port: ServerPort) -> Result<Builder<AddrIncoming>, RuntimeError> {
         ServerPort::None => Err(RuntimeError::Unexpected(
             "the port for http server is not selected.".to_string(),
         )),
-        ServerPort::Dynamic => axum::Server::try_bind(&SocketAddr::from(([127, 0, 0, 1], 0)))
-            .map_err(|e| RuntimeError::IOError(e.to_string())),
         ServerPort::Static(port) => {
             axum::Server::try_bind(&SocketAddr::from(([127, 0, 0, 1], port)))
                 .map_err(|e| RuntimeError::IOError(e.to_string()))

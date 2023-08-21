@@ -4,9 +4,9 @@ pub mod file_builder;
 pub mod text_builder;
 
 use crate::get_pb;
-use crate::runtime::action::builtin::remote::{Remote, RemoteHttpAction};
+use crate::runtime::action::builtin::remote::RemoteHttpAction;
 use crate::runtime::action::keeper::{ActionImpl, ActionKeeper};
-use crate::runtime::action::{Action, ActionName, Impl, ImplAsync};
+use crate::runtime::action::{Action, ActionName, Impl, ImplAsync, ImplRemote};
 use crate::runtime::blackboard::BlackBoard;
 use crate::runtime::builder::builtin::BuilderBuiltInActions;
 use crate::runtime::builder::custom_builder::CustomForesterBuilder;
@@ -168,7 +168,7 @@ impl ForesterBuilder {
             }
         }
     }
-
+    /// add runtime node.
     pub fn add_rt_node(&mut self, node_b: RtNodeBuilder) -> RNodeId {
         match self {
             ForesterBuilder::Code { delegate, .. } => delegate.add_rt_node(node_b),
@@ -197,17 +197,13 @@ impl ForesterBuilder {
     /// Add an action according to the name but with a promise the action remote.
     pub fn register_remote_action<A>(&mut self, name: &str, action: A)
     where
-        A: Impl + Remote + 'static,
+        A: ImplRemote + 'static,
     {
         self.cfb().register_remote_action(name, action);
     }
     /// setup the port for the server
-    pub fn port(&mut self, port: u16) {
-        self.cfb().port(port)
-    }
-    /// setup the http server and the port dynamically(the first open from 10000)
-    pub fn port_dyn(&mut self) {
-        self.cfb().port_dyn()
+    pub fn http_serv(&mut self, port: u16) {
+        self.cfb().http_serv(port)
     }
 
     /// Tracer that will be used to save the tracing information.
@@ -316,15 +312,16 @@ impl ForesterBuilder {
 
         let bb = Arc::new(Mutex::new(bb));
         let tracer = Arc::new(Mutex::new(tr));
-        let keeper = ActionKeeper::new_with(actions, action_names, default_action)?;
 
-        let stopper = if port.is_some() {
+        let serv = if port.is_some() {
             Some(serv::start(&env.runtime, port, bb.clone(), tracer.clone())?)
         } else {
             None
         };
 
-        Forester::new(tree, bb, tracer, keeper, env, stopper)
+        let keeper = ActionKeeper::new_with(actions, action_names, default_action)?;
+
+        Forester::new(tree, bb, tracer, keeper, env, serv)
     }
 
     fn cfb(&mut self) -> &mut CommonForesterBuilder {
@@ -383,21 +380,14 @@ impl CommonForesterBuilder {
     /// Add an action according to the name but with a promise the action remote.
     pub fn register_remote_action<A>(&mut self, name: &str, action: A)
     where
-        A: Impl + Remote + 'static,
+        A: ImplRemote + 'static,
     {
-        if let ServerPort::None = self.port {
-            self.port = ServerPort::Dynamic
-        }
         self.actions
-            .insert(name.to_string(), Action::Sync(Box::new(action)));
+            .insert(name.to_string(), Action::Remote(Box::new(action)));
     }
     /// setup the port for the server
-    pub fn port(&mut self, port: u16) {
+    pub fn http_serv(&mut self, port: u16) {
         self.port = ServerPort::Static(port)
-    }
-    /// setup the http server and the port dynamically(the first open from 10000)
-    pub fn port_dyn(&mut self) {
-        self.port = ServerPort::Dynamic
     }
 
     /// Tracer that will be used to save the tracing information.
@@ -419,7 +409,6 @@ impl CommonForesterBuilder {
 #[derive(Debug, Clone)]
 pub enum ServerPort {
     None,
-    Dynamic,
     Static(u16),
 }
 
@@ -434,6 +423,12 @@ impl ServerPort {
         match self {
             ServerPort::None => false,
             _ => true,
+        }
+    }
+    fn get(&self) -> u16 {
+        match self {
+            ServerPort::None => 0,
+            ServerPort::Static(v) => *v,
         }
     }
 }

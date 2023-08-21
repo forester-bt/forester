@@ -3,7 +3,6 @@ use crate::runtime::RtResult;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-use crate::runtime::builder::ServerPort;
 use std::path::PathBuf;
 
 /// Just a profile to build the simulator

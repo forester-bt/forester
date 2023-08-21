@@ -5,9 +5,10 @@ Actions are the leaves of the tree. They require some implementation to be execu
 
 ## Action types
 
-There are 2 types of actions available at that moment:
+There are three types of actions available at that moment:
 - Sync actions: the actions that block the flow until the action get done.
 - Async action: initiate the calculation at the different thread and return `running` immediately.
+- Remote action: send the blocking request (http) to the remote host.
 
 - For heavy actions, preferably to use `async actions`.
 
@@ -53,6 +54,55 @@ It does not block the execution of the tree and can be used in parallel nodes, e
 
 On the other hand, every time when the tree is reloaded, the tick number is increased that can exceed the limit on ticks 
 if the system has it. Therefore, it needs to take into account (when forester runs with the limit of ticks.)
+
+
+## Remote actions
+
+The remote actions are the actions that send the request to the remote host and wait for the response.
+For now, it is only http requests with json body and json response.
+
+The remote actions can have access to the blackboard and the tracer if the http-server is running (see [http-server](./engine.md#http-server)).
+
+The remote actions should implement `ImplRemote` trait:
+
+```rust
+
+pub trait ImplRemote: Sync + Send {
+    fn tick(&self, args: RtArgs, ctx: TreeRemoteContextRef) -> Tick;
+}
+```
+
+Where `args` are the given arguments from the tree definition and invocation and `ctx` has the information about the http_server:
+```rust
+pub struct TreeRemoteContextRef<'a> {
+    pub curr_ts: Timestamp, // current timestamp
+    pub port: u16,          // port of the http server, to access the blackboard and tracer
+    pub env: &'a mut RtEnv, // runtime env to execute the http request
+}
+```
+
+The default implementation of the `tick` method is available in `forester_rs::runtime::action::builtin::remote::RemoteHttpAction`:
+
+```rust
+pub struct RemoteHttpAction {
+    url: String,
+    serv_ip: Option<String>,
+}
+```
+it accepts the url and the ip of the http server (if it is not localhost, which is a default parameter).
+
+The message is the following:
+```rust
+pub struct RemoteActionRequest {
+    pub tick: usize,            // current tick
+    pub args: Vec<RtArgument>,  // arguments from the tree
+    pub serv_url: String,       // url of the http server to get access to the blackboard and tracer
+}
+```
+
+The response is the following a `TickResult`.
+
+How to implement the client side, please see [remote action lib](./rem_action.md).
 
 
 ## Default actions

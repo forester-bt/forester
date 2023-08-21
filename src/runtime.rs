@@ -111,7 +111,12 @@ impl Debug for RuntimeError {
         Ok(())
     }
 }
-
+pub fn to_fail<V, E: Debug>(r: Result<V, E>) -> RtResult<V> {
+    match r {
+        Ok(v) => Ok(v),
+        Err(e) => Err(RuntimeError::fail(format!("{:?}", e))),
+    }
+}
 impl RuntimeError {
     pub fn fail(reason: String) -> Self {
         Self::RecoveryToFailure(reason)

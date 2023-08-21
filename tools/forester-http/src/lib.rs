@@ -1,9 +1,14 @@
-use reqwest::blocking::Response;
+pub mod api;
+pub mod client;
+
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::time::Duration;
 
 /// The result that the node returns
+/// It can be Success, Failure or Running
+/// The Failure contains the error message
+/// The Running means that the node is still running
+/// and it will be executed on the next tick
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum TickResult {
     Success,
@@ -11,118 +16,55 @@ pub enum TickResult {
     Running,
 }
 
-#[derive(Debug)]
-pub struct TickError {
-    pub message: String,
+/// The request that is sent from the Forester instance
+/// It has the current tick and the arguments in the action from tree
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RemoteActionRequest {
+    pub tick: usize,
+    pub args: Vec<RtArgument>,
+    pub serv_url: String,
 }
 
-impl From<reqwest::Error> for TickError {
-    fn from(value: reqwest::Error) -> Self {
-        Self::new(format!("{:?}", value))
-    }
+/// The argument that is sent from the Forester instance
+#[derive(Debug, PartialEq, Clone, Deserialize, Serialize)]
+pub struct RtArgument {
+    name: String,
+    value: Value,
 }
 
-impl TickError {
-    pub fn new(message: String) -> Self {
-        Self { message }
-    }
-}
-
-/// The event that will be recorded to tracer
-#[derive(Debug, Deserialize, Serialize)]
-pub struct CustomEvent {
-    text: String,
-    tick: usize,
-}
-
-pub struct ForesterHttpClient {
-    api: ForesterHttpApi,
-    timeout: Option<Duration>,
-}
-
-impl ForesterHttpClient {
-    pub fn new(base: String) -> Self {
-        let api = ForesterHttpApi::new(base);
-        Self { api, timeout: None }
-    }
-    pub fn new_with(base: String, timeout: Duration) -> Self {
-        let api = ForesterHttpApi::new(base);
-        Self {
-            api,
-            timeout: Some(timeout),
-        }
-    }
-
-    pub fn post_event(&self, tick: usize, text: String) -> Result<Response, TickError> {
-        Ok(self
-            .client()?
-            .post(&self.api.trace_event())
-            .json(&CustomEvent { text, tick })
-            .send()?)
-    }
-    pub fn print_trace(&self) -> Result<Response, TickError> {
-        Ok(self.client()?.get(&self.api.print_trace()).send()?)
-    }
-
-    fn client(&self) -> Result<reqwest::blocking::Client, TickError> {
-        match self.timeout {
-            Some(timeout) => Ok(reqwest::blocking::Client::builder()
-                .timeout(timeout)
-                .build()?),
-            None => Ok(reqwest::blocking::Client::new()),
-        }
-    }
-}
-
-pub struct ForesterHttpApi {
-    pub base: String,
-}
-
-impl ForesterHttpApi {
-    pub fn trace_event(&self) -> String {
-        format!("{}/tracer/custom", self.base)
-    }
-    pub fn print_trace(&self) -> String {
-        format!("{}/tracer/print", self.base)
-    }
-    pub fn lock(&self, key: String) -> String {
-        format!("{}/bb/{key}/lock", self.base)
-    }
-    pub fn unlock(&self, key: String) -> String {
-        format!("{}/bb/{key}/unlock", self.base)
-    }
-    pub fn locked(&self, key: String) -> String {
-        format!("{}/bb/{key}/locked", self.base)
-    }
-    pub fn contains(&self, key: String) -> String {
-        format!("{}/bb/{key}/contains", self.base)
-    }
-    pub fn take(&self, key: String) -> String {
-        format!("{}/bb/{key}/take", self.base)
-    }
-    pub fn get(&self, key: String) -> String {
-        format!("{}/bb/{key}", self.base)
-    }
-    pub fn put(&self, key: String) -> String {
-        format!("{}/bb/{key}", self.base)
-    }
-    pub fn new(base: String) -> Self {
-        Self { base }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use std::time::Duration;
-    #[test]
-    fn trace_event_then_print_event() {
-        let client = ForesterHttpClient::new("http://localhost:10000".to_string());
-        let resp = client.post_event(1, "test".to_string()).unwrap();
-        assert_eq!(resp.status(), 200);
-        let resp = client.print_trace().unwrap();
-        assert_eq!(resp.status(), 200);
-        let text = resp.text().unwrap();
-        assert_eq!("[1]custom: test\r\n", text)
-    }
+/// Describes the contract for the remote action that is expected by the Forester instance
+/// The remote action is a remote implementation of the action node in the tree.
+///
+/// Therefore the implementation of the remote action should be integrated to the http api
+/// that is provided on the other side.
+///
+/// # Example
+/// Having the following b-tree:
+/// ```f-tree
+///
+/// root main sequence {
+///     remote_action(1,2,3)
+/// }
+///
+/// impl remote_action(a:num, b:num, c:num);
+///
+/// ```
+///
+/// Register the action in the Forester instance:
+/// ```pseudocode
+///
+/// fn build_forester(mut fb: ForesterBuilder){
+///      ...
+///      let action = RemoteHttpAction::new("http://localhost:10000/remote_action/".to_string());
+///      fb.register_remote_action("remote_action", action);
+///      ...
+/// }
+///
+/// ```
+/// Thus, now we need to implement
+/// the remote action in the http api: `http://localhost:10000/remote_action/`
+/// that will be called by the Forester instance.
+///
+pub trait ForesterRemoteAction {
+    fn tick(&self, request: RemoteActionRequest) -> TickResult;
 }

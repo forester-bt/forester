@@ -2,7 +2,7 @@ pub mod builtin;
 pub mod keeper;
 
 use crate::runtime::args::RtArgs;
-use crate::runtime::context::TreeContextRef;
+use crate::runtime::context::{TreeContextRef, TreeRemoteContextRef};
 use crate::runtime::{RtResult, RuntimeError, TickResult};
 use std::sync::Arc;
 
@@ -20,10 +20,12 @@ pub fn recover(tick: Tick) -> Tick {
 
 /// The Action wrapper that provides two implementations:
 /// - sync that is used by default
-/// - astnc to handle the future (uses tokio under the hood)
+/// - async to handle the future (uses tokio under the hood)
+/// - remote to handle the remote actions
 pub enum Action {
     Sync(Box<dyn Impl>),
     Async(Arc<dyn ImplAsync>),
+    Remote(Box<dyn ImplRemote>),
 }
 
 impl Action {
@@ -39,6 +41,13 @@ impl Action {
         T: ImplAsync + 'static,
     {
         Action::Async(Arc::new(a))
+    }
+
+    pub fn remote<T>(a: T) -> Self
+    where
+        T: ImplRemote + 'static,
+    {
+        Action::Remote(Box::new(a))
     }
 }
 
@@ -116,6 +125,20 @@ pub trait Impl: Sync + Send {
 
 pub trait ImplAsync: Sync + Send {
     fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick;
+}
+
+/// The trait to implement remote action.
+/// The remote action is the action that is executed on the remote machine.
+/// # Params
+/// - args: the list of arguments that will be accepted from the given operation from the forester
+/// - ctx: the context to send the request to the remote machine
+///
+/// ## Returns tick = RtResult(TickResult)
+///
+/// As an example, please see the `RemoteHttpAction`
+///
+pub trait ImplRemote: Sync + Send {
+    fn tick(&self, args: RtArgs, ctx: TreeRemoteContextRef) -> Tick;
 }
 
 impl From<Box<dyn Impl>> for Action {

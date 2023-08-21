@@ -1,3 +1,4 @@
+use crate::runtime::action::builtin::remote::RemoteHttpAction;
 use crate::runtime::args::RtValue;
 use crate::runtime::TickResult;
 use crate::tests::fb;
@@ -43,4 +44,14 @@ fn http_get() {
     assert_eq!(result, Ok(TickResult::success()));
     assert!(out1.contains("https://google.com"));
     assert!(out2.contains("https://google.com"));
+}
+#[test]
+fn remote() {
+    let mut fb = fb("actions/simple_http");
+    fb.register_remote_action(
+        "a",
+        RemoteHttpAction::new("http://localhost:8080".to_string()),
+    );
+
+    let mut f = fb.build().unwrap();
 }

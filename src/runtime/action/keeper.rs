@@ -1,11 +1,13 @@
 use crate::runtime::action::Tick;
 use crate::runtime::action::{Action, ActionName};
 use crate::runtime::args::RtArgs;
-use crate::runtime::context::TreeContextRef;
+use crate::runtime::context::{TreeContextRef, TreeRemoteContextRef};
 use crate::runtime::env::RtEnv;
 use crate::runtime::env::TaskState;
+use crate::runtime::forester::serv::ServInfo;
 use crate::runtime::{RtResult, RuntimeError, TickResult};
 use std::collections::{HashMap, HashSet};
+
 /// Just a simple action map to register and execute the actions.
 pub struct ActionKeeper {
     actions: HashMap<ActionName, ActionImpl>,
@@ -82,9 +84,14 @@ impl ActionKeeper {
         name: &ActionName,
         args: RtArgs,
         ctx: TreeContextRef,
+        http_serv: &Option<ServInfo>,
     ) -> Tick {
         match self.get_mut(name)? {
             Action::Sync(action) => action.tick(args, ctx),
+            Action::Remote(action) => action.tick(
+                args,
+                TreeRemoteContextRef::new(ctx.current_tick(), get_port(http_serv)?, env),
+            ),
             Action::Async(ref mut action) => match env.task_state(name)? {
                 TaskState::Absent => {
                     let action = action.clone();
@@ -103,4 +110,13 @@ impl ActionKeeper {
             },
         }
     }
+}
+fn get_port(http_serv: &Option<ServInfo>) -> Result<u16, RuntimeError> {
+    http_serv
+        .as_ref()
+        .map(|v| v.serv_port)
+        .filter(|p| *p > 0)
+        .ok_or(RuntimeError::RecoveryToFailure(
+            format!("the http server port is not found or incorrect").to_string(),
+        ))
 }

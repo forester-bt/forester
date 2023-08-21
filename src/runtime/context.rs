@@ -1,6 +1,7 @@
 use crate::runtime::action::Tick;
 use crate::runtime::args::{RtArgs, RtValue};
 use crate::runtime::blackboard::BlackBoard;
+use crate::runtime::env::RtEnv;
 use crate::runtime::forester::flow::REASON;
 use crate::runtime::rtree::rnode::RNodeId;
 use crate::runtime::trimmer::TrimmingQueue;
@@ -13,6 +14,18 @@ use std::sync::Arc;
 use std::sync::Mutex;
 
 pub type Timestamp = usize;
+
+pub struct TreeRemoteContextRef<'a> {
+    pub curr_ts: Timestamp,
+    pub port: u16,
+    pub env: &'a mut RtEnv,
+}
+
+impl<'a> TreeRemoteContextRef<'a> {
+    pub fn new(curr_ts: Timestamp, port: u16, env: &'a mut RtEnv) -> Self {
+        Self { curr_ts, port, env }
+    }
+}
 
 #[derive(Clone)]
 pub struct TreeContextRef {

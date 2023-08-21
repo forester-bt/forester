@@ -1,3 +1,4 @@
+use crate::runtime::action::builtin::remote::RemoteActionRequest;
 use crate::runtime::args::RtValue;
 use crate::runtime::forester::serv::{err_handler, CustomEvent, HttpServ};
 use crate::runtime::RuntimeError;
@@ -19,7 +20,7 @@ pub(crate) async fn bb_get(Path(key): Path<String>, State(s): State<HttpServ>) -
     err_handler(
         s.bb.lock()
             .map_err(|e| Into::<RuntimeError>::into(e))
-            .and_then(|mut bb| bb.get(key).map(|v| v.cloned()))
+            .and_then(|bb| bb.get(key).map(|v| v.cloned()))
             .map(|r| (StatusCode::OK, Json::from(r))),
     )
 }
@@ -51,7 +52,7 @@ pub(crate) async fn bb_contains(Path(key): Path<String>, State(s): State<HttpSer
     err_handler(
         s.bb.lock()
             .map_err(|e| Into::<RuntimeError>::into(e))
-            .and_then(|mut bb| bb.contains(key))
+            .and_then(|bb| bb.contains(key))
             .map(|b| (StatusCode::OK, Json::from(b))),
     )
 }
@@ -67,6 +68,7 @@ pub(crate) async fn bb_put(
             .map(|_| StatusCode::OK),
     )
 }
+
 pub(crate) async fn trace(State(s): State<HttpServ>, Json(event): Json<CustomEvent>) -> Response {
     err_handler(
         s.tracer
@@ -81,7 +83,7 @@ pub(crate) async fn print_trace(State(s): State<HttpServ>) -> Response {
         s.tracer
             .lock()
             .map_err(|e| Into::<RuntimeError>::into(e))
-            .map(|mut t| t.to_string())
+            .map(|t| t.to_string())
             .map(|s| (StatusCode::OK, s)),
     )
 }

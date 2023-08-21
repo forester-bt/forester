@@ -298,6 +298,7 @@ impl Forester {
                             f_name.name()?,
                             args.clone(),
                             ctx_ref,
+                            &self.serv,
                         ))?;
                         let new_state = RNodeState::from(args.clone(), res);
                         debug!(target:"leaf", "tick:{}, the new state: {:?}",ctx.curr_ts(),&new_state);
@@ -307,18 +308,22 @@ impl Forester {
                 }
             }
         }
-        // try to stop the remote server
+        self.stop_http();
+        ctx.root_state(self.tree.root)
+    }
+
+    /// stops the http server
+    pub fn stop_http(&mut self) {
         if let Some(serv) = self.serv.take() {
             match serv.stop() {
                 Ok(_) => {
-                    debug!(target:"forester","Tree is finished. The server for remote actions is stopped")
+                    debug!(target:"forester","Tree is finished. The server for remote actions is stopped");
                 }
                 Err(_) => {
-                    debug!(target:"forester", "Tree is finished. The server for remote actions is stopped with error")
+                    debug!(target:"forester", "Tree is finished. The server for remote actions is stopped with an error");
                 }
             }
         }
-        ctx.root_state(self.tree.root)
     }
 }
 
