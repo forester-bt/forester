@@ -1,3 +1,17 @@
+//! # Forester HTTP
+//! The library provides a contract to implement a remote action alongside with the  
+//! API to the Forester instance of http server.
+//! It is used to get access to the blackboard and to trace events.
+//!
+//! The library composes three main parts:
+//! * `ForesterRemoteAction` - the contract for the remote action that is expected by the Forester instance
+//! * `ForesterHttpApi` - the api to Forester instance of http server
+//! * `ForesterHttpClient` - the client to the Forester instance of http server
+//!
+//! Client uses api to get access to the blackboard and to trace events.
+//! Under the hood it uses reqwest(blocking) to send requests to the Forester instance.
+//! If the library is willing to use another client it can use only api.
+//!
 pub mod api;
 pub mod client;
 

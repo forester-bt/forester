@@ -1,8 +1,21 @@
 use crate::api::ForesterHttpApi;
-use reqwest::blocking::Response;
+use reqwest::Response;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::time::Duration;
 
+/// the client to the Forester instance of http server
+/// It accepts the api and timeout to request
+///
+/// ```no-run
+/// use forester_http::client::ForesterHttpClient;
+///
+/// async fn main() {
+///     let client = ForesterHttpClient::new("http://localhost:10000".to_string());
+///     client.new_trace_event(1, "test".to_string());
+/// }
+///
+/// ```
 pub struct ForesterHttpClient {
     api: ForesterHttpApi,
     timeout: Option<Duration>,
@@ -13,7 +26,7 @@ impl ForesterHttpClient {
         let api = ForesterHttpApi::new(base);
         Self { api, timeout: None }
     }
-    pub fn new_with(base: String, timeout: Duration) -> Self {
+    pub async fn new_with(base: String, timeout: Duration) -> Self {
         let api = ForesterHttpApi::new(base);
         Self {
             api,
@@ -21,48 +34,62 @@ impl ForesterHttpClient {
         }
     }
 
-    pub fn new_trace_event(&self, tick: usize, text: String) -> Result<Response, TickError> {
+    /// creates a new trace event
+    pub async fn new_trace_event(&self, tick: usize, text: String) -> Result<Response, TickError> {
         Ok(self
             .client()?
             .post(&self.api.trace_event())
             .json(&CustomEvent { text, tick })
-            .send()?)
+            .send()
+            .await?)
     }
-    pub fn print_trace(&self) -> Result<Response, TickError> {
-        Ok(self.client()?.get(&self.api.print_trace()).send()?)
+    /// prints the trace or if the file is big the tail of the trace (last 100 lines)
+    pub async fn print_trace(&self) -> Result<Response, TickError> {
+        Ok(self.client()?.get(&self.api.print_trace()).send().await?)
     }
-    pub fn lock(&self, id: String) -> Result<Response, TickError> {
-        Ok(self.client()?.get(&self.api.lock(id)).send()?)
+    /// lock the key in the blackboard
+    pub async fn lock(&self, id: String) -> Result<Response, TickError> {
+        Ok(self.client()?.get(&self.api.lock(id)).send().await?)
     }
-    pub fn unlock(&self, id: String) -> Result<Response, TickError> {
-        Ok(self.client()?.get(&self.api.unlock(id)).send()?)
+    /// unlock the key in the blackboard
+    pub async fn unlock(&self, id: String) -> Result<Response, TickError> {
+        Ok(self.client()?.get(&self.api.unlock(id)).send().await?)
     }
-    pub fn locked(&self, id: String) -> Result<Response, TickError> {
-        Ok(self.client()?.get(&self.api.locked(id)).send()?)
+    /// check if the key is locked in the blackboard
+    pub async fn locked(&self, id: String) -> Result<Response, TickError> {
+        Ok(self.client()?.get(&self.api.locked(id)).send().await?)
     }
-    pub fn contains(&self, id: String) -> Result<Response, TickError> {
-        Ok(self.client()?.get(&self.api.contains(id)).send()?)
+    /// check if the key is in the blackboard
+    pub async fn contains(&self, id: String) -> Result<Response, TickError> {
+        Ok(self.client()?.get(&self.api.contains(id)).send().await?)
     }
-    pub fn take(&self, id: String) -> Result<Response, TickError> {
-        Ok(self.client()?.get(&self.api.take(id)).send()?)
+    /// take the key from the blackboard.
+    pub async fn take(&self, id: String) -> Result<Response, TickError> {
+        Ok(self.client()?.get(&self.api.take(id)).send().await?)
     }
-    pub fn get(&self, id: String) -> Result<Response, TickError> {
-        Ok(self.client()?.get(&self.api.get(id)).send()?)
+    /// get the key from the blackboard.
+    pub async fn get(&self, id: String) -> Result<Response, TickError> {
+        Ok(self.client()?.get(&self.api.get(id)).send().await?)
     }
-    pub fn put(&self, id: String) -> Result<Response, TickError> {
-        Ok(self.client()?.post(&self.api.unlock(id)).send()?)
+    /// put the key to the blackboard.
+    pub async fn put(&self, id: String, value: Value) -> Result<Response, TickError> {
+        Ok(self
+            .client()?
+            .post(&self.api.put(id))
+            .json(&value)
+            .send()
+            .await?)
     }
 
-    fn client(&self) -> Result<reqwest::blocking::Client, TickError> {
+    fn client(&self) -> Result<reqwest::Client, TickError> {
         match self.timeout {
-            Some(timeout) => Ok(reqwest::blocking::Client::builder()
-                .timeout(timeout)
-                .build()?),
-            None => Ok(reqwest::blocking::Client::new()),
+            Some(timeout) => Ok(reqwest::Client::builder().timeout(timeout).build()?),
+            None => Ok(reqwest::Client::new()),
         }
     }
 }
 
+/// Error
 #[derive(Debug)]
 pub struct TickError {
     pub message: String,

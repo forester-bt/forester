@@ -29,4 +29,7 @@
 * **`0.2.1`**
   * some improvements.
   * change api for builder for action
+* **`0.2.2`**
+  * Add http server
+  * Add remote action
  

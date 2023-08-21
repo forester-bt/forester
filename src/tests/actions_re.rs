@@ -50,5 +50,22 @@ fn remote_smoke() {
     );
 
     println!("{:?}", result);
-    assert_eq!(1, 0)
+}
+
+#[test]
+fn remote_serv() {
+    turn_on_logs();
+
+    let mut builder = fb("actions/remote");
+
+    builder.tracer(Tracer::default());
+
+    let action = RemoteHttpAction::new("http://localhost:10000/action".to_string());
+    builder.register_remote_action("action", action);
+    builder.http_serv(9999);
+    let mut f = builder.build().unwrap();
+
+    let result = f.run();
+
+    println!("{:?}", result);
 }

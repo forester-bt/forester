@@ -1,0 +1,6 @@
+root main sequence {
+    action(1)
+    action(2)
+}
+
+impl action(a:num);

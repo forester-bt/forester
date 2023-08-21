@@ -1,6 +1,6 @@
 
 ### add a tracer ev
-POST http://{{host}}:10000/tracer/custom
+POST http://{{host}}:9999/tracer/custom
 Content-Type: application/json
 
 {
