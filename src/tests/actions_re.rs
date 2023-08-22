@@ -60,7 +60,7 @@ fn remote_serv() {
 
     builder.tracer(Tracer::default());
 
-    let action = RemoteHttpAction::new("http://localhost:10000/action".to_string());
+    let action = RemoteHttpAction::new("http://localhost:10001/action".to_string());
     builder.register_remote_action("action", action);
     builder.http_serv(9999);
     let mut f = builder.build().unwrap();

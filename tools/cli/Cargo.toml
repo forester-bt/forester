@@ -10,6 +10,6 @@ repository = "https://github.com/besok/forester"
 
 [dependencies]
 clap = { version = "4.3.11", features = ["derive"] }
-forester-rs = "0.2.2
+forester-rs = "0.2.2"
 log = "0.4"
 env_logger = "0.10.0"
