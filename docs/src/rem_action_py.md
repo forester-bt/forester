@@ -4,6 +4,8 @@ The Forester provides an http library that alleviates writing the remote http ac
 
 ## Usage
 
+The latest version can be obtained from the [test.pypi.org](https://test.pypi.org/project/forester-http/)
+
 ```shell
 pip install -i https://test.pypi.org/simple/ forester-http==0.0.5
 ```
@@ -61,8 +63,7 @@ class MyServer(BaseHTTPRequestHandler):
             content_length = int(self.headers["Content-Length"])
             # get body as json and deserialize it to RemoteActionRequest
             body = json.loads(self.rfile.read(content_length))
-            req = RemoteActionRequest(body["tick"], [RtArgument(arg["name"], arg["value"]) for arg in body["args"]],
-                                      body["serv_url"])
+            req = RemoteActionRequest.from_bytes(body.encode("utf-8"))
     
             client = ForesterHttpClient(req.serv_url)
             client.put("test", "test")
