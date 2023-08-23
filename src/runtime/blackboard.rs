@@ -60,7 +60,7 @@ impl BlackBoard {
         })
     }
 
-    /// Unlock the value enablint any actions including reading writing or taking.
+    /// Unlock the value enabling any actions including reading writing or taking.
     ///
     /// #Notes:
     /// If it asent or taken returns ok.
