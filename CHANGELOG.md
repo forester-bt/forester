@@ -32,4 +32,7 @@
 * **`0.2.2`**
   * Add http server
   * Add remote action
+* **`0.2.3`**
+  * Add built in actions for bb
+  * fix bugs
  

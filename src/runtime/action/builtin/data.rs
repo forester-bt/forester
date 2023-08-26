@@ -3,6 +3,33 @@ use crate::runtime::args::{RtArgs, RtValue};
 use crate::runtime::context::TreeContextRef;
 use crate::runtime::{RuntimeError, TickResult};
 
+/// Check if the key is locked
+pub struct Locked;
+
+impl Impl for Locked {
+    fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
+        ctx.bb().lock()?.is_locked(get_name(args, &ctx)?).map(|v| {
+            if v {
+                TickResult::success()
+            } else {
+                TickResult::failure(format!("the key is not locked"))
+            }
+        })
+    }
+}
+fn get_name(args: RtArgs, ctx: &TreeContextRef) -> Result<String, RuntimeError> {
+    args.first()
+        .ok_or(RuntimeError::fail(
+            "the key argument is not found".to_string(),
+        ))
+        .and_then(|v| v.cast(ctx.clone()).str())
+        .and_then(|v| {
+            v.ok_or(RuntimeError::fail(
+                "the key argument is not found".to_string(),
+            ))
+        })
+}
+
 /// Lock or unlock key in bb
 /// Just simple wrapper around the bb api.
 pub enum LockUnlockBBKey {
@@ -11,17 +38,7 @@ pub enum LockUnlockBBKey {
 }
 impl Impl for LockUnlockBBKey {
     fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
-        let key = args
-            .first()
-            .ok_or(RuntimeError::fail(
-                "the key argument is not found".to_string(),
-            ))
-            .and_then(|v| v.cast(ctx.clone()).str())
-            .and_then(|v| {
-                v.ok_or(RuntimeError::fail(
-                    "the key argument is not found".to_string(),
-                ))
-            })?;
+        let key = get_name(args, &ctx)?;
 
         match &self {
             LockUnlockBBKey::Lock => ctx.bb().lock()?.lock(key)?,
@@ -70,6 +87,28 @@ impl Impl for CheckEq {
             Ok(TickResult::success())
         } else {
             Ok(TickResult::failure(format!("{actual} != {expected}")))
+        }
+    }
+}
+/// Compare a value in the cell with the true
+pub struct TestBool;
+impl Impl for TestBool {
+    fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
+        let key = args
+            .find_or_ith("key".to_string(), 0)
+            .and_then(|v| v.as_string())
+            .ok_or(RuntimeError::fail("the key is expected ".to_string()))?;
+
+        let actual = ctx
+            .bb()
+            .lock()?
+            .get(key)
+            .map(|v| v.and_then(|b| b.clone().as_bool()).unwrap_or_default())?;
+
+        if actual {
+            Ok(TickResult::success())
+        } else {
+            Ok(TickResult::failure(format!("{actual} != true")))
         }
     }
 }

@@ -94,6 +94,11 @@ Articles that introduce into the basics of the behavior trees
 
 The common documentation is available as a [mini-book](https://besok.github.io/forester/), describing all aspects of working with the framework
 
+## Publications
+ - [Part I. The orchestration with behavior trees. Simulation.](https://medium.com/@zhguchev/forester-the-orchestration-with-behaviour-trees-part-i-simulation-b10867aab8db)
+ - [Part II. The dsl above trees. Higher order trees.](https://medium.com/@zhguchev/forester-part-ii-why-do-we-need-to-have-a-language-above-trees-bdf046bf4a73)
+ - [Part III. How to change the runtime tree on the fly. Trimming.](https://medium.com/@zhguchev/forester-part-iii-trimming-change-the-runtime-tree-on-the-fly-185a6e61a7aa)
+
 ## Contributing
 
 Currently, the project is under active development (there are a lot of blind spots), so any help is highly appreciated.

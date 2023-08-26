@@ -1,4 +1,6 @@
-use crate::runtime::action::builtin::data::{CheckEq, LockUnlockBBKey, StoreData, StoreTick};
+use crate::runtime::action::builtin::data::{
+    CheckEq, LockUnlockBBKey, Locked, StoreData, StoreTick, TestBool,
+};
 use crate::runtime::action::builtin::http::HttpGet;
 use crate::runtime::action::builtin::ReturnResult;
 use crate::runtime::action::{Action, ActionName};
@@ -16,11 +18,13 @@ impl BuilderBuiltInActions {
             "store_str" => Ok(Action::sync(StoreData)),
             "eq_str" => Ok(Action::sync(CheckEq)),
             "eq_num" => Ok(Action::sync(CheckEq)),
+            "test" => Ok(Action::sync(TestBool)),
             "store_tick" => Ok(Action::sync(StoreTick)),
             "http_get" => Ok(Action::sync(HttpGet)),
             "http_get_async" => Ok(Action::a_sync(HttpGet)),
             "lock" => Ok(Action::sync(LockUnlockBBKey::Lock)),
             "unlock" => Ok(Action::sync(LockUnlockBBKey::Unlock)),
+            "locked" => Ok(Action::sync(Locked)),
 
             _ => Err(RuntimeError::UnImplementedAction(format!(
                 "action {action} is absent in the library"
@@ -64,6 +68,12 @@ impl store_num(key:string, value:num);
 impl eq_str(key:string, expected:string);
 impl eq_num(key:string, expected:num);
 
+// Compares given bool value with true:
+// - Returns Result::Success if they are equal
+// - Returns Fail(reason)if they are not equal
+// - Returns Fail(reason) if there is no cell in bbe with the given key.
+impl test(key:string);
+
 /// Store the current tick
 impl store_tick(name:string);
 
@@ -78,6 +88,10 @@ impl lock(key:string);
 
 // Unlock key in bb
 impl unlock(key:string);
+
+// Validate the key if it is locked in bb
+impl locked(key:string);
+
 "#
         .to_string()
     }

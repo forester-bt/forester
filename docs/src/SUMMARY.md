@@ -35,3 +35,4 @@
   - [Remote Action](./rem_action.md)
     - [Rust library for Remote Action](./rem_action_rs.md)
     - [Python library for Remote Action](./rem_action_py.md)
+  - [Console](./console.md)
