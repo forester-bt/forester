@@ -1,6 +1,6 @@
 cond is_approachable(obj:object);
 cond is_graspable(obj:object);
-cond is_valid_place(obj:object);
+cond is_valid_place(obj:array);
 impl approach(obj:object);
 impl grasp(obj:object);
 impl ask_for_help();

@@ -6,6 +6,7 @@ mod tests {
     use crate::runtime::rtree::RuntimeTree;
     use crate::tree::parser::ast::call::Call;
     use crate::tree::project::Project;
+    use crate::visualizer::Visualizer;
     use graphviz_rust::attributes::arrowhead::vee;
     use std::collections::HashMap;
     use std::path::PathBuf;

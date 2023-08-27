@@ -82,16 +82,16 @@
 <!-- 7 -->
 <g id="node7" class="node">
 <title>7</title>
-<polygon fill="none" stroke="green" points="303.25,-181.75 41.25,-181.75 41.25,-177.75 37.25,-177.75 37.25,-173.75 41.25,-173.75 41.25,-153.75 37.25,-153.75 37.25,-149.75 41.25,-149.75 41.25,-145.75 303.25,-145.75 303.25,-181.75"/>
-<polyline fill="none" stroke="green" points="41.25,-177.75 45.25,-177.75 45.25,-173.75 41.25,-173.75"/>
-<polyline fill="none" stroke="green" points="41.25,-153.75 45.25,-153.75 45.25,-149.75 41.25,-149.75"/>
-<text text-anchor="middle" x="172.25" y="-158.32" font-family="Times New Roman,serif" font-size="14.00">(7) less (lhs=battery_level,rhs=critical_level)</text>
+<polygon fill="none" stroke="green" points="303.5,-181.75 97,-181.75 97,-177.75 93,-177.75 93,-173.75 97,-173.75 97,-153.75 93,-153.75 93,-149.75 97,-149.75 97,-145.75 303.5,-145.75 303.5,-181.75"/>
+<polyline fill="none" stroke="green" points="97,-177.75 101,-177.75 101,-173.75 97,-173.75"/>
+<polyline fill="none" stroke="green" points="97,-153.75 101,-153.75 101,-149.75 97,-149.75"/>
+<text text-anchor="middle" x="200.25" y="-158.32" font-family="Times New Roman,serif" font-size="14.00">(7) less (lhs=battery_level,rhs=10)</text>
 </g>
 <!-- 5&#45;&gt;7 -->
 <g id="edge6" class="edge">
 <title>5&#45;&gt;7</title>
-<path fill="none" stroke="black" d="M340.64,-219.03C308.74,-208.75 269.4,-196.07 236.78,-185.55"/>
-<polygon fill="black" stroke="black" points="238.03,-181.96 227.44,-182.22 235.88,-188.62 238.03,-181.96"/>
+<path fill="none" stroke="black" d="M347.96,-219.03C320.34,-208.88 286.37,-196.4 257.97,-185.96"/>
+<polygon fill="black" stroke="black" points="259.38,-182.38 248.78,-182.22 256.96,-188.95 259.38,-182.38"/>
 </g>
 <!-- 8 -->
 <g id="node8" class="node">

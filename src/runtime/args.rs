@@ -2,10 +2,11 @@ pub mod display;
 mod sede;
 pub mod transform;
 
+use crate::runtime::args::transform::find_arg_value;
 use crate::runtime::blackboard::BBKey;
 use crate::runtime::context::TreeContextRef;
 use crate::runtime::{RtResult, RuntimeError};
-use crate::tree::parser::ast::arg::{ArgumentRhs, MesType, Param};
+use crate::tree::parser::ast::arg::{ArgumentRhs, Arguments, MesType, Param, Params};
 use crate::tree::parser::ast::call::Call;
 use crate::tree::parser::ast::message::{Message, Number};
 use crate::tree::{cerr, TreeError};
@@ -316,10 +317,18 @@ impl RtArgument {
         }
     }
 
-    pub fn try_from(a: ArgumentRhs, p: Param) -> Result<Option<RtArgument>, TreeError> {
-        RtArgument::validate_type(a.clone(), p.tpe)?;
+    pub fn try_from(
+        a: ArgumentRhs,
+        p: Param,
+        parent_args: Arguments,
+        parent_params: Params,
+    ) -> Result<Option<RtArgument>, TreeError> {
+        RtArgument::validate_type(a.clone(), p.clone().tpe)?;
         match &a {
-            ArgumentRhs::Id(id) => Ok(Some(RtArgument::new(p.name, RtValue::Pointer(id.clone())))),
+            ArgumentRhs::Id(id) => match find_arg_value(id, &parent_params, &parent_args).ok() {
+                None => Ok(Some(RtArgument::new(p.name, RtValue::Pointer(id.clone())))),
+                Some(v) => RtArgument::try_from(v, p, Arguments::default(), Params::default()),
+            },
             ArgumentRhs::Mes(m) => Ok(Some(RtArgument::new(p.name, m.clone().into()))),
             ArgumentRhs::Call(c) => Ok(Some(RtArgument::new(p.name, RtValue::Call(c.clone())))),
         }
@@ -327,7 +336,7 @@ impl RtArgument {
     pub fn validate_type(arg: ArgumentRhs, param: MesType) -> Result<(), TreeError> {
         let error = |lhs: &str, rhs: &str| {
             Err(cerr(format!(
-                "the type of argument {lhs} does not coincide to the type of the definition {rhs}",
+                "the type '{lhs}' of the argument does not coincide to the type '{rhs}' of the definition ",
             )))
         };
 

@@ -24,7 +24,7 @@ fn smoke_serv() {
 
     rt.spawn(async {
         tokio::time::sleep(Duration::from_secs(2)).await;
-        // stop.send(()).unwrap();
+        stop.send(()).unwrap();
     });
 
     rt.block_on(async {

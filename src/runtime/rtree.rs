@@ -85,11 +85,13 @@ impl RuntimeTree {
                 // - the invocation is passed as an argument from the parent (this chain can be long up)
                 //   So we need to find the initially passed call.
                 // - since we found it we transform it into a simple invocation call and process it at the next step.
-                // - if it is lambda we found it
+                // - if it is lambda we already found it
                 Call::HoInvocation(key) => {
+                    let (p_id, parent_args, parent_params) =
+                        builder.get_chain_skip_lambda(&parent_id)?.get_tree();
                     let call = builder.find_ho_call(&parent_id, &key)?;
                     if call.is_lambda() {
-                        builder.push_front(id, call, id, file_name.clone());
+                        builder.push_front(id, call, p_id, file_name.clone());
                     } else {
                         let k = call
                             .key()
@@ -98,7 +100,7 @@ impl RuntimeTree {
                         builder.push_front(
                             id,
                             Call::invocation(&k, call.arguments()),
-                            id,
+                            p_id,
                             file_name.clone(),
                         );
                     }
@@ -110,70 +112,89 @@ impl RuntimeTree {
                     builder.add_chain(id, parent_id, parent_args.clone(), parent_params.clone());
                     let child = builder.push(*call, id, file.clone());
                     let d_tpe: DecoratorType = tpe.try_into()?;
-                    let rt_args = to_dec_rt_args(&d_tpe, decor_args)?;
+                    let rt_args = to_dec_rt_args(&d_tpe, decor_args, parent_args, parent_params)?;
                     r_tree
                         .nodes
                         .insert(id, RNode::decorator(d_tpe, rt_args, child));
                 }
                 // firstly we need to find the definition either in the file or in the imports
                 // with a consideration of a possible alias and transform the args
-                Call::Invocation(name, args) => match curr_file.definitions.get(&name) {
-                    Some(tree) => {
-                        let rt_args = to_rt_args(name.as_str(), args.clone(), tree.params.clone())?;
-                        builder.add_chain(id, parent_id, args.clone(), tree.params.clone());
-                        if tree.tpe.is_action() {
-                            r_tree.nodes.insert(id, RNode::action(name, rt_args));
-                            actions.insert(tree.name.clone());
-                        } else {
-                            let children =
-                                builder.push_vec(tree.calls.clone(), id, file_name.clone());
-                            r_tree.nodes.insert(
-                                id,
-                                RNode::flow(tree.tpe.try_into()?, name, rt_args, children),
-                            );
-                        }
-                    }
-                    None => {
-                        let (tree, file) = import_map.find(&name, &project)?;
-                        if file == "std::actions" {
-                            std_actions.insert(tree.name.clone());
-                        }
-                        let rt_args = to_rt_args(name.as_str(), args.clone(), tree.params.clone())?;
-                        builder.add_chain(id, parent_id, args.clone(), tree.params.clone());
-                        let children = builder.push_vec(tree.calls.clone(), id, file_name.clone());
-
-                        if tree.name != name {
+                Call::Invocation(name, args) => {
+                    let (_, parent_args, parent_params) = builder
+                        .get_chain_skip_lambda(&parent_id)
+                        .map(|e| e.get_tree())
+                        .unwrap_or_default();
+                    match curr_file.definitions.get(&name) {
+                        Some(tree) => {
+                            let rt_args = to_rt_args(
+                                name.as_str(),
+                                args.clone(),
+                                tree.params.clone(),
+                                parent_args,
+                                parent_params,
+                            )?;
+                            builder.add_chain(id, parent_id, args.clone(), tree.params.clone());
                             if tree.tpe.is_action() {
+                                r_tree.nodes.insert(id, RNode::action(name, rt_args));
                                 actions.insert(tree.name.clone());
+                            } else {
+                                let children =
+                                    builder.push_vec(tree.calls.clone(), id, file_name.clone());
                                 r_tree.nodes.insert(
                                     id,
-                                    RNode::action_alias(tree.name.clone(), name, rt_args),
+                                    RNode::flow(tree.tpe.try_into()?, name, rt_args, children),
                                 );
+                            }
+                        }
+                        None => {
+                            let (tree, file) = import_map.find(&name, &project)?;
+                            if file == "std::actions" {
+                                std_actions.insert(tree.name.clone());
+                            }
+                            let rt_args = to_rt_args(
+                                name.as_str(),
+                                args.clone(),
+                                tree.params.clone(),
+                                parent_args,
+                                parent_params,
+                            )?;
+                            builder.add_chain(id, parent_id, args.clone(), tree.params.clone());
+                            let children =
+                                builder.push_vec(tree.calls.clone(), id, file_name.clone());
+
+                            if tree.name != name {
+                                if tree.tpe.is_action() {
+                                    actions.insert(tree.name.clone());
+                                    r_tree.nodes.insert(
+                                        id,
+                                        RNode::action_alias(tree.name.clone(), name, rt_args),
+                                    );
+                                } else {
+                                    r_tree.nodes.insert(
+                                        id,
+                                        RNode::flow_alias(
+                                            tree.tpe.try_into()?,
+                                            tree.name.clone(),
+                                            name,
+                                            rt_args,
+                                            children,
+                                        ),
+                                    );
+                                }
+                            } else if tree.tpe.is_action() {
+                                r_tree
+                                    .nodes
+                                    .insert(id, RNode::action(name.clone(), rt_args));
+                                actions.insert(name);
                             } else {
                                 r_tree.nodes.insert(
                                     id,
-                                    RNode::flow_alias(
-                                        tree.tpe.try_into()?,
-                                        tree.name.clone(),
-                                        name,
-                                        rt_args,
-                                        children,
-                                    ),
+                                    RNode::flow(tree.tpe.try_into()?, name, rt_args, children),
                                 );
-                            }
-                        } else if tree.tpe.is_action() {
-                            r_tree
-                                .nodes
-                                .insert(id, RNode::action(name.clone(), rt_args));
-                            actions.insert(name);
-                        } else {
-                            r_tree.nodes.insert(
-                                id,
-                                RNode::flow(tree.tpe.try_into()?, name, rt_args, children),
-                            );
-                        };
+                            };
+                        }
                     }
-                },
+                }
             }
         }
 

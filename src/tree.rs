@@ -16,6 +16,20 @@ pub enum TreeError {
     IOError(String),
 }
 
+impl TreeError {
+    pub fn modify<F>(&self, f: F) -> Self
+    where
+        F: Fn(&String) -> String,
+    {
+        match self {
+            TreeError::ParseError(s) => TreeError::ParseError(f(s)),
+            TreeError::CompileError(s) => TreeError::CompileError(f(s)),
+            TreeError::VisualizationError(s) => TreeError::VisualizationError(f(s)),
+            TreeError::IOError(s) => TreeError::IOError(f(s)),
+        }
+    }
+}
+
 impl From<ParseError<'_>> for TreeError {
     fn from(value: ParseError) -> Self {
         TreeError::ParseError(value.to_string())

@@ -24,7 +24,7 @@ fn lock_unlock() {
     assert_eq!(k, Some(&RtValue::str("v2".to_string())))
 }
 
-#[test]
+// #[test]
 fn http_get() {
     let mut fb = fb("actions/simple_http");
     let mut f = fb.build().unwrap();

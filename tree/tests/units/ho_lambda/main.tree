@@ -9,6 +9,6 @@ root main
 
 
 
-r_sequence x(test:tree){
-    test(..)
+r_sequence x(t:tree){
+    t(..)
 }

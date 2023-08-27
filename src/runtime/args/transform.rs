@@ -8,8 +8,36 @@ use crate::tree::parser::ast::Key;
 use crate::tree::{cerr, TreeError};
 use std::collections::HashMap;
 
+fn dec_rt_arg(
+    a: &ArgumentRhs,
+    parent_args: Arguments,
+    parent_params: Params,
+) -> Result<RtValue, TreeError> {
+    match a {
+        ArgumentRhs::Id(p) => {
+            // check of the parent has the argument with the given key
+            // and if so then take it from there otherwise it is a pointer to bb
+            match find_arg_value(p, &parent_params, &parent_args).ok() {
+                None => Ok(RtValue::Pointer(p.to_string())),
+                Some(v) => dec_rt_arg(&v, Arguments::default(), Params::default()),
+            }
+        }
+        ArgumentRhs::Mes(Message::Num(n)) => Ok(RtValue::Number((*n).into())),
+        e => Err(cerr(format!(
+            "decorator has only one argument and it is either id or num but got {}",
+            e
+        ))),
+    }
+}
+
 /// It extracts and validates the arguments for decorators since the contract is fixed.
-pub fn to_dec_rt_args(tpe: &DecoratorType, args: Arguments) -> Result<RtArgs, TreeError> {
+/// The parent attributes  are used to find the arguments that comes from the from `parent(x:num) retry(x) action()`
+pub fn to_dec_rt_args(
+    tpe: &DecoratorType,
+    args: Arguments,
+    parent_args: Arguments,
+    parent_params: Params,
+) -> Result<RtArgs, TreeError> {
     let empty = |args: &Arguments| {
         if args.args.is_empty() {
             Ok(RtArgs::default())
@@ -18,20 +46,10 @@ pub fn to_dec_rt_args(tpe: &DecoratorType, args: Arguments) -> Result<RtArgs, Tr
         }
     };
     let one_num = |args: &Arguments| match args.args.as_slice() {
-        [a] => match a.value() {
-            ArgumentRhs::Id(id) => Ok(RtArgs(vec![RtArgument::new_noname(RtValue::Pointer(
-                id.to_string(),
-            ))])),
-            ArgumentRhs::Mes(Message::Num(n)) => {
-                let r_num: RtValueNumber = (*n).into();
-                Ok(RtArgs(vec![RtArgument::new_noname(RtValue::Number(r_num))]))
-            }
-
-            e => Err(cerr(format!(
-                "decorator has only one argument and it is either id or num but got {}",
-                e
-            ))),
-        },
+        [a] => {
+            let v = dec_rt_arg(a.value(), parent_args, parent_params)?;
+            Ok(RtArgs(vec![RtArgument::new_noname(v)]))
+        }
         _ => Err(cerr("decorator has only one argument".to_string())),
     };
 
@@ -46,7 +64,13 @@ pub fn to_dec_rt_args(tpe: &DecoratorType, args: Arguments) -> Result<RtArgs, Tr
     }
 }
 
-pub fn to_rt_args(name: &str, args: Arguments, params: Params) -> Result<RtArgs, TreeError> {
+pub fn to_rt_args(
+    name: &str,
+    args: Arguments,
+    params: Params,
+    parent_args: Arguments,
+    parent_params: Params,
+) -> Result<RtArgs, TreeError> {
     if args.args.len() != params.params.len() {
         Err(cerr(format!(
             "the call {} doesn't have the same number of arguments and parameters",
@@ -57,7 +81,14 @@ pub fn to_rt_args(name: &str, args: Arguments, params: Params) -> Result<RtArgs,
         match args.get_type()? {
             ArgumentsType::Unnamed => {
                 for (a, p) in args.args.into_iter().zip(params.params) {
-                    if let Some(rt_a) = RtArgument::try_from(a.value().clone(), p)? {
+                    if let Some(rt_a) = RtArgument::try_from(
+                        a.value().clone(),
+                        p,
+                        parent_args.clone(),
+                        parent_params.clone(),
+                    )
+                    .map_err(|r| r.modify(|s| format!("tree: {}, {}", name, s)))?
+                    {
                         rt_args.push(rt_a);
                     }
                 }
@@ -71,7 +102,14 @@ pub fn to_rt_args(name: &str, args: Arguments, params: Params) -> Result<RtArgs,
                     let p = a.name().and_then(|n| param_map.get(n)).ok_or(cerr(format!(
                         "the argument {a} does not correspond to the definition"
                     )))?;
-                    if let Some(rt_a) = RtArgument::try_from(a.value().clone(), p.clone())? {
+                    if let Some(rt_a) = RtArgument::try_from(
+                        a.value().clone(),
+                        p.clone(),
+                        parent_args.clone(),
+                        parent_params.clone(),
+                    )
+                    .map_err(|r| r.modify(|s| format!("tree: {}, {}", name, s)))?
+                    {
                         rt_args.push(rt_a);
                     }
                 }
@@ -82,6 +120,9 @@ pub fn to_rt_args(name: &str, args: Arguments, params: Params) -> Result<RtArgs,
     }
 }
 
+/// find the argument value by the key
+/// if the arguments are unnamed then the key is the index
+/// if the arguments are named then the key is the name
 pub fn find_arg_value(
     key: &Key,
     params: &Params,

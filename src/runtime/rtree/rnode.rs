@@ -114,6 +114,20 @@ impl RNode {
             _ => false,
         }
     }
+    pub fn is_decorator(&self, tpe: &DecoratorType) -> bool {
+        match self {
+            RNode::Decorator(t, ..) if t == tpe => true,
+            _ => false,
+        }
+    }
+
+    pub fn args(&self) -> RtArgs {
+        match self {
+            RNode::Leaf(_, args) | RNode::Flow(_, _, args, _) | RNode::Decorator(_, args, _) => {
+                args.clone()
+            }
+        }
+    }
 
     pub fn name(&self) -> Option<&RNodeName> {
         match self {
