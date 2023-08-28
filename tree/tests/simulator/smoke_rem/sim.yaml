@@ -1,0 +1,11 @@
+config:
+  max_ticks: 10
+  http:
+      port: 8080
+
+actions:
+  -
+    name: task
+    stub: remote
+    params:
+      url: http://localhost:10000/action

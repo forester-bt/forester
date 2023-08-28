@@ -127,18 +127,19 @@ impl SimulatorBuilder {
             fb.bb_load(bb_load_path);
         }
 
+        if let Some(http) = profile.config.http {
+            fb.http_serv(http.port);
+        }
+
         for action in profile.actions.iter() {
-            fb.register_sync_action(
-                action.name.as_str(),
-                SimAction::create(
-                    action.stub.as_str(),
-                    action
-                        .params
-                        .get("delay")
-                        .map(|s| s.parse::<usize>().unwrap_or_default())
-                        .unwrap_or_default(),
-                )?,
-            )
+            let sim_action = SimAction::create(action.stub.as_str(), action.params.clone())?;
+            let name = action.name.as_str();
+
+            if sim_action.is_remote() {
+                fb.register_remote_action(name, sim_action);
+            } else {
+                fb.register_sync_action(name, sim_action);
+            }
         }
 
         let forester =

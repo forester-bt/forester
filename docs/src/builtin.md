@@ -65,5 +65,4 @@ impl http_get(url:string, bb_key:string);
 
 # Http server (sync | async)
 # Curl
-# lock | unlock key
  

@@ -35,4 +35,6 @@
 * **`0.2.3`**
   * Add built in actions for bb
   * fix bugs
+* **`0.2.4`**
+  * add remote action to simulation 
  

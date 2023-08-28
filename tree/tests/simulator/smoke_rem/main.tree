@@ -1,0 +1,5 @@
+
+root main sequence {
+    task({})
+}
+impl task(config: object);

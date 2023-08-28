@@ -1,0 +1,16 @@
+config:
+  http:
+    port: 8080
+
+actions:
+  -
+    name: name1
+    stub: remote
+    params:
+      url: localhost:10000
+      server: http://localhost:8080
+  -
+    name: name2
+    stub: remote
+    params:
+      url: localhost:10001

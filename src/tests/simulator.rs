@@ -1,8 +1,10 @@
 use crate::runtime::builder::ForesterBuilder;
 use crate::simulator::builder::SimulatorBuilder;
-use crate::simulator::config::{Action, BbConfig, SimProfile, SimProfileConfig, TracerSimConfig};
+use crate::simulator::config::{
+    Action, BbConfig, HttpServ, SimProfile, SimProfileConfig, TracerSimConfig,
+};
 use crate::simulator::Simulator;
-use crate::tests::test_folder;
+use crate::tests::{test_folder, turn_on_logs};
 use graphviz_rust::attributes::quadtree::fast;
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -25,7 +27,7 @@ fn file() {
                     dump: Some(String::from("bb.dump")),
                     load: Some(String::from("bb.json")),
                 },
-                port: None,
+                http: None,
             },
             actions: vec![
                 Action {
@@ -90,6 +92,40 @@ fn file() {
         },
         profile
     );
+
+    let buf = test_folder("simulator/example5.yaml");
+    let profile = SimProfile::parse_file(&buf).unwrap();
+
+    assert_eq!(
+        SimProfile {
+            config: SimProfileConfig {
+                tracer: Default::default(),
+                bb: Default::default(),
+                graph: None,
+                max_ticks: None,
+                http: Some(HttpServ { port: 8080 }),
+            },
+            actions: vec![
+                Action {
+                    name: "name1".to_string(),
+                    stub: "remote".to_string(),
+                    params: HashMap::from_iter(vec![
+                        ("url".to_string(), "localhost:10000".to_string()),
+                        ("server".to_string(), "http://localhost:8080".to_string()),
+                    ])
+                },
+                Action {
+                    name: "name2".to_string(),
+                    stub: "remote".to_string(),
+                    params: HashMap::from_iter(vec![(
+                        "url".to_string(),
+                        "localhost:10001".to_string()
+                    ),])
+                }
+            ]
+        },
+        profile
+    );
 }
 
 #[test]
@@ -110,6 +146,32 @@ fn smoke() {
     let mut sim = sb.build().unwrap();
     let tracer = &sim.forester.tracer;
     sim.run().unwrap();
+}
+#[test]
+fn smoke_remote() {
+    turn_on_logs();
+    let mut sb = SimulatorBuilder::new();
+
+    let root = test_folder("simulator/smoke_rem");
+
+    sb.root(root.clone());
+    sb.profile(PathBuf::from("sim.yaml"));
+
+    let mut fb = ForesterBuilder::from_fs();
+    fb.main_file("main.tree".to_string());
+    fb.root(root);
+
+    sb.forester_builder(fb);
+
+    let mut sim = sb.build().unwrap();
+    sim.run().unwrap();
+
+    let bb = sim.forester.bb.lock().unwrap();
+    let option = bb.get("tt".to_string()).unwrap();
+    assert_eq!(
+        option.and_then(|v| v.clone().as_string()),
+        Some("OK".to_string())
+    );
 }
 
 // #[test]

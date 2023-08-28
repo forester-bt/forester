@@ -37,24 +37,27 @@ actions:
 
 Config section:
 
-| Setting       | Description                                      | Default                                  | Example           |
-|---------------|--------------------------------------------------|------------------------------------------|-------------------|
-| tracer.file   | the tracer settings to write to a file           | if it is absent, there will be no action | gen/main.trace    |
-| tracer.dt_fmt | the tracer settings to given data format         | if it is absent, there will be no action | "%d %H:%M:%S%.3f" |
-| graph         | the visualization file                           | if it is absent, there will be no action | gen/main.svg      |
-| bb.dump       | the dump of the bb at the end                    | if it is absent, there will be no action | gen/bb.json       |
-| bb.load       | the dump that will be used to init bb before sim | if it is absent, there will be no action | gen/init_bb.json  |
-| max_ticks     | the maximum amount of ticks to work.             | 0 by default                             | 10                |
+| Setting       | Description                                                       | Default                                  | Example           |
+|---------------|-------------------------------------------------------------------|------------------------------------------|-------------------|
+| tracer.file   | the tracer settings to write to a file                            | if it is absent, there will be no action | gen/main.trace    |
+| tracer.dt_fmt | the tracer settings to given data format                          | if it is absent, there will be no action | "%d %H:%M:%S%.3f" |
+| graph         | the visualization file                                            | if it is absent, there will be no action | gen/main.svg      |
+| bb.dump       | the dump of the bb at the end                                     | if it is absent, there will be no action | gen/bb.json       |
+| bb.load       | the dump that will be used to init bb before sim                  | if it is absent, there will be no action | gen/init_bb.json  |
+| max_ticks     | the maximum amount of ticks to work.                              | 0 by default                             | 10                |
+| http.port     | The port for http server to communicate with the remote actions . | if it is absent, there will be no action | 8080              |
 
 Actions sections:
 
 The actions sections is an array to stub the actions
 
-| Setting      | Description                              | Default             | Example |
-|--------------|------------------------------------------|---------------------|---------|
-| name         | the name of the stubbed action           | should be presented | name    |
-| stub         | the stubbed implementation               | should be presented | success |
-| params.delay | denotes the pause before start in millis | 0                   | 100     |
+| Setting       | Description                                                     | Default             | Example                       |
+|---------------|-----------------------------------------------------------------|---------------------|-------------------------------|
+| name          | the name of the stubbed action                                  | should be presented | name                          |
+| stub          | the stubbed implementation                                      | should be presented | success                       |
+| params.delay  | denotes the pause before start in millis                        | 0                   | 100                           |
+| params.url    | (For remote stub) the url to connect                            | should be presented | http://localhost:10000/action |
+| params.server | (For remote stub) the url to provide to action to connect to bb | http://localhost    | http://localhost:8080         |
 
 
 #### Default profile
@@ -67,9 +70,14 @@ Other artifacts will not be generated.
 - success: returns a success
 - failure: returns a failure
 - random: returns either a failure or a success randomly
+- remote: connects to the remote server and returns the result of the action. The details can be found in the [Remote action](./r_actions.md#remote-actions). 
 
-All stubs have the following params:
+The stubs success, failure, random have the following param:
 - delay: in millis, the time to delay the stub.
+
+The remote stub has the following params:
+- url: the url to connect to the remote server
+- server: the url to provide to the remote server to connect to the blackboard
 
 ## Process
 

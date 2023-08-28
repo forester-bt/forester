@@ -47,7 +47,15 @@ pub struct SimProfileConfig {
 
     /// The port where needs to deploy the server to communicate with the remote actions.
     #[serde(default)]
-    pub port: Option<u16>,
+    pub http: Option<HttpServ>,
+}
+
+/// The http server configuration
+/// It is used to communicate with the remote actions.
+/// The server is used to receive the requests from the remote actions and to send the responses.
+#[derive(Debug, Default, PartialEq, Clone, Serialize, Deserialize)]
+pub struct HttpServ {
+    pub port: u16,
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Serialize, Deserialize)]

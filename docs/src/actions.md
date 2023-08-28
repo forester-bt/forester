@@ -7,7 +7,7 @@ and mix-in on the execution stage.
 The actions have 2 keywords to mark:
 
 - `impl` means some job or action that can take time and be asynchronous
-- `cond` means some activity to check some conditions and swiftly returns result
+- `cond` means some activity to check some conditions and immediately returns result
 
 *In practice, the engine does not see difference*
 
