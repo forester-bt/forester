@@ -1,4 +1,3 @@
-use std::ffi::OsString;
 use std::path::PathBuf;
 
 use clap::{arg, value_parser, Arg, ArgAction, ArgMatches, Command};
@@ -19,7 +18,7 @@ fn cli() -> Command {
         .about("A console utility to interact with Forester")
         .subcommand_required(true)
         .arg_required_else_help(true)
-        .version("0.1.9")
+        .version("0.2.0")
         .arg(
             Arg::new("debug")
                 .short('d')
