@@ -27,7 +27,10 @@ use serde::{Deserialize, Serialize};
 ///      fb.root(root);
 ///      
 ///      let action = RemoteHttpAction::new("http://localhost:10000".to_string());
-///      let action_with_url = RemoteHttpAction::new_with("http://localhost:10001".to_string(), "http://127.0.0.1".to_string());
+///      let action_with_url = RemoteHttpAction::new_with(
+///             "http://localhost:10001".to_string(),
+///             "http://127.0.0.1".to_string());
+///
 ///      fb.register_remote_action("a", action);
 ///      fb.register_remote_action("b", action_with_url);
 ///     
@@ -113,4 +116,46 @@ pub struct RemoteActionRequest {
     pub args: Vec<RtArgument>,
     /// The server url to get access to the blackboard and the tracer
     pub serv_url: String,
+}
+
+#[cfg(test)]
+mod tests {
+
+    use crate::runtime::action::builtin::remote::RemoteHttpAction;
+    use crate::runtime::action::ImplRemote;
+    use crate::runtime::args::RtArgs;
+    use crate::runtime::blackboard::BlackBoard;
+    use crate::runtime::context::TreeRemoteContextRef;
+    use crate::runtime::env::RtEnv;
+    use crate::runtime::TickResult;
+    use serde_json::json;
+    use std::sync::{Arc, Mutex};
+    use wiremock::matchers::{method, path};
+    use wiremock::{Mock, MockServer, ResponseTemplate};
+
+    #[test]
+    fn smoke() {
+        let mut env = RtEnv::try_new().unwrap();
+
+        let port = env.runtime.block_on(async {
+            let mock_server = MockServer::start().await;
+
+            let mut resp = ResponseTemplate::new(200);
+            let resp = resp.set_body_json(json!("Success"));
+
+            Mock::given(method("POST"))
+                .and(path("/action"))
+                .respond_with(resp)
+                .mount(&mock_server)
+                .await;
+            mock_server.address().port()
+        });
+
+        let mut action = RemoteHttpAction::new(format!("http://localhost:{}/action", port));
+
+        let bb = Arc::new(Mutex::new(BlackBoard::default()));
+        let r = action.tick(RtArgs(vec![]), TreeRemoteContextRef::new(1, port, &mut env));
+
+        assert_eq!(r, Ok(TickResult::success()));
+    }
 }

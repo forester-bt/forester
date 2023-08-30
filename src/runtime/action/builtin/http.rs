@@ -49,3 +49,62 @@ impl ImplAsync for HttpGet {
         self.on_tick(args, ctx)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::runtime::action::builtin::http::HttpGet;
+    use crate::runtime::action::Impl;
+    use crate::runtime::args::{RtArgs, RtArgument, RtValue};
+    use crate::runtime::blackboard::BlackBoard;
+    use crate::runtime::context::TreeContextRef;
+    use crate::runtime::env::RtEnv;
+    use crate::runtime::trimmer::TrimmingQueue;
+    use crate::runtime::TickResult;
+    use crate::tracer::Tracer;
+    use itertools::Itertools;
+    use std::sync::{Arc, Mutex};
+    use wiremock::matchers::{method, path};
+    use wiremock::{Mock, MockServer, ResponseTemplate};
+
+    #[test]
+    fn smoke() {
+        let env = RtEnv::try_new().unwrap();
+
+        let port = env.runtime.block_on(async {
+            let mock_server = MockServer::start().await;
+
+            let mut resp = ResponseTemplate::new(200);
+            let resp = resp.set_body_string("OK");
+
+            Mock::given(method("GET"))
+                .and(path("/hello"))
+                .respond_with(resp)
+                .mount(&mock_server)
+                .await;
+            mock_server.address().port()
+        });
+
+        let mut action = HttpGet;
+
+        let bb = Arc::new(Mutex::new(BlackBoard::default()));
+        let r = action.tick(
+            RtArgs(vec![
+                RtArgument::new_noname(RtValue::str(format!("http://localhost:{port}/hello"))),
+                RtArgument::new_noname(RtValue::str("k".to_string())),
+            ]),
+            TreeContextRef::new(
+                bb.clone(),
+                Arc::new(Mutex::new(Tracer::Noop)),
+                1,
+                Arc::new(Mutex::new(TrimmingQueue::default())),
+            ),
+        );
+
+        assert_eq!(r, Ok(TickResult::success()));
+
+        assert_eq!(
+            bb.clone().lock().unwrap().get("k".to_string()),
+            Ok(Some(&RtValue::str("OK".to_string())))
+        );
+    }
+}

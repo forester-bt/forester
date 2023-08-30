@@ -1,11 +1,24 @@
+//! Builtin actions that are related to the data manipulation.
+//! The actions are:
+//! - `locked` - check if the key is locked in bb
+//! - `lock` - lock the key in bb
+//! - `unlock` - unlock the key in bb
+//! - `store_tick` - save current tick to bb
+//! - `check_eq` - compare a value in the cell with the given expected value
+//! - `test_bool` - compare a value in the cell with the true
+//! - `generate_data` - a simple action that can generate and then update data in the given cell in bb.
+
 use crate::runtime::action::{Impl, Tick};
 use crate::runtime::args::{RtArgs, RtValue};
 use crate::runtime::context::TreeContextRef;
 use crate::runtime::{RuntimeError, TickResult};
 
-/// Check if the key is locked
+/// Check if the key is locked in BlackBoard
 pub struct Locked;
 
+/// Check if the key is locked in BlackBoard
+/// Just simple wrapper around the bb api.
+/// The key is expected to be a string or a pointer to a string.
 impl Impl for Locked {
     fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
         ctx.bb().lock()?.is_locked(get_name(args, &ctx)?).map(|v| {
@@ -32,6 +45,7 @@ fn get_name(args: RtArgs, ctx: &TreeContextRef) -> Result<String, RuntimeError> 
 
 /// Lock or unlock key in bb
 /// Just simple wrapper around the bb api.
+/// The key is expected to be a string or a pointer to a string.
 pub enum LockUnlockBBKey {
     Lock,
     Unlock,
@@ -72,6 +86,7 @@ impl Impl for StoreTick {
 /// Compare a value in the cell with the given expected value
 pub struct CheckEq;
 
+/// Compare a value in the cell with the given expected value
 impl Impl for CheckEq {
     fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
         let key = args
@@ -114,7 +129,7 @@ impl Impl for TestBool {
 }
 
 /// A simple action that can generate and then update data in the given cell in bb.
-/// Encompassess a function that accepts a current value of the cell and then place the updated one.
+/// Encompasses a function that accepts a current value of the cell and then place the updated one.
 ///
 /// ## Note:
 /// The action accepts a default parameter that will be used initially.
@@ -241,6 +256,28 @@ mod tests {
         assert_eq!(
             bb.clone().lock().unwrap().is_locked("k".to_string()),
             Ok(true)
+        );
+    }
+
+    #[test]
+    fn store_tick() {
+        let mut store_tick = super::StoreTick;
+
+        let bb = Arc::new(Mutex::new(BlackBoard::default()));
+
+        let r = store_tick.tick(
+            RtArgs(vec![RtArgument::new_noname(RtValue::str("k".to_string()))]),
+            TreeContextRef::new(
+                bb.clone(),
+                Arc::new(Mutex::new(Tracer::Noop)),
+                1,
+                Arc::new(Mutex::new(TrimmingQueue::default())),
+            ),
+        );
+        assert_eq!(r, Ok(TickResult::success()));
+        assert_eq!(
+            bb.clone().lock().unwrap().get("k".to_string()),
+            Ok(Some(&RtValue::int(1)))
         );
     }
 }

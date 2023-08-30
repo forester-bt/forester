@@ -26,3 +26,7 @@ axum  = "0.6.16"
 tokio = { version = "1.29.1", features = ["full"] }
 hyper = "0.14.27"
 chrono = "0.4.26"
+
+[dev-dependencies]
+# ...
+wiremock = "0.5.19"

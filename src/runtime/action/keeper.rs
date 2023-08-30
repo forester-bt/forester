@@ -8,13 +8,21 @@ use crate::runtime::forester::serv::ServInfo;
 use crate::runtime::{RtResult, RuntimeError, TickResult};
 use std::collections::{HashMap, HashSet};
 
-/// Just a simple action map to register and execute the actions.
+/// Just an action map to register and execute the actions.
+/// The actions are registered by the `ActionName` and the `Action` impl.
 pub struct ActionKeeper {
     actions: HashMap<ActionName, ActionImpl>,
 }
 
+/// The action impl is a wrapper of the `Action` to provide the information of the action.
 pub enum ActionImpl {
+    /// The action is present and can be executed.
     Present(Action),
+    /// The action is absent and can not be executed. The execution will be failed in runtime.
+    ///
+    /// #Note
+    /// The absent actions can be replaced by the default action impl in simulation or with building Forester
+    /// with default action impl.
     Absent,
 }
 
@@ -53,7 +61,8 @@ impl ActionKeeper {
                 debug!(target:"action","register action {action_name} with the default impl");
                 let action_impl = default();
                 if action_impl.is_absent() {
-                    debug!(target:"action","The action {action_name} is absent and the execution will be failed on calling this action.");
+                    debug!(target:"action",
+                        "The action {action_name} is absent and the execution will be failed on calling this action.");
                 }
                 actions.insert(action_name, action_impl);
             }
@@ -93,6 +102,7 @@ impl ActionKeeper {
                 TreeRemoteContextRef::new(ctx.current_tick(), get_port(http_serv)?, env),
             ),
             Action::Async(ref mut action) => match env.task_state(name)? {
+                // just to start it in the separate thread(supposedly)
                 TaskState::Absent => {
                     let action = action.clone();
                     env.tasks.insert(
@@ -102,7 +112,7 @@ impl ActionKeeper {
                     Ok(TickResult::running())
                 }
                 TaskState::Started(handle) => {
-                    // return it to the running tasks
+                    // return it to the running tasks instantly.
                     env.tasks.insert(name.to_string(), handle);
                     Ok(TickResult::running())
                 }
@@ -116,7 +126,7 @@ fn get_port(http_serv: &Option<ServInfo>) -> Result<u16, RuntimeError> {
         .as_ref()
         .map(|v| v.serv_port)
         .filter(|p| *p > 0)
-        .ok_or(RuntimeError::RecoveryToFailure(
-            format!("the http server port is not found or incorrect").to_string(),
+        .ok_or(RuntimeError::fail(
+            "the http server port is not found or incorrect".to_string(),
         ))
 }
