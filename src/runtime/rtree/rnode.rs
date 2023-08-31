@@ -74,6 +74,8 @@ impl TryFrom<TreeType> for FlowType {
     }
 }
 
+/// A node name can be a lambda, a name or an alias.
+/// An alias is a name that is used to refer to a node in the import
 #[derive(Debug, PartialEq, Clone)]
 pub enum RNodeName {
     Lambda,
@@ -93,7 +95,11 @@ impl RNodeName {
         }
     }
 }
-
+/// A runtime node is a node that is used to execute a tree.
+/// It can be a leaf, a flow or a decorator.
+/// A leaf is a node that executes an action.
+/// A flow is a node that executes a flow of nodes.
+/// A decorator is a node that executes a child and decorates the result.
 #[derive(Debug, PartialEq)]
 pub enum RNode {
     Leaf(RNodeName, RtArgs),
@@ -102,18 +108,21 @@ pub enum RNode {
 }
 
 impl RNode {
+    /// check if the node has the given name
     pub fn is_name(&self, name: &str) -> bool {
         self.name()
             .and_then(|n| n.name().ok())
             .filter(|action| action.as_str() == name)
             .is_some()
     }
+    /// check if the node has the given type
     pub fn is_flow(&self, tpe: &FlowType) -> bool {
         match self {
             RNode::Flow(t, ..) if t == tpe => true,
             _ => false,
         }
     }
+    /// check if the node has the given type
     pub fn is_decorator(&self, tpe: &DecoratorType) -> bool {
         match self {
             RNode::Decorator(t, ..) if t == tpe => true,
@@ -121,6 +130,7 @@ impl RNode {
         }
     }
 
+    /// returns the args of the node
     pub fn args(&self) -> RtArgs {
         match self {
             RNode::Leaf(_, args) | RNode::Flow(_, _, args, _) | RNode::Decorator(_, args, _) => {
@@ -129,6 +139,7 @@ impl RNode {
         }
     }
 
+    /// returns the name of the node
     pub fn name(&self) -> Option<&RNodeName> {
         match self {
             RNode::Leaf(n, _) | RNode::Flow(_, n, _, _) => Some(n),
@@ -136,6 +147,7 @@ impl RNode {
         }
     }
 
+    /// returns the children ids of the node
     pub fn children(&self) -> Vec<RNodeId> {
         match self {
             RNode::Leaf(_, _) => vec![],

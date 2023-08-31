@@ -44,14 +44,13 @@ impl ReturnResult {
 }
 
 impl Impl for ReturnResult {
-    fn tick(&self, args: RtArgs, _ctx: TreeContextRef) -> Tick {
+    fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
         Ok(match &self.res {
             TickResult::Failure(_) => {
                 let mb_str = args.first();
                 let c = match mb_str {
                     None => String::new(),
-                    Some(v) => v.as_string().unwrap_or_default(),
-                    // Some(v) => v.cast(ctx.bb()).string()?.unwrap_or_default(),
+                    Some(v) => v.cast(ctx).str()?.unwrap_or_default(),
                 };
                 TickResult::failure(c)
             }

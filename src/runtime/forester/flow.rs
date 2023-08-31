@@ -138,11 +138,7 @@ pub fn finalize(
             }
         }
 
-        _ => Err(RuntimeError::UnImplementedAction("flow".to_string())), // FlowType::Parallel => {}
-                                                                         // FlowType::MSequence => {}
-                                                                         // FlowType::RSequence => {}
-                                                                         // FlowType::Fallback => {}
-                                                                         // FlowType::RFallback => {}
+        _ => Err(RuntimeError::UnImplementedAction("flow".to_string())),
     }
 }
 // it starts when the child returns running.

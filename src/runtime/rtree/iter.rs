@@ -1,7 +1,10 @@
 use crate::runtime::rtree::rnode::{RNode, RNodeId};
 use crate::runtime::rtree::RuntimeTree;
 use std::collections::VecDeque;
-
+/// simple bfs iterator over the tree
+///
+///
+///
 pub struct RtTreeBfsIter<'a> {
     pub queue: VecDeque<RNodeId>,
     pub tree: &'a RuntimeTree,

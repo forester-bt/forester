@@ -27,25 +27,30 @@ pub enum ActionImpl {
 }
 
 impl ActionImpl {
-    pub fn action(&mut self) -> Option<&mut Action> {
+    fn action(&mut self) -> Option<&mut Action> {
         match self {
             ActionImpl::Present(a) => Some(a),
             ActionImpl::Absent => None,
         }
     }
-    pub fn is_absent(&self) -> bool {
+    fn is_absent(&self) -> bool {
         matches!(self, ActionImpl::Absent)
     }
 }
 
 impl ActionKeeper {
+    /// all actions registered in the keeper
     pub fn actions(&self) -> HashSet<&ActionName> {
         self.actions.keys().collect()
     }
 
+    /// Create a new action keeper with the given actions and the default action impl.
     pub fn new_with<T>(
+        // all actions that have the impl
         impl_actions: HashMap<ActionName, Action>,
+        // all actions that should be registered
         all_actions: HashSet<ActionName>,
+        // the default action impl for the set = all_actions - impl_actions
         default: T,
     ) -> RtResult<Self>
     where
@@ -78,7 +83,7 @@ impl ActionKeeper {
                 "the action {name} is not registered"
             )))
     }
-
+    /// Register an action with the given name and the impl.
     pub fn register(&mut self, name: ActionName, action: Action) -> RtResult<()> {
         debug!(target:"action","A new action {name} is registered");
         let _ = self.actions.insert(name, ActionImpl::Present(action));
@@ -121,6 +126,7 @@ impl ActionKeeper {
         }
     }
 }
+
 fn get_port(http_serv: &Option<ServInfo>) -> Result<u16, RuntimeError> {
     http_serv
         .as_ref()

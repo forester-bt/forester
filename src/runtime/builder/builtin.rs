@@ -6,6 +6,8 @@ use crate::runtime::action::builtin::ReturnResult;
 use crate::runtime::action::{Action, ActionName};
 use crate::runtime::{RtResult, RuntimeError};
 
+/// Built-in actions
+/// The actions are accessible using the import 'import "std::actions"'
 pub struct BuilderBuiltInActions;
 
 impl BuilderBuiltInActions {

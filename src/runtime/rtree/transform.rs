@@ -13,13 +13,14 @@ use std::collections::{HashMap, VecDeque};
 /// # Note
 /// The internal structure
 #[derive(Default)]
-pub struct Transformer {
+pub(crate) struct Transformer {
     gen: usize,
     stack: VecDeque<StackItem>,
     chain_map: HashMap<usize, ChainItem>,
 }
 // to help in traversing the call stack
-pub struct StackItem {
+// represents a call in the stack trace
+pub(crate) struct StackItem {
     pub id: usize,
     pub call: Call,
     pub parent_id: usize,
@@ -27,7 +28,7 @@ pub struct StackItem {
 }
 
 /// represents a parent of the call in the stack trace
-pub enum ChainItem {
+pub(crate) enum ChainItem {
     Tree(usize, Arguments, Params),
     Lambda(usize),
     Root,

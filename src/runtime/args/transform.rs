@@ -8,6 +8,10 @@ use crate::tree::parser::ast::Key;
 use crate::tree::{cerr, TreeError};
 use std::collections::HashMap;
 
+/// It converts the argument to the runtime argument
+/// The parent attributes  are used to find the arguments
+/// that comes from parents as pointer the from `parent(x:num) retry(x) action()`
+// TODO the refactor the parent_args and parent_params to be a single struct (i am pretty sure i do the same thing in the other places)
 fn dec_rt_arg(
     a: &ArgumentRhs,
     parent_args: Arguments,
@@ -31,7 +35,8 @@ fn dec_rt_arg(
 }
 
 /// It extracts and validates the arguments for decorators since the contract is fixed.
-/// The parent attributes  are used to find the arguments that comes from the from `parent(x:num) retry(x) action()`
+/// The parent attributes  are used to find the arguments
+/// that comes from parents as pointer the from `parent(x:num) retry(x) action()`
 pub fn to_dec_rt_args(
     tpe: &DecoratorType,
     args: Arguments,
@@ -63,13 +68,15 @@ pub fn to_dec_rt_args(
         DecoratorType::Delay => one_num(&args),
     }
 }
-
+/// It extracts and validates the arguments for decorators since the contract is fixed.
+/// The parent attributes  are used to find the arguments
+/// that comes from parents as pointer the from `parent(x:num) retry(x) action()`
 pub fn to_rt_args(
     name: &str,
     args: Arguments,
     params: Params,
-    parent_args: Arguments,
-    parent_params: Params,
+    p_args: Arguments,
+    p_params: Params,
 ) -> Result<RtArgs, TreeError> {
     if args.args.len() != params.params.len() {
         Err(cerr(format!(
@@ -79,21 +86,18 @@ pub fn to_rt_args(
     } else {
         let mut rt_args: Vec<RtArgument> = vec![];
         match args.get_type()? {
+            // find by the index according to the parameters
             ArgumentsType::Unnamed => {
                 for (a, p) in args.args.into_iter().zip(params.params) {
-                    if let Some(rt_a) = RtArgument::try_from(
-                        a.value().clone(),
-                        p,
-                        parent_args.clone(),
-                        parent_params.clone(),
-                    )
-                    .map_err(|r| r.modify(|s| format!("tree: {}, {}", name, s)))?
-                    {
-                        rt_args.push(rt_a);
-                    }
+                    // if the that is a pointer we need to check parent also.
+                    let rhs = a.value().clone();
+                    let rt_arg = RtArgument::try_from(rhs, p, p_args.clone(), p_params.clone())
+                        .map_err(|r| r.modify(|s| format!("tree: {}, {}", name, s)))?;
+                    rt_args.push(rt_arg);
                 }
                 Ok(RtArgs(rt_args))
             }
+            // find by the name according to the parameters
             ArgumentsType::Named => {
                 let param_map: HashMap<String, Param> =
                     HashMap::from_iter(params.params.into_iter().map(|p| (p.name.clone(), p)));
@@ -102,16 +106,12 @@ pub fn to_rt_args(
                     let p = a.name().and_then(|n| param_map.get(n)).ok_or(cerr(format!(
                         "the argument {a} does not correspond to the definition"
                     )))?;
-                    if let Some(rt_a) = RtArgument::try_from(
-                        a.value().clone(),
-                        p.clone(),
-                        parent_args.clone(),
-                        parent_params.clone(),
-                    )
-                    .map_err(|r| r.modify(|s| format!("tree: {}, {}", name, s)))?
-                    {
-                        rt_args.push(rt_a);
-                    }
+                    // if the that is a pointer we need to check parent also.
+                    let rhs = a.value().clone();
+                    let rt_arg =
+                        RtArgument::try_from(rhs, p.clone(), p_args.clone(), p_params.clone())
+                            .map_err(|r| r.modify(|s| format!("tree: {}, {}", name, s)))?;
+                    rt_args.push(rt_arg);
                 }
                 Ok(RtArgs(rt_args))
             }

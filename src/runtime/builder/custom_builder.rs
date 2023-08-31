@@ -4,6 +4,7 @@ use crate::runtime::rtree::RuntimeTree;
 use crate::runtime::RtResult;
 use std::collections::HashSet;
 
+/// The builder to build Forester from rust code.
 pub struct CustomForesterBuilder {
     rtb: RtTreeBuilder,
 }

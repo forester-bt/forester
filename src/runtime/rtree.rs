@@ -20,9 +20,13 @@ use crate::tree::project::Project;
 use crate::tree::{cerr, TreeError};
 use std::collections::{HashMap, HashSet, VecDeque};
 
+/// The auxiliary structure that encapsulates the runtime tree
+/// and some additional information about actions
 pub struct RuntimeTreeStarter {
     pub tree: RuntimeTree,
-    // an action with the same name but the import will be from the diff place and to distinguish we keep track here
+    // the separate tables for standard and all actions
+    // the reason for this is that the user actions can have the same name as the standard ones
+    // and we need to distinguish them
     pub std_actions: HashSet<ActionName>,
     pub actions: HashSet<ActionName>,
 }
@@ -35,17 +39,57 @@ pub struct RuntimeTree {
 }
 
 impl RuntimeTree {
+    /// Returns bfs iterator over the runtime tree
     pub fn iter(&self) -> RtTreeBfsIter<'_> {
         RtTreeBfsIter {
             queue: VecDeque::from(vec![self.root]),
             tree: &self,
         }
     }
-
+    /// Returns the analyzer for the runtime tree
+    /// which provides methods to analyze the tree
+    /// and find nodes by some criteria
+    ///
+    /// # Example
+    ///
+    /// ```
+    ///     use forester_rs::runtime::args::RtArgs;
+    ///     use forester_rs::runtime::rtree::builder::RtNodeBuilder;
+    ///     use forester_rs::runtime::rtree::builder::RtTreeBuilder;
+    ///     use forester_rs::runtime::rtree::rnode::FlowType;
+    ///     use forester_rs::runtime::rtree::rnode::RNodeName;
+    ///     use forester_rs::*;
+    ///
+    ///     #[test]
+    ///     fn analyzer() {
+    ///         let mut rtb = RtTreeBuilder::new();
+    ///
+    ///         let flow = flow!(fallback node_name!("root"), args!();
+    ///             flow!(sequence node_name!("seq"), args!();
+    ///                  action!(node_name!("action1"))
+    ///             ),
+    ///            action!(node_name!("action2"))
+    ///         );
+    ///
+    ///         rtb.add_as_root(flow);
+    ///         let tree = rtb.build().unwrap().0;
+    ///
+    ///         let analyzer = tree.analyze();
+    ///
+    ///         let a1 = analyzer.find_by(|n| n.is_name("action1")).unwrap();
+    ///         let a2 = analyzer.find_by(|n| n.is_name("action2")).unwrap();
+    ///         let root = analyzer.find_by(|n| n.is_name("root")).unwrap();
+    ///         let seq = analyzer.find_by(|n| n.is_name("seq")).unwrap();
+    ///
+    ///         assert_eq!(analyzer.parent(&a1), Some(&seq));
+    ///         assert_eq!(analyzer.parent(&a2), Some(&root));
+    ///         assert_eq!(analyzer.parent(&root), None);
+    ///     }
+    /// ```
     pub fn analyze(&self) -> RtTreeAnalyzer<'_> {
         RtTreeAnalyzer::new(self)
     }
-
+    /// Builds the runtime tree from the project
     pub fn build(project: Project) -> Result<RuntimeTreeStarter, TreeError> {
         let (file, name) = &project.main;
         let root = project.find_root(name, file)?;
@@ -204,13 +248,71 @@ impl RuntimeTree {
             actions,
         })
     }
+    /// Returns the node by id
     pub fn node(&self, id: &RNodeId) -> RtResult<&RNode> {
         self.nodes.get(id).ok_or(RuntimeError::uex(format!(
             "the node {id} is not found in the rt tree"
         )))
     }
 
+    /// find the max given id in the tree
     pub fn max_id(&self) -> RNodeId {
         self.nodes.keys().max().cloned().unwrap_or_default()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::runtime::args::RtArgs;
+    use crate::runtime::rtree::rnode::FlowType::{Fallback, Root, Sequence};
+    use crate::runtime::rtree::rnode::RNode::{Flow, Leaf};
+    use crate::runtime::rtree::rnode::RNodeName::{Lambda, Name};
+    use crate::runtime::rtree::RuntimeTree;
+    use crate::tree::project::Project;
+    use std::collections::{HashMap, HashSet};
+
+    #[test]
+    fn smoke() {
+        let project = Project::build_from_text(
+            r#"
+          import "std::actions"
+          impl action();
+          root main fallback{
+                sequence {
+                    action()
+                    success()
+                }
+            }        
+        "#
+            .to_string(),
+        )
+        .unwrap();
+
+        let st_tree = RuntimeTree::build(project).unwrap();
+
+        assert_eq!(
+            st_tree.std_actions,
+            HashSet::from_iter(vec!["success".to_string()])
+        );
+        assert_eq!(
+            st_tree.actions,
+            HashSet::from_iter(vec!["action".to_string(), "success".to_string()])
+        );
+        assert_eq!(st_tree.tree.nodes.len(), 5);
+        assert_eq!(st_tree.tree.root, 1);
+        assert_eq!(st_tree.tree.max_id(), 5);
+        assert_eq!(
+            st_tree.tree.nodes,
+            HashMap::from_iter(vec![
+                (5, Leaf(Name("success".to_string()), RtArgs(vec![]))),
+                (2, Flow(Fallback, Lambda, RtArgs(vec![]), vec![3])),
+                (3, Flow(Sequence, Lambda, RtArgs(vec![]), vec![4, 5])),
+                (
+                    1,
+                    Flow(Root, Name("main".to_string()), RtArgs(vec![]), vec![2])
+                ),
+                (4, Leaf(Name("action".to_string()), RtArgs(vec![])))
+            ])
+        );
     }
 }

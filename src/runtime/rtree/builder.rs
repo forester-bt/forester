@@ -3,6 +3,36 @@ use crate::runtime::rtree::rnode::{DecoratorType, FlowType, RNode, RNodeId, RNod
 use crate::runtime::rtree::RuntimeTree;
 use crate::runtime::{RtResult, RuntimeError};
 use std::collections::{HashMap, HashSet};
+
+/// The builder for the runtime tree.
+/// It is used to build the runtime tree from the tree definition.
+/// The builder is used in the tree definition macros.
+///
+/// # Example
+/// ```
+///     use forester_rs::runtime::args::RtArgs;
+///     use forester_rs::runtime::rtree::builder::RtNodeBuilder;
+///     use forester_rs::runtime::rtree::builder::RtTreeBuilder;
+///     use forester_rs::runtime::rtree::rnode::FlowType;
+///     use forester_rs::runtime::rtree::rnode::RNodeName;
+///     use forester_rs::*;
+///
+///     #[test]
+///     fn tree() {
+///         let mut rtb = RtTreeBuilder::new();
+///
+///         let flow = flow!(fallback node_name!("root"), args!();
+///             flow!(sequence node_name!("seq"), args!();
+///                  action!(node_name!("action1"))
+///             ),
+///            action!(node_name!("action2"))
+///         );
+///
+///         rtb.add_as_root(flow);
+///         let tree = rtb.build().unwrap().0;
+///         
+///     }
+/// ```
 #[derive(Debug)]
 pub struct RtTreeBuilder {
     pub root: Option<RNodeId>,
@@ -12,6 +42,8 @@ pub struct RtTreeBuilder {
 }
 
 impl RtTreeBuilder {
+    /// Builds the runtime tree from the builder
+    /// Returns the runtime tree and the set of action names
     pub fn build(self) -> RtResult<(RuntimeTree, HashSet<String>)> {
         let root = self
             .root
@@ -38,6 +70,7 @@ impl RtTreeBuilder {
             actions: HashSet::new(),
         }
     }
+    /// Creates the builder with the initial root id value
     pub fn new_from(from: RNodeId) -> Self {
         Self {
             root: None,
@@ -53,22 +86,26 @@ impl RtTreeBuilder {
             RtChild::Node(nb) => self.add(nb),
         }
     }
-
+    /// Generate a new id and adds the node to the builder  and returns its id
     pub fn add(&mut self, node_b: RtNodeBuilder) -> RNodeId {
         let id = self.next();
         self.set(node_b, id);
         id
     }
+
+    /// Generate a new id and adds the node to the builder , sets it as root and returns its id
     pub fn add_as_root(&mut self, node_b: RtNodeBuilder) -> RNodeId {
         let id = self.add(node_b);
         self.root = Some(id.clone());
         id
     }
 
+    /// sets the root node id
     pub fn root(&mut self, id: RNodeId) {
         self.root = Some(id);
     }
 
+    /// Sets the node with the given id
     pub fn set(&mut self, node_b: RtNodeBuilder, id: RNodeId) {
         match node_b {
             RtNodeBuilder::Leaf(n, args) => {
@@ -93,12 +130,14 @@ impl RtTreeBuilder {
             }
         }
     }
+    /// Sets the node with the given id as root
     pub fn set_as_root(&mut self, node_b: RtNodeBuilder, id: RNodeId) {
         self.set(node_b, id.clone());
         self.root = Some(id)
     }
 }
 
+/// The builder for the runtime tree node.
 pub enum RtNodeBuilder {
     Leaf(RNodeName, RtArgs),
     Decorator(DecoratorType, RtArgs, Box<RtChild>),
@@ -116,7 +155,8 @@ impl RtNodeBuilder {
         RtNodeBuilder::Flow(t, name, args, children)
     }
 }
-
+/// The child of the runtime tree node.
+/// It can be either the id of the node or the node builder that will be transformed later
 pub enum RtChild {
     Id(RNodeId),
     Node(RtNodeBuilder),
@@ -151,15 +191,39 @@ mod tests {
             root node_name!(), args!();
             flow!(fallback node_name!(), args!(); action!()),
             flow!(sequence node_name!(), args!(arg!("a", rt_num!(i 1)));
-                action!(node_name!("a")), action!()
+                action!(node_name!("a")),
+                decorator!(inverter args!(), action!())
             )
 
         ));
         let (tree, _) = b.build().unwrap();
-        Visualizer::rt_tree_svg_to_file(
-            &tree,
-            PathBuf::from(r#"C:\projects\forester\tools\cli\1.svg"#),
+
+        let nodes = tree
+            .iter()
+            .map(|(id, node)| {
+                let node = match node {
+                    RNode::Leaf(n, args) => "action".to_string(),
+                    RNode::Flow(t, n, args, children) => {
+                        format!("{t}")
+                    }
+                    RNode::Decorator(t, args, child) => {
+                        format!("{t}")
+                    }
+                };
+                (id, node)
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(
+            nodes,
+            vec![
+                (1, "root".to_string()),
+                (2, "fallback".to_string()),
+                (4, "sequence".to_string()),
+                (3, "action".to_string()),
+                (5, "action".to_string()),
+                (6, "inverter".to_string()),
+                (7, "action".to_string())
+            ]
         )
-        .unwrap();
     }
 }

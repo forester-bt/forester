@@ -8,8 +8,8 @@
 /// use forester_rs::*;
 /// use forester_rs::runtime::args::{RtArgs, RtArgument, RtValue};
 /// use forester_rs::runtime::args::RtValueNumber;
-///
-/// fn test1(){
+/// #[test]
+/// fn test(){
 ///      assert_eq!(
 ///             args!(arg!("a" , rt_str!("a")), arg!("b" , rt_num!(i 1))),
 ///             RtArgs(vec![
@@ -51,8 +51,8 @@ macro_rules! args {
 /// use forester_rs::*;
 /// use forester_rs::runtime::args::{RtArgument, RtValue};
 /// use forester_rs::runtime::args::RtValueNumber;
-///
-/// fn test1(){
+/// #[test]
+/// fn test(){
 ///      let x = arg!("a" , rt_array![rt_num!(i 1), rt_str!("a")]);
 ///         assert_eq!(
 ///             x,
@@ -69,7 +69,7 @@ macro_rules! args {
 /// use forester_rs::runtime::args::{RtArgument, RtValue};
 /// use forester_rs::runtime::args::RtValueNumber;
 ///
-///  fn test2(){
+///  fn test(){
 ///         assert_eq!(
 ///             arg!("a" , rt_obj!{
 ///                 "l" => rt_array![rt_str!("a"),rt_str!("b")]
@@ -192,7 +192,7 @@ macro_rules! rt_obj {
 /// use forester_rs::runtime::args::RtValueNumber;
 /// use forester_rs::runtime::rtree::rnode::{FlowType, RNodeName};
 ///
-///  fn test2(){
+///  fn test(){
 ///         assert_eq!(
 ///           node_name!(),
 ///           RNodeName::Lambda  
@@ -234,11 +234,11 @@ macro_rules! node_name {
 /// use forester_rs::runtime::rtree::builder::RtNodeBuilder;
 /// use forester_rs::runtime::rtree::rnode::RNodeName;
 ///
-///  fn test2(){
+///  fn test(){
 ///         let action = action!();
 ///         let action = action!(node_name!("name"));
 ///         let action = action!(node_name!("name"), args!());
-///
+///         
 /// }
 ///
 /// ```
@@ -273,7 +273,7 @@ macro_rules! action {
 /// use forester_rs::runtime::rtree::builder::RtNodeBuilder;
 /// use forester_rs::runtime::rtree::rnode::{FlowType, RNodeName};
 ///
-///  fn test2(){
+///  fn test(){
 ///         
 ///         let flow_with_enlist = flow!(fallback node_name!(), args!();
 ///                         action!(),
@@ -382,7 +382,7 @@ macro_rules! flow {
 /// use forester_rs::runtime::rtree::builder::RtNodeBuilder;
 /// use forester_rs::runtime::rtree::rnode::{FlowType,DecoratorType, RNodeName};
 ///
-///  fn test2(){
+///  fn test(){
 ///         
 ///         let decorator = decorator!(
 ///                         inverter args!(),

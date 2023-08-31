@@ -18,6 +18,13 @@ use std::fmt::{Display, Formatter};
 
 pub type RtAKey = String;
 
+/// The structure that represents the number type in runtime.
+/// # Notes
+/// The number can be represented in different formats:
+/// - `Int` - the integer number
+/// - `Float` - the floating point number
+/// - `Hex` - the hexadecimal number
+/// - `Binary` - the binary number
 #[derive(Debug, PartialEq, Clone, Deserialize, Serialize)]
 pub enum RtValueNumber {
     Int(i64),
@@ -36,6 +43,17 @@ impl From<Number> for RtValueNumber {
         }
     }
 }
+/// The structure that represents the value type in runtime.
+/// The value type is a value in BlackBoard or a message.
+/// # Notes
+/// The value can be represented in different formats:
+/// - `String` - the string value
+/// - `Bool` - the boolean value
+/// - `Array` - the array of values
+/// - `Object` - the object of values
+/// - `Number` - the number value
+/// - `Pointer` - the pointer to the value in BlackBoard (or to parent arguments)
+/// - `Call` - the call to the tree (for the higher order trees)
 #[derive(Debug, PartialEq, Clone)]
 pub enum RtValue {
     String(String),
@@ -68,6 +86,8 @@ pub struct RtValueCast {
 }
 
 impl RtValueCast {
+    /// tries to convert the value to the given type but
+    /// considers the value as a pointer to the value in BlackBoard
     pub fn with_ptr(self) -> RtResult<RtValue> {
         self.v.with_ptr(self.ctx)
     }
@@ -84,13 +104,16 @@ impl RtValueCast {
     pub fn float(self) -> RtResult<Option<f64>> {
         self.with_ptr().map(RtValue::as_float)
     }
-    pub fn vec<Map, To>(self, map: Map) -> RtResult<Option<Vec<To>>>
+    /// tries to convert to vec and map each element
+    pub fn map_vec<Map, To>(self, map: Map) -> RtResult<Option<Vec<To>>>
     where
         Map: Fn(RtValue) -> To,
     {
         self.with_ptr().map(|v| v.as_vec(map))
     }
-    pub fn map<Map, To>(self, map: Map) -> RtResult<Option<HashMap<String, To>>>
+
+    /// tries to convert obj to map
+    pub fn map_obj<Map, To>(self, map: Map) -> RtResult<Option<HashMap<String, To>>>
     where
         Map: Fn((String, RtValue)) -> (String, To),
     {
@@ -98,7 +121,6 @@ impl RtValueCast {
     }
 }
 
-/// The structure that represents the message type in runtime.
 impl RtValue {
     pub fn int(i: i64) -> Self {
         RtValue::Number(RtValueNumber::Int(i))
@@ -106,7 +128,7 @@ impl RtValue {
     pub fn str(s: String) -> Self {
         RtValue::String(s)
     }
-
+    /// cast to the given type with the consideration of the pointers
     pub fn cast(self, ctx: TreeContextRef) -> RtValueCast {
         RtValueCast { v: self, ctx }
     }
@@ -163,6 +185,8 @@ impl RtValue {
         }
     }
 
+    /// tries to resolve the pointer to the value in BlackBoard,
+    /// or if it is already a scalar value, then returns it
     pub fn with_ptr(self, ctx: TreeContextRef) -> RtResult<RtValue> {
         match self {
             RtValue::Pointer(p) => {
@@ -252,7 +276,8 @@ impl Display for RtArgs {
         Ok(())
     }
 }
-
+/// The structure that represents the pair of the argument name and the value.
+/// It is used in bb to store the arguments of the tree.
 #[derive(Debug, PartialEq, Clone, Deserialize, Serialize)]
 pub struct RtArgument {
     name: RtAKey,
@@ -317,22 +342,27 @@ impl RtArgument {
         }
     }
 
+    /// tries to convert the argument to the given type
+    /// # Notes
+    /// If the argument is a pointer, then the value will be taken from parent arguments
+    /// according to the parent parameters
     pub fn try_from(
         a: ArgumentRhs,
         p: Param,
         parent_args: Arguments,
         parent_params: Params,
-    ) -> Result<Option<RtArgument>, TreeError> {
+    ) -> Result<RtArgument, TreeError> {
         RtArgument::validate_type(a.clone(), p.clone().tpe)?;
         match &a {
             ArgumentRhs::Id(id) => match find_arg_value(id, &parent_params, &parent_args).ok() {
-                None => Ok(Some(RtArgument::new(p.name, RtValue::Pointer(id.clone())))),
+                None => Ok(RtArgument::new(p.name, RtValue::Pointer(id.clone()))),
                 Some(v) => RtArgument::try_from(v, p, Arguments::default(), Params::default()),
             },
-            ArgumentRhs::Mes(m) => Ok(Some(RtArgument::new(p.name, m.clone().into()))),
-            ArgumentRhs::Call(c) => Ok(Some(RtArgument::new(p.name, RtValue::Call(c.clone())))),
+            ArgumentRhs::Mes(m) => Ok(RtArgument::new(p.name, m.clone().into())),
+            ArgumentRhs::Call(c) => Ok(RtArgument::new(p.name, RtValue::Call(c.clone()))),
         }
     }
+    /// validates the type of the argument in accordance with the type of the parameter
     pub fn validate_type(arg: ArgumentRhs, param: MesType) -> Result<(), TreeError> {
         let error = |lhs: &str, rhs: &str| {
             Err(cerr(format!(

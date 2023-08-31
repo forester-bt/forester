@@ -2,6 +2,7 @@ use crate::runtime::{RtResult, RuntimeError};
 use crate::tree::project::{FileName, Project, TreeName};
 use std::path::PathBuf;
 
+/// The builder to build Forester from the tree files.
 pub struct FileForesterBuilder {
     main_file: Option<FileName>,
     main: Option<TreeName>,

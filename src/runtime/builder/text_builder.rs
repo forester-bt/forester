@@ -1,6 +1,7 @@
 use crate::runtime::{RtResult, RuntimeError};
 use crate::tree::project::Project;
 
+/// The builder to build Forester from the given string.
 pub struct TextForesterBuilder {
     text: Option<String>,
 }
