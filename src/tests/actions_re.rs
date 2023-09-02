@@ -6,10 +6,14 @@ use crate::runtime::builder::ServerPort;
 use crate::runtime::context::{TreeContextRef, TreeRemoteContextRef};
 use crate::runtime::env::RtEnv;
 use crate::runtime::forester::serv::start;
+use crate::runtime::TickResult;
 use crate::tests::{fb, turn_on_logs};
 use crate::tracer::Tracer;
+use serde_json::json;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
+use wiremock::matchers::{method, path};
+use wiremock::{Mock, MockServer, ResponseTemplate};
 
 #[test]
 fn smoke_serv() {
@@ -68,4 +72,32 @@ fn remote_serv() {
     let result = f.run();
 
     println!("{:?}", result);
+}
+
+#[test]
+fn remote() {
+    let mut env = RtEnv::try_new().unwrap();
+
+    let port = env.runtime.block_on(async {
+        let mock_server = MockServer::start().await;
+
+        let mut resp = ResponseTemplate::new(200);
+        let resp = resp.set_body_json(json!("Success"));
+
+        Mock::given(method("POST"))
+            .and(path("/action"))
+            .respond_with(resp)
+            .mount(&mock_server)
+            .await;
+        mock_server.address().port()
+    });
+
+    let action = RemoteHttpAction::new(format!("http://localhost:{}/action", port));
+    let mut fb = fb("actions/simple_http");
+    fb.rt_env(env);
+    fb.register_remote_action("a", action);
+
+    let mut f = fb.build().unwrap();
+    let result = f.run();
+    assert_eq!(result, Ok(TickResult::success()));
 }

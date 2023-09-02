@@ -103,3 +103,54 @@ impl Visualizer {
         .map_err(|e| TreeError::VisualizationError(e.to_string()))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::runtime::rtree::RuntimeTree;
+    use crate::tree::project::Project;
+    use crate::visualizer::Visualizer;
+
+    #[test]
+    fn smoke() {
+        let p = Project::build_from_text(
+            r#"
+        
+        impl a1();
+        fallback one(a:tree){
+            a1()
+            a(..)
+        }
+        
+        root main sequence {
+            one(a1())
+            a1()
+        }
+        
+        "#
+            .to_string(),
+        )
+        .unwrap();
+        let tree = RuntimeTree::build(p).unwrap().tree;
+
+        let result = Visualizer::dot(&tree).unwrap();
+
+        assert_eq!(
+            result,
+            r#"strict digraph  {
+    1[label="(1) root
+main ",shape=rect,color=black]
+    1 -> 2 
+    2[label="(2) sequence",shape=rect,color=darkred]
+    2 -> 3 
+    2 -> 4 
+    3[label="(3) fallback
+one (a=a1(<>))",shape=rect,color=blue]
+    3 -> 5 
+    3 -> 6 
+    4[label="(4) a1 ",shape=component,color=green]
+    5[label="(5) a1 ",shape=component,color=green]
+    6[label="(6) a1 ",shape=component,color=green]
+}"#
+        );
+    }
+}

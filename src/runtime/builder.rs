@@ -244,8 +244,10 @@ impl ForesterBuilder {
                 } = RuntimeTree::build(project)?;
                 let mut impl_actions = cfb.actions;
                 for action_name in std_actions.iter() {
-                    let action = BuilderBuiltInActions::action_impl(action_name)?;
-                    impl_actions.insert(action_name.clone(), action);
+                    impl_actions.insert(
+                        action_name.clone(),
+                        BuilderBuiltInActions::action_impl(action_name)?,
+                    );
                 }
                 (
                     tree,
@@ -406,6 +408,7 @@ impl CommonForesterBuilder {
     }
 }
 
+/// The struct defines the information of the server.
 #[derive(Debug, Clone)]
 pub enum ServerPort {
     None,

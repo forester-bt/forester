@@ -16,6 +16,7 @@ use serde::{Deserialize, Deserializer, Serialize};
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 
+/// Just a Key class for the arguments that represents the key in BB
 pub type RtAKey = String;
 
 /// The structure that represents the number type in runtime.

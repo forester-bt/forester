@@ -8,6 +8,15 @@ use std::fs;
 use std::path::PathBuf;
 
 pub type BBKey = String;
+
+/// Representation of the value in the cell.
+/// It can be locked or unlocked.
+///
+/// It can be taken which means that the cell is empty but the value was there.
+/// It can be useful in the operation for cas or in the communication between the threads.
+///
+/// If it is locked it can not be read or taken.
+/// If it is unlocked it can be read or taken.
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub enum BBValue {
     Locked(RtValue),
@@ -32,7 +41,7 @@ pub struct BlackBoard {
 }
 
 impl BlackBoard {
-    /// Locks the value preventing from any actions including reading writing or taking.
+    /// Locks the value preventing from any actions that can modify the value including writing or taking.
     /// If the value is absent or taken will return an error
     ///
     /// #Notes:
@@ -51,6 +60,7 @@ impl BlackBoard {
         }
     }
 
+    /// Checks if the value is locked.
     #[allow(clippy::wrong_self_convention)]
     pub fn is_locked(&mut self, key: BBKey) -> RtResult<bool> {
         Ok(match self.storage.get(&key) {
@@ -63,7 +73,7 @@ impl BlackBoard {
     /// Unlock the value enabling any actions including reading writing or taking.
     ///
     /// #Notes:
-    /// If it asent or taken returns ok.
+    /// If it absent or taken returns ok.
     pub fn unlock(&mut self, key: BBKey) -> RtOk {
         let v = self.storage.get(&key);
         match v {
@@ -78,14 +88,13 @@ impl BlackBoard {
     /// Gets the element by key
     ///
     /// #Notes:
-    /// - If locked returns error
     /// - If taken returns none
+    /// - If locked returns the value.
     pub fn get(&self, key: BBKey) -> Result<Option<&RtValue>, RuntimeError> {
         let v = self.storage.get(&key);
         match v {
-            Some(Locked(_)) => Err(RuntimeError::bb(format!("the key {key} is locked"))),
+            Some(Locked(v)) | Some(Unlocked(v)) => Ok(Some(v)),
             Some(Taken) | None => Ok(None),
-            Some(Unlocked(v)) => Ok(Some(v)),
         }
     }
 
@@ -112,7 +121,7 @@ impl BlackBoard {
     /// Check if the key is presented
     ///
     /// #Notes:
-    /// Not considered is it is taken or locked.
+    /// Not considered whether it is taken or locked.
     pub fn contains(&self, key: BBKey) -> Result<bool, RuntimeError> {
         Ok(self.storage.contains_key(&key))
     }
@@ -141,7 +150,7 @@ impl BlackBoard {
 impl BlackBoard {
     /// Drops the snapshot to the file in json format.
     pub fn dump(&self, file: PathBuf) -> RtOk {
-        let dump = serde_json::to_string(self)?;
+        let dump = self.text_dump()?;
         debug!(target:"bb", "dump snapshot to the file {:?}",file);
         fs::write(file, dump)?;
 
@@ -150,9 +159,13 @@ impl BlackBoard {
 
     /// Prints the snapshot in json format.
     pub fn print_dump(&self) -> RtOk {
-        let dump = serde_json::to_string_pretty(self)?;
+        let dump = self.text_dump()?;
         info!("{dump}");
         Ok(())
+    }
+    pub fn text_dump(&self) -> RtResult<String> {
+        let dump = serde_json::to_string_pretty(self)?;
+        Ok(dump)
     }
 
     /// Loads the snapshot from the file.

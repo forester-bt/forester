@@ -8,6 +8,7 @@ use tokio::task::JoinError;
 use tokio::task::JoinHandle;
 
 /// Runtime to execute async tasks.
+/// It is not supposed to be used directly (except maybe for remote action execution)
 /// Based on the tokio Runtime
 pub struct RtEnv {
     pub runtime: Runtime,

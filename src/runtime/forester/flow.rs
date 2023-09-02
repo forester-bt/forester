@@ -26,14 +26,17 @@ pub(crate) fn read_len_or_zero(args: RtArgs) -> i64 {
         .and_then(|v| v.as_int())
         .unwrap_or(0)
 }
-
+// read and compare the cursor and prev_cursor
+// if both are present, return the max
+// if only one is present, return it
+// if none is present, return 0
 pub(crate) fn read_cursor(tick_args: RtArgs) -> RtResult<i64> {
+    let p_cursor = tick_args.find(CURSOR.to_string()).and_then(RtValue::as_int);
     let cursor = tick_args
         .find(P_CURSOR.to_string())
         .and_then(RtValue::as_int);
-    let prev_cursor = tick_args.find(CURSOR.to_string()).and_then(RtValue::as_int);
 
-    match (cursor, prev_cursor) {
+    match (cursor, p_cursor) {
         (Some(lhs), Some(rhs)) => Ok(max(lhs, rhs)),
         (None, Some(v)) | (Some(v), None) => Ok(v),
         _ => Ok(0),

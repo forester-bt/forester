@@ -79,3 +79,35 @@ impl Simulator {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::runtime::builder::ForesterBuilder;
+    use crate::runtime::TickResult;
+    use crate::simulator::builder::SimulatorBuilder;
+
+    #[test]
+    fn smoke_all_success() {
+        let mut sb = SimulatorBuilder::new();
+        let mut fb = ForesterBuilder::from_text();
+        fb.text(
+            r#"
+         
+         impl action1();   
+         impl action2();   
+            
+        root main sequence {
+                action1()
+                action2()
+        }
+        "#
+            .to_string(),
+        );
+        sb.forester_builder(fb);
+
+        let mut simulator = sb.build().unwrap();
+        let result = simulator.run().unwrap();
+
+        assert_eq!(result, TickResult::Success);
+    }
+}

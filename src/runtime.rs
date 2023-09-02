@@ -118,6 +118,9 @@ pub fn to_fail<V, E: Debug>(r: Result<V, E>) -> RtResult<V> {
     }
 }
 impl RuntimeError {
+    /// Create a new runtime error
+    /// The error is not expected to be recovered
+    /// Therefore, the runtime will not stop and the result will be converted to failure
     pub fn fail(reason: String) -> Self {
         Self::RecoveryToFailure(reason)
     }

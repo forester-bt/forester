@@ -97,3 +97,33 @@ impl Impl for SimAction {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::runtime::action::Impl;
+    use crate::runtime::args::RtArgs;
+    use crate::runtime::blackboard::BlackBoard;
+    use crate::runtime::context::TreeContextRef;
+    use crate::runtime::trimmer::TrimmingQueue;
+    use crate::runtime::TickResult;
+    use crate::simulator::actions::SimAction;
+    use crate::tracer::Tracer;
+    use std::sync::{Arc, Mutex};
+
+    #[test]
+    fn smoke() {
+        let action = SimAction::Success(0);
+        let result = action.tick(
+            RtArgs(vec![]),
+            TreeContextRef::new(
+                Arc::new(Mutex::new(BlackBoard::default())),
+                Arc::new(Mutex::new(Tracer::default())),
+                0,
+                Arc::new(Mutex::new(TrimmingQueue::default())),
+            ),
+        );
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), TickResult::Success);
+    }
+}

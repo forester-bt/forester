@@ -46,7 +46,6 @@ pub trait TrimValidation {
 }
 
 /// Check if some subtasks that are about to replace are running
-///
 struct RunningVal;
 impl TrimValidation for RunningVal {
     fn validate(&self, snapshot: &TreeSnapshot, request: &RequestBody) -> TrimValidationResult {

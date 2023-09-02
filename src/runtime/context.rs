@@ -15,6 +15,13 @@ use std::sync::Mutex;
 
 pub type Timestamp = usize;
 
+/// The remote context ref for the remote actions.
+/// Since, the context is supposed to help to send
+/// the information to the remote action it does not have the actual copy of the blackboard and tracer.
+///
+/// #Note
+/// The port defines the port of the http server
+/// that is used to send the information to the remote action(current http server).
 pub struct TreeRemoteContextRef<'a> {
     pub curr_ts: Timestamp,
     pub port: u16,
@@ -27,6 +34,9 @@ impl<'a> TreeRemoteContextRef<'a> {
     }
 }
 
+/// The context ref for the tree to help the actions to implement the logic.
+/// The context ref is supposed to be used by the actions
+/// to get the information about the current state of the tree.
 #[derive(Clone)]
 pub struct TreeContextRef {
     bb: Arc<Mutex<BlackBoard>>,
@@ -40,12 +50,15 @@ impl TreeContextRef {
         TreeContextRef::new(ctx.bb.clone(), ctx.tracer.clone(), ctx.curr_ts, trimmer)
     }
 
+    /// A pointer to tracer struct.
     pub fn trace(&self, ev: String) -> RtOk {
         self.tracer.lock()?.trace(self.curr_ts, Event::Custom(ev))
     }
+    /// A pointer to bb struct.
     pub fn bb(&self) -> Arc<Mutex<BlackBoard>> {
         self.bb.clone()
     }
+    /// A current tick.
     pub fn current_tick(&self) -> Timestamp {
         self.curr_ts
     }
@@ -65,6 +78,7 @@ impl TreeContextRef {
 }
 
 /// The runtime context.
+/// It is used to store the information about the current state of the tree.
 pub struct TreeContext {
     /// Storage
     bb: Arc<Mutex<BlackBoard>>,

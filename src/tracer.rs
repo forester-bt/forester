@@ -313,3 +313,28 @@ impl Trace {
         )
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::runtime::args::RtArgs;
+    use crate::runtime::context::RNodeState;
+
+    #[test]
+    fn smoke_mem() {
+        use crate::tracer::{Event, Tracer, TracerConfig};
+        let mut tracer = Tracer::create(TracerConfig::default()).unwrap();
+        tracer.trace(1, Event::NextTick).unwrap();
+        tracer
+            .trace(2, Event::NewState(1, RNodeState::Success(RtArgs(vec![]))))
+            .unwrap();
+
+        let res = tracer.to_string();
+        assert_eq!(
+            res,
+            r#"[1]next tick
+[2]1 : Success()
+"#
+            .replace("\n", "\r\n")
+        )
+    }
+}
