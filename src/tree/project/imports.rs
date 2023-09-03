@@ -49,11 +49,13 @@ impl ImportMap {
         Ok(map)
     }
 
+    /// find the tree in the project considering the aliases and the definitions
     pub fn find<'a>(
         &'a self,
         key: &TreeName,
         project: &'a Project,
     ) -> Result<(&'a Tree, &'a FileName), TreeError> {
+        // try to find by name
         if let Some(file) = self.trees.get(key) {
             project
                 .find_tree(file, key)
@@ -61,6 +63,7 @@ impl ImportMap {
                 .ok_or(cerr(format!(
                     "the call {key} can not be found in the file {file} "
                 )))
+            // try to find by alias
         } else if let Some(id) = self.aliases.get(key) {
             let file = self
                 .trees
@@ -73,6 +76,7 @@ impl ImportMap {
                     "the call {key} can not be found in the file {file} "
                 )))
         } else {
+            // try to find bluntly everywhere. Probably this is not the best idea
             self.files
                 .iter()
                 .flat_map(|f| project.files.get(f))

@@ -7,6 +7,11 @@ use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 
+/// Just a pair of name and type
+/// This is a representation of a tree parameter
+/// # Example
+/// `sequence tree(a:string){...}`
+/// and a:string is a param
 #[derive(Clone, Debug, PartialEq)]
 pub struct Param {
     pub name: Key,
@@ -33,10 +38,14 @@ impl Params {
     }
 }
 
+/// The right part of the argument
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub enum ArgumentRhs {
+    /// A pointer to the bb key or the parameter from the parent tree
     Id(Key),
+    /// A scalar value
     Mes(Message),
+    /// A call to a tree
     Call(Call),
 }
 
@@ -72,6 +81,7 @@ impl Display for ArgumentRhs {
     }
 }
 
+/// An argument is a pair of name and value or just a value
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub enum Argument {
     Assigned(Key, ArgumentRhs),
@@ -132,6 +142,8 @@ pub struct Arguments {
     pub args: Vec<Argument>,
 }
 
+/// this is a plain representation of the argument type
+/// to avoid several levels of nesting
 pub enum ArgumentsType {
     Unnamed,
     Named,

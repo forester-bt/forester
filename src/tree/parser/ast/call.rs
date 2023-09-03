@@ -1,13 +1,44 @@
 use crate::tree::parser::ast::arg::Arguments;
 use crate::tree::parser::ast::{Key, TreeType};
 use serde::{Deserialize, Serialize};
+use std::fmt::{Debug, Display, Formatter};
 
-#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
+/// A call to a tree
+#[derive(Clone, PartialEq, Deserialize, Serialize)]
 pub enum Call {
+    /// An invocation of a tree like 'root main { invocation()}'
     Invocation(Key, Arguments),
+    /// An Higher order invocation of a tree like 'root main { ho-invocation(..)}'
     HoInvocation(Key),
+    /// A lambda call like 'root main { sequence {...} }'
     Lambda(TreeType, Calls),
+    /// A decorator call like 'root main { decorator(..) child() }'
     Decorator(TreeType, Arguments, Box<Call>),
+}
+
+impl Debug for Call {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Call::Invocation(id, args) => write!(f, "{}({})", id, args),
+            Call::HoInvocation(id) => write!(f, "{}(..)", id),
+            Call::Lambda(tpe, calls) => {
+                let _ = write!(f, "{} :", tpe);
+                let mut elems = f.debug_list();
+                for call in calls.elems.iter() {
+                    elems.entry(call);
+                }
+                let _ = elems.finish();
+                Ok(())
+            }
+            Call::Decorator(tpe, args, call) => {
+                let _ = write!(f, "{}({}) :", tpe, args);
+                let mut elems = f.debug_list();
+                elems.entry(call);
+                elems.finish();
+                Ok(())
+            }
+        }
+    }
 }
 
 impl Call {

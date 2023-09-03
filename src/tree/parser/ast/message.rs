@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 
+/// A gathering structure for numeric scalar values
 #[derive(Debug, Copy, Clone, PartialEq, Deserialize, Serialize)]
 pub enum Number {
     Int(i64),
@@ -11,9 +12,11 @@ pub enum Number {
     Binary(isize),
 }
 
+/// A gathering structure for string scalar values
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct StringLit(pub String);
 
+/// A gathering structure for boolean scalar values
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub enum Bool {
     True,
@@ -29,6 +32,7 @@ impl Into<bool> for Bool {
     }
 }
 
+/// A gathering structure for scalar values
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub enum Message {
     Num(Number),

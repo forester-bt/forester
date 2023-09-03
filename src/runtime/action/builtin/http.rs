@@ -103,7 +103,7 @@ mod tests {
         assert_eq!(r, Ok(TickResult::success()));
 
         assert_eq!(
-            bb.clone().lock().unwrap().get("k".to_string()),
+            bb.lock().unwrap().get("k".to_string()),
             Ok(Some(&RtValue::str("OK".to_string())))
         );
     }

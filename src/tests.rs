@@ -3,6 +3,7 @@ mod actions_re;
 mod args;
 mod decorator;
 mod flow;
+mod parser;
 mod project;
 mod rtree;
 mod simulator;

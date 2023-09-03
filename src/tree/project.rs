@@ -20,6 +20,7 @@ pub type AliasName = String;
 ///   - `root` is a root of the project. Every import relates to it.
 ///   - `main` is a pointer to the file and definition when the tree is started.
 ///   - `files` is a map of the files
+///   - `std` is a set of the standard actions
 #[derive(Debug, Default, Clone)]
 pub struct Project {
     pub root: PathBuf,
@@ -45,6 +46,16 @@ impl<'a> Project {
         self.files.get(file).and_then(|f| f.definitions.get(tree))
     }
 
+    /// build the project with the given root and main file
+    ///
+    /// Suppose we have the following structure:
+    /// ```no-run
+    /// - root_folder
+    ///     - folder    
+    ///         - main.tree # root tree_name
+    ///     - other.tree
+    /// ```
+    /// Setting up the rooot as root_folder allows pulling in the other.tree file.
     pub fn build_with_root(
         main_file: FileName,
         main_call: TreeName,
@@ -65,6 +76,9 @@ impl<'a> Project {
         project.parse_file(root, main_file)?;
         Ok(project)
     }
+    /// build the project with the given main file and root.
+    /// The root will be found in the main file.
+    /// If there are more than one root in the main file, the first one will be used.
     pub fn build(main_file: FileName, root: PathBuf) -> Result<Project, TreeError> {
         let mut project = Project {
             root: root.clone(),
@@ -92,6 +106,12 @@ impl<'a> Project {
         project.main = (main_file, main_call);
         Ok(project)
     }
+    /// build the project with the given text.
+    /// The root will be empty.
+    ///
+    /// # Note
+    /// If there are some imports to the other files they will not work
+    /// unless the imports are absolute,
     pub fn build_from_text(text: String) -> Result<Project, TreeError> {
         let mut project = Project {
             root: PathBuf::new(),

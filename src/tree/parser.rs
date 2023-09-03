@@ -15,6 +15,23 @@ use parsit::{seq, token, wrap};
 use std::collections::HashMap;
 use std::str::FromStr;
 
+/// just a parser for the tree language
+///
+/// # Example of the language
+/// ```tree
+/// // built in library        
+/// import "std:actions"
+///
+/// r_fallback retry_with_delay(delay:num, attempts:num,trg:tree){
+///     retry(attempts) fallback {
+///         trg(..)
+///         wait(delay)
+///         fail()
+///     }
+///     wait(delay)
+/// }
+/// ```
+
 pub struct Parser<'a> {
     inner: Parsit<'a, Token>,
 }

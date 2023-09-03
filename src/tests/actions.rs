@@ -1,11 +1,6 @@
-use crate::runtime::action::builtin::remote::RemoteHttpAction;
 use crate::runtime::args::RtValue;
-use crate::runtime::env::RtEnv;
 use crate::runtime::TickResult;
 use crate::tests::fb;
-use serde_json::json;
-use wiremock::matchers::{method, path};
-use wiremock::{Mock, MockServer, ResponseTemplate};
 
 #[test]
 fn builtin_actions() {
@@ -26,4 +21,11 @@ fn lock_unlock() {
     let guard = f.bb.lock().unwrap();
     let k = guard.get("k".to_string()).unwrap();
     assert_eq!(k, Some(&RtValue::str("v2".to_string())))
+}
+
+#[test]
+fn builtin_http_get() {
+    let mut fb = fb("actions/simple_http");
+    let mut f = fb.build().unwrap();
+    assert_eq!(f.run(), Ok(TickResult::success()));
 }
