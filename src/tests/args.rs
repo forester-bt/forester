@@ -13,15 +13,14 @@ use crate::visualizer::Visualizer;
 
 #[test]
 fn pointers() {
-    let mut fb = fb("units/pointers");
-    let mut forester = fb.build().unwrap();
+    let mut forester = fb("units/pointers").build().unwrap();
     let result = forester.run().unwrap();
 
     assert_eq!(result, TickResult::success())
 }
 
 #[test]
-fn inter_args_func_test() {
+fn inter_args_func() {
     struct T;
     impl Impl for T {
         fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {

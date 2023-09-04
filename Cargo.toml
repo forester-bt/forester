@@ -30,3 +30,4 @@ chrono = "0.4.26"
 [dev-dependencies]
 # ...
 wiremock = "0.5.19"
+forester-http="0.1.0"

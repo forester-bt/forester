@@ -1,12 +1,23 @@
+use crate::runtime::action::builtin::remote::RemoteActionRequest;
 use crate::runtime::builder::ForesterBuilder;
+use crate::runtime::env::RtEnv;
+use crate::runtime::TickResult;
 use crate::simulator::builder::SimulatorBuilder;
 use crate::simulator::config::{
     Action, BbConfig, HttpServ, SimProfile, SimProfileConfig, TracerSimConfig,
 };
 use crate::simulator::Simulator;
 use crate::tests::{test_folder, turn_on_logs};
+use axum::http::StatusCode;
+use axum::response::IntoResponse;
+use axum::routing::{get, post};
+use axum::{Json, Router, ServiceExt};
+use forester_http::client::ForesterHttpClient;
 use graphviz_rust::attributes::quadtree::fast;
+use serde_json::json;
 use std::collections::HashMap;
+use std::io::Write;
+use std::net::SocketAddr;
 use std::path::PathBuf;
 
 #[test]
@@ -144,11 +155,35 @@ fn smoke() {
     sb.forester_builder(fb);
 
     let mut sim = sb.build().unwrap();
-    let tracer = &sim.forester.tracer;
-    sim.run().unwrap();
+    let result = sim.run().unwrap();
+    assert_eq!(result, TickResult::Success);
 }
+
+#[ignore]
 #[test]
 fn smoke_remote() {
+    let env = RtEnv::try_new().unwrap();
+    let _ = env.runtime.spawn_blocking(|| async {
+        async fn handler(Json(req): Json<RemoteActionRequest>) -> impl IntoResponse {
+            let url = req.clone().serv_url;
+
+            let client = ForesterHttpClient::new(url);
+            let _ = client.put("tt".to_string(), json!("OK")).await;
+
+            (StatusCode::OK, Json::from(TickResult::Success))
+        }
+
+        let routing = Router::new()
+            .route("/", get(|| async { "OK" }))
+            .route("/action", post(handler))
+            .into_make_service();
+
+        axum::Server::bind(&SocketAddr::from(([127, 0, 0, 1], 10000)))
+            .serve(routing)
+            .await
+            .unwrap();
+    });
+
     turn_on_logs();
     let mut sb = SimulatorBuilder::new();
 
@@ -158,6 +193,7 @@ fn smoke_remote() {
     sb.profile(PathBuf::from("sim.yaml"));
 
     let mut fb = ForesterBuilder::from_fs();
+    fb.rt_env(env);
     fb.main_file("main.tree".to_string());
     fb.root(root);
 
@@ -174,8 +210,10 @@ fn smoke_remote() {
     );
 }
 
-// #[test]
+#[test]
 fn text() {
+    test_folder("simulator/smoke");
+
     let mut fb = ForesterBuilder::from_text();
     let mut sb = SimulatorBuilder::new();
     fb.text(
@@ -199,10 +237,21 @@ impl task(config: object);
         .to_string(),
     );
     sb.forester_builder(fb);
-    let sim = test_folder("simulator/smoke/sim_absolute.yaml");
 
-    sb.profile(sim);
+    let buf = test_folder("simulator/smoke/gen");
+    let gen = buf.as_path().to_str().unwrap();
+
+    let sim = test_folder("simulator/smoke/sim_absolute.yaml"); // <_Absolute_path_>
+    let new_sim_profile = test_folder("simulator/smoke/sim_absolute_t.yaml"); // <_Absolute_path_>
+    let sim_abs = std::fs::read_to_string(sim)
+        .unwrap()
+        .replace("<_Absolute_path_>", gen);
+    let mut file = std::fs::File::create(new_sim_profile.clone()).unwrap();
+    write!(file, "{}", sim_abs).unwrap();
+
+    sb.profile(new_sim_profile);
 
     let mut sim = sb.build().unwrap();
-    sim.run().unwrap();
+    let result = sim.run().unwrap();
+    assert_eq!(result, TickResult::Success);
 }

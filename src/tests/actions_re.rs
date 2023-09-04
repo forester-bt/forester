@@ -27,7 +27,7 @@ fn smoke_serv() {
     let stop = info.stop_cmd;
 
     rt.spawn(async {
-        tokio::time::sleep(Duration::from_secs(2)).await;
+        tokio::time::sleep(Duration::from_secs(1)).await;
         stop.send(()).unwrap();
     });
 

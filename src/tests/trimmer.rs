@@ -8,7 +8,7 @@ use crate::runtime::rtree::rnode::RNodeName;
 use crate::runtime::rtree::RuntimeTree;
 use crate::runtime::trimmer::task::{RtTreeTrimTask, TrimTask};
 use crate::runtime::trimmer::{RequestBody, TreeSnapshot, TrimRequest};
-use crate::runtime::RtResult;
+use crate::runtime::{RtResult, TickResult};
 use crate::simulator::actions::SimAction;
 use crate::tests::{test_folder, turn_on_logs};
 use crate::tracer::{Tracer, TracerConfig};
@@ -31,8 +31,7 @@ fn smoke() {
     let mut forester = fb.build().unwrap();
     forester.add_trim_task(TrimTask::rt_tree(Test));
     let result = forester.run_until(Some(100)).unwrap();
-    Visualizer::rt_tree_svg_to_file(&forester.tree, root.clone().join("main_new.svg")).unwrap();
-    println!("{result}");
+    assert_eq!(result, TickResult::Success);
 }
 
 struct Test;
@@ -67,7 +66,7 @@ impl RtTreeTrimTask for Test {
 }
 
 #[test]
-fn smoke2() {
+fn naive() {
     turn_on_logs();
     let root = test_folder("trimmer/naive");
 
@@ -77,7 +76,7 @@ fn smoke2() {
     fb.main_file("main.tree".to_string());
     fb.root(root.clone());
 
-    fb.register_sync_action("pick", SimAction::Random(1000));
+    fb.register_sync_action("pick", SimAction::Random(100));
     fb.register_sync_action("validate", SimAction::Success(100));
     fb.register_sync_action("place", SimAction::Success(100));
 
@@ -85,11 +84,9 @@ fn smoke2() {
     for (n, i) in forester.tree.iter() {
         println!("{n} {:?}", i)
     }
-    Visualizer::rt_tree_svg_to_file(&forester.tree, root.clone().join("main_init.svg")).unwrap();
     forester.add_trim_task(TrimTask::rt_tree(Test));
     let result = forester.run_until(Some(100)).unwrap();
-    Visualizer::rt_tree_svg_to_file(&forester.tree, root.clone().join("main_new.svg")).unwrap();
-    println!("{result}");
+    assert_eq!(result, TickResult::Success);
 }
 
 struct SmokeTest;

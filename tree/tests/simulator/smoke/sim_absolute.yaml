@@ -1,8 +1,8 @@
 config:
-  trace: c:/x/gen/main.log
-  graph: c:/x/gen/main.svg
+  trace: <_Absolute_path_>\main.log
+  graph: <_Absolute_path_>\main.svg
   bb:
-    dump: c:/x/gen/bb.json
+    dump: <_Absolute_path_>\bb.json
   max_ticks: 10
 
 actions:

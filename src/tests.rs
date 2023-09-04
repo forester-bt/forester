@@ -4,7 +4,6 @@ mod args;
 mod decorator;
 mod flow;
 mod parser;
-mod project;
 mod rtree;
 mod simulator;
 mod tracer;

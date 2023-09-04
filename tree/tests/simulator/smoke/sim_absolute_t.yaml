@@ -1,0 +1,13 @@
+config:
+  trace: C:\projects\forester\tree/tests\simulator/smoke/gen\main.log
+  graph: C:\projects\forester\tree/tests\simulator/smoke/gen\main.svg
+  bb:
+    dump: C:\projects\forester\tree/tests\simulator/smoke/gen\bb.json
+  max_ticks: 10
+
+actions:
+  -
+    name: task
+    stub: failure
+    params:
+      delay: 100

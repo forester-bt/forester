@@ -8,5 +8,5 @@ fn smoke() {
     let scr = fs::read_to_string(path).unwrap();
     let parser = Parser::new(scr.as_str()).unwrap();
     let result = parser.parse().unwrap();
-    println!("{:#?}", result);
+    assert_eq!(result.0.len(), 6);
 }

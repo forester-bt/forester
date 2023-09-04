@@ -416,12 +416,25 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "00b0228411908ca8685dba7fc2cdd70ec9990a6e753e89b6ac91a84c40fbaf4b"
 
 [[package]]
+name = "forester-http"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5455b088f01cbd725c6dd44c1d3556ead02321dea36e6aca86b7ce8ccf87769c"
+dependencies = [
+ "reqwest",
+ "serde",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
 name = "forester-rs"
 version = "0.2.4"
 dependencies = [
  "axum",
  "chrono",
  "env_logger",
+ "forester-http",
  "graphviz-rust",
  "hyper",
  "itertools",

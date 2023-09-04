@@ -1,15 +1,21 @@
 #[cfg(test)]
 mod tests {
+    use crate::flow;
     use crate::runtime::args::{RtArgs, RtArgument, RtValue};
+    use crate::runtime::rtree::builder::RtTreeBuilder;
+    use crate::runtime::rtree::rnode::FlowType::{RSequence, Root, Sequence};
     use crate::runtime::rtree::rnode::RNodeName::Name;
-    use crate::runtime::rtree::rnode::{FlowType, RNode};
+    use crate::runtime::rtree::rnode::{FlowType, RNode, RNodeName};
     use crate::runtime::rtree::RuntimeTree;
-    use crate::tree::parser::ast::call::Call;
+    use crate::runtime::trimmer::task::TrimTask::RtTree;
+    use crate::tree::parser::ast::call::{Call, Calls};
+    use crate::tree::parser::ast::TreeType;
     use crate::tree::project::Project;
     use crate::visualizer::Visualizer;
     use graphviz_rust::attributes::arrowhead::vee;
     use std::collections::HashMap;
     use std::path::PathBuf;
+    use std::vec;
 
     pub fn test_tree(root_dir: &str, root_file: &str) -> RuntimeTree {
         let mut root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
@@ -22,7 +28,6 @@ mod tests {
     #[test]
     fn ho_op() {
         let tree = test_tree("units/ho", "main.tree");
-        println!("{:?}", tree);
         assert_eq!(
             tree,
             RuntimeTree {
@@ -62,23 +67,69 @@ mod tests {
     #[test]
     fn lambda_ho_op() {
         let tree = test_tree("units/ho_lambda", "main.tree");
-        println!("{:?}", tree);
+        let test_tree = RuntimeTree {
+            root: 1,
+            nodes: HashMap::from_iter(vec![
+                (
+                    1,
+                    RNode::flow(Root, "main".to_string(), RtArgs::default(), vec![2]),
+                ),
+                (
+                    2,
+                    RNode::flow(
+                        RSequence,
+                        "x".to_string(),
+                        RtArgs(vec![RtArgument::new(
+                            "t".to_string(),
+                            RtValue::Call(Call::Lambda(
+                                TreeType::Sequence,
+                                Calls {
+                                    elems: vec![Call::invocation("success", Default::default())],
+                                },
+                            )),
+                        )]),
+                        vec![3],
+                    ),
+                ),
+                (3, RNode::lambda(Sequence, vec![4])),
+                (
+                    4,
+                    RNode::Leaf(Name("success".to_string()), Default::default()),
+                ),
+            ]),
+        };
+        assert_eq!(tree, test_tree);
     }
 
     #[test]
     fn std_action() {
         let tree = test_tree("actions", "std_actions.tree");
-        println!("{:?}", tree);
+        let test_tree = RuntimeTree {
+            root: 1,
+            nodes: HashMap::from_iter(vec![
+                (
+                    1,
+                    RNode::flow(Root, "main".to_string(), RtArgs::default(), vec![2]),
+                ),
+                (
+                    2,
+                    RNode::Leaf(
+                        RNodeName::Name("fail".to_string()),
+                        RtArgs(vec![RtArgument::new(
+                            "reason".to_string(),
+                            RtValue::String("test".to_string()),
+                        )]),
+                    ),
+                ),
+            ]),
+        };
+        assert_eq!(tree, test_tree);
     }
 
     #[test]
     fn ho_tree() {
         let tree = test_tree("ho_tree", "main.tree");
-        println!("{:?}", tree);
-    }
-    #[test]
-    fn smoke() {
-        let tree = test_tree("plain_project", "main.tree");
-        println!("{:?}", tree);
+        let max_id = tree.max_id();
+        assert_eq!(max_id, 11);
     }
 }
