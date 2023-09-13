@@ -63,6 +63,7 @@ pub enum RuntimeError {
     BlackBoardError(String),
     MultiThreadError(String),
     TrimmingError(String),
+    ExportError(String),
 }
 
 impl Debug for RuntimeError {
@@ -105,6 +106,10 @@ impl Debug for RuntimeError {
             }
             RuntimeError::TrimmingError(e) => {
                 let _ = f.write_str("optimization error: ");
+                let _ = f.write_str(e.as_str());
+            }
+            RuntimeError::ExportError(e) => {
+                let _ = f.write_str("export error: ");
                 let _ = f.write_str(e.as_str());
             }
         }

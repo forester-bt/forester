@@ -192,7 +192,7 @@ impl RuntimeTree {
                         }
                         None => {
                             let (tree, file) = import_map.find(&name, &project)?;
-                            if file == "std::actions" {
+                            if file.contains("::") {
                                 std_actions.insert(tree.name.clone());
                             }
                             let rt_args = to_rt_args(

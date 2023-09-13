@@ -2,13 +2,13 @@ pub mod builtin;
 pub mod custom_builder;
 pub mod file_builder;
 pub mod text_builder;
+pub mod ros_nav;
 
 use crate::get_pb;
 use crate::runtime::action::builtin::remote::RemoteHttpAction;
 use crate::runtime::action::keeper::{ActionImpl, ActionKeeper};
 use crate::runtime::action::{Action, ActionName, Impl, ImplAsync, ImplRemote};
 use crate::runtime::blackboard::BlackBoard;
-use crate::runtime::builder::builtin::BuilderBuiltInActions;
 use crate::runtime::builder::custom_builder::CustomForesterBuilder;
 use crate::runtime::builder::file_builder::FileForesterBuilder;
 use crate::runtime::builder::text_builder::TextForesterBuilder;
@@ -246,7 +246,7 @@ impl ForesterBuilder {
                 for action_name in std_actions.iter() {
                     impl_actions.insert(
                         action_name.clone(),
-                        BuilderBuiltInActions::action_impl(action_name)?,
+                        builtin::action_impl(action_name)?,
                     );
                 }
                 (
@@ -269,7 +269,7 @@ impl ForesterBuilder {
                 } = RuntimeTree::build(project)?;
                 let mut impl_actions = cfb.actions;
                 for action_name in std_actions.iter() {
-                    let action = BuilderBuiltInActions::action_impl(action_name)?;
+                    let action = builtin::action_impl(action_name)?;
                     impl_actions.insert(action_name.clone(), action);
                 }
                 (

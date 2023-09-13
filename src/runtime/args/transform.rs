@@ -68,6 +68,7 @@ pub fn to_dec_rt_args(
         DecoratorType::Delay => one_num(&args),
     }
 }
+
 /// It extracts and validates the arguments for decorators since the contract is fixed.
 /// The parent attributes  are used to find the arguments
 /// that comes from parents as pointer the from `parent(x:num) retry(x) action()`
@@ -78,45 +79,45 @@ pub fn to_rt_args(
     p_args: Arguments,
     p_params: Params,
 ) -> Result<RtArgs, TreeError> {
-    if args.args.len() != params.params.len() {
-        Err(cerr(format!(
-            "the call {} doesn't have the same number of arguments and parameters",
-            name
-        )))
-    } else {
-        let mut rt_args: Vec<RtArgument> = vec![];
-        match args.get_type()? {
-            // find by the index according to the parameters
-            ArgumentsType::Unnamed => {
-                for (a, p) in args.args.into_iter().zip(params.params) {
-                    // if the that is a pointer we need to check parent also.
-                    let rhs = a.value().clone();
-                    let rt_arg = RtArgument::try_from(rhs, p, p_args.clone(), p_params.clone())
-                        .map_err(|r| r.modify(|s| format!("tree: {}, {}", name, s)))?;
-                    rt_args.push(rt_arg);
-                }
-                Ok(RtArgs(rt_args))
-            }
-            // find by the name according to the parameters
-            ArgumentsType::Named => {
-                let param_map: HashMap<String, Param> =
-                    HashMap::from_iter(params.params.into_iter().map(|p| (p.name.clone(), p)));
-
-                for a in args.args {
-                    let p = a.name().and_then(|n| param_map.get(n)).ok_or(cerr(format!(
-                        "the argument {a} does not correspond to the definition"
-                    )))?;
-                    // if the that is a pointer we need to check parent also.
-                    let rhs = a.value().clone();
-                    let rt_arg =
-                        RtArgument::try_from(rhs, p.clone(), p_args.clone(), p_params.clone())
-                            .map_err(|r| r.modify(|s| format!("tree: {}, {}", name, s)))?;
-                    rt_args.push(rt_arg);
-                }
-                Ok(RtArgs(rt_args))
-            }
-            ArgumentsType::Empty => Ok(RtArgs(rt_args)),
+    let mut rt_args: Vec<RtArgument> = vec![];
+    match args.get_type()? {
+        // we can't traverse the parameters if some of them are skipped
+        ArgumentsType::Unnamed if args.args.len() != params.params.len() => {
+            Err(cerr(format!(
+                "the call {} doesn't have the same number of arguments and parameters",
+                name
+            )))
         }
+        // find by the index according to the parameters
+        ArgumentsType::Unnamed => {
+            for (a, p) in args.args.into_iter().zip(params.params) {
+                // if the that is a pointer we need to check parent also.
+                let rhs = a.value().clone();
+                let rt_arg = RtArgument::try_from(rhs, p, p_args.clone(), p_params.clone())
+                    .map_err(|r| r.modify(|s| format!("tree: {}, {}", name, s)))?;
+                rt_args.push(rt_arg);
+            }
+            Ok(RtArgs(rt_args))
+        }
+        // find by the name according to the parameters
+        ArgumentsType::Named => {
+            let param_map: HashMap<String, Param> =
+                HashMap::from_iter(params.params.into_iter().map(|p| (p.name.clone(), p)));
+
+            for a in args.args {
+                let p = a.name().and_then(|n| param_map.get(n)).ok_or(cerr(format!(
+                    "the argument {a} does not correspond to the definition"
+                )))?;
+                // if the that is a pointer we need to check parent also.
+                let rhs = a.value().clone();
+                let rt_arg =
+                    RtArgument::try_from(rhs, p.clone(), p_args.clone(), p_params.clone())
+                        .map_err(|r| r.modify(|s| format!("tree: {}, {}", name, s)))?;
+                rt_args.push(rt_arg);
+            }
+            Ok(RtArgs(rt_args))
+        }
+        ArgumentsType::Empty => Ok(RtArgs(rt_args)),
     }
 }
 

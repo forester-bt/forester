@@ -5,7 +5,7 @@ use crate::tree::parser::ast::Key;
 use crate::tree::{cerr, TreeError};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
-use std::fmt::{Display, Formatter};
+use std::fmt::{Display, Formatter, Write};
 
 /// Just a pair of name and type
 /// This is a representation of a tree parameter
@@ -16,6 +16,12 @@ use std::fmt::{Display, Formatter};
 pub struct Param {
     pub name: Key,
     pub tpe: MesType,
+}
+
+impl Display for Param {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}:{}", self.name, self.tpe)
+    }
 }
 
 impl Param {
@@ -192,4 +198,17 @@ pub enum MesType {
     String,
     Bool,
     Tree,
+}
+
+impl Display for MesType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            MesType::Num => write!(f, "num"),
+            MesType::Array => write!(f, "array"),
+            MesType::Object => write!(f, "object"),
+            MesType::String => write!(f, "string"),
+            MesType::Bool => write!(f, "bool"),
+            MesType::Tree => write!(f, "tree"),
+        }
+    }
 }

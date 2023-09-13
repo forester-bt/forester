@@ -15,6 +15,7 @@ pub mod simulator;
 pub mod tracer;
 pub mod tree;
 pub mod visualizer;
+pub mod exporter;
 
 use crate::runtime::RuntimeError;
 #[cfg(test)]

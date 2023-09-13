@@ -3,13 +3,13 @@ pub mod imports;
 
 use crate::read_file;
 use crate::runtime::action::ActionName;
-use crate::runtime::builder::builtin::BuilderBuiltInActions;
 use crate::tree::parser::ast::{FileEntity, Tree};
 use crate::tree::parser::Parser;
 use crate::tree::project::file::File;
 use crate::tree::{cerr, TreeError};
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
+use crate::runtime::builder::{builtin, ros_nav};
 
 pub type FileName = String;
 pub type TreeName = String;
@@ -176,11 +176,24 @@ impl<'a> Project {
     }
 }
 fn file_to_str(root: PathBuf, file: FileName) -> Result<String, TreeError> {
-    if file == "std::actions" {
-        Ok(BuilderBuiltInActions::builtin_actions_file())
+
+    if file.contains("::"){
+        let mut parts:Vec<_> = file.split("::").collect();
+        if parts.len() != 2{
+            return Err(TreeError::IOError(format!("invalid file name: {}", file)))
+        }else {
+            match parts.as_slice() {
+                ["std","actions"] => Ok(builtin::builtin_actions_file()),
+                ["ros","nav2"] => Ok(ros_nav::ros_actions_file()),
+                _ => Err(TreeError::IOError(format!("invalid file name: {}", file)))
+            }
+        }
+
     } else {
         let mut path = root;
         path.push(file);
         Ok(read_file(&path)?)
     }
+
 }
+
