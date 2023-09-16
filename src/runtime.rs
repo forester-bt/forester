@@ -168,3 +168,12 @@ impl<T> From<PoisonError<MutexGuard<'_, T>>> for RuntimeError {
         RuntimeError::MultiThreadError(value.to_string())
     }
 }
+
+impl From<quick_xml::Error> for RuntimeError {
+    fn from(value: quick_xml::Error) -> Self {
+        RuntimeError::IOError(format!("export to xml error: {}",value.to_string()))
+    }
+}
+
+
+

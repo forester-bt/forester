@@ -1,3 +1,4 @@
 import "std::actions"
 
 root main fail("test")
+

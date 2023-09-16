@@ -1,0 +1,7 @@
+<root main_tree_to_execute="main">
+  <BehaviorTree ID="main">
+    <ComputePathToPose goal="goal" path="path" planner_id="GridBased"/>
+    <GoalUpdated/>
+    <ClearEntireCostmap name="ClearGlobalCostmap-Context" service_name="global_costmap/clear_entirely_global_costmap"/>
+  </BehaviorTree>
+</root>

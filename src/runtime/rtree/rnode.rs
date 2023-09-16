@@ -95,6 +95,7 @@ impl RNodeName {
         }
     }
 }
+
 /// A runtime node is a node that is used to execute a tree.
 /// It can be a leaf, a flow or a decorator.
 /// A leaf is a node that executes an action.
@@ -122,6 +123,14 @@ impl RNode {
             _ => false,
         }
     }
+    /// check if the node is a leaf
+    pub fn is_action(&self) -> bool {
+        match self {
+            RNode::Leaf(..) => true,
+            _ => false,
+        }
+    }
+
     /// check if the node has the given type
     pub fn is_decorator(&self, tpe: &DecoratorType) -> bool {
         match self {

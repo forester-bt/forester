@@ -9,6 +9,7 @@ mod simulator;
 mod tracer;
 mod trimmer;
 mod vizualizer;
+mod nav;
 
 use crate::runtime::builder::file_builder::FileForesterBuilder;
 use crate::runtime::builder::ForesterBuilder;

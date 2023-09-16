@@ -10,7 +10,7 @@ use crate::tree::parser::ast::message::Message;
 
 pub(super) fn action_impl(action: &ActionName) -> RtResult<Action> {
     match action.as_str() {
-        "_" => Ok(Action::sync(ReturnResult::success())),
+        _ if ros_actions().contains_key(action) => Ok(Action::sync(ReturnResult::success())),
 
         _ => Err(RuntimeError::UnImplementedAction(format!(
             "action {action} is absent in the library"
@@ -19,12 +19,31 @@ pub(super) fn action_impl(action: &ActionName) -> RtResult<Action> {
 }
 
 pub fn ros_actions_file() -> String {
-    let actions = ros_actions().iter().map(|(_, v)| v.to_string()).join("\n");
-    format!(r#"
-// Ros specific actions and decorators.
+    let actions = ros_actions().iter().map(|(_, v)| v.to_string()).join("\n\n");
+    format!(r#"// Ros specific actions and decorators.
 // The actions are accessible using the import 'import "ros::nav2"'
 
-// Actions
+// --- Control nodes ---
+
+// PipelineSequence - Sequence of actions that are executed in a pipeline fashion.
+// In Forester, it is represented as a sequence
+
+// RoundRobin - Sequence of actions that are executed in a round robin fashion.
+// In Forester, it is represented as a fallback
+
+// RecoveryNode
+// The RecoveryNode is a control flow node with two children.
+// It returns SUCCESS if and only if the first child returns SUCCESS.
+// The second child will be executed only if the first child returns FAILURE.
+// If the second child SUCCEEDS, then the first child will be executed again.
+// The user can specify how many times the recovery actions should be taken before returning FAILURE.
+// In nav2, the RecoveryNode is included in Behavior Trees to implement recovery actions upon failures.
+// In Forester, it is represented as a decorator retry
+
+
+
+// --- Actions ---
+
 {actions}
 
 "#)
@@ -180,7 +199,7 @@ impl |header|;
         kv(RosAction::new(
             "ClearEntireCostmap".to_string(),
             vec![
-                RosParam::Input(Param::new("server_name", MesType::String)),
+                RosParam::Input(Param::new("service_name", MesType::String)),
                 RosParam::InputWithDefault(Param::new("server_timeout", MesType::Num), Message::float(10.0)),
             ],
             r#"
@@ -483,10 +502,10 @@ impl |header|;
                 RosParam::Input(Param::new("smoother_id", MesType::String)),
                 RosParam::InputWithDefault(Param::new("max_smoothing_duration", MesType::Num), Message::float(3.0)),
                 RosParam::InputWithDefault(Param::new("check_for_collisions", MesType::Bool), Message::bool(false)),
-                RosParam::Output(Param::new("smoothed_path", MesType::String) ),
-                RosParam::Output(Param::new("smoothing_duration", MesType::Num) ),
-                RosParam::Output(Param::new("was_completed", MesType::Bool) ),
-                RosParam::Output(Param::new("error_code_id", MesType::Num) ),
+                RosParam::Output(Param::new("smoothed_path", MesType::String)),
+                RosParam::Output(Param::new("smoothing_duration", MesType::Num)),
+                RosParam::Output(Param::new("was_completed", MesType::Bool)),
+                RosParam::Output(Param::new("error_code_id", MesType::Num)),
             ],
             r#"
 // Invokes the SmoothPath action API in the smoother server to smooth a given path plan.
@@ -498,17 +517,347 @@ impl |header|;
 impl |header|;
 "#.to_string(),
         )),
+        kv(RosAction::new(
+            "GoalReached".to_string(),
+            vec![
+                RosParam::Input(Param::new("goal", MesType::String)),
+                RosParam::InputWithDefault(Param::new("global_frame", MesType::String), Message::str("map")),
+                RosParam::InputWithDefault(Param::new("robot_base_frame", MesType::String), Message::str("base_link")),
+            ],
+            r#"
+// Checks the distance to the goal, if the distance to goal is less than the pre-defined threshold,
+// the tree returns SUCCESS, otherwise it returns FAILURE.
+// <GoalReached goal="{goal}" global_frame="map" robot_base_frame="base_link"/>
+|params_doc|
+cond |header|;
+"#.to_string(),
+        )),
+        kv(RosAction::new(
+            "TransformAvailable".to_string(),
+            vec![
+                RosParam::InputWithDefault(Param::new("child", MesType::String), Message::str("")),
+                RosParam::InputWithDefault(Param::new("parent", MesType::String), Message::str("")),
+            ],
+            r#"
+// Checks if a TF transform is available. Returns failure if it cannot be found.
+// Once found, it will always return success. Useful for initial condition checks.
+// <TransformAvailable parent="odom" child="base_link"/>
+|params_doc|
+cond |header|;
+"#.to_string(),
+        )),
+        kv(RosAction::new(
+            "DistanceTraveled".to_string(),
+            vec![
+                RosParam::InputWithDefault(Param::new("distance", MesType::Num), Message::float(1.0)),
+                RosParam::InputWithDefault(Param::new("global_frame", MesType::String), Message::str("map")),
+                RosParam::InputWithDefault(Param::new("robot_base_frame", MesType::String), Message::str("base_link")),
+            ],
+            r#"
+// Node that returns success when a configurable distance has been traveled.
+// <DistanceTraveled distance="0.8" global_frame="map" robot_base_frame="base_link"/>
+|params_doc|
+cond |header|;
+"#.to_string(),
+        )),
+        kv(RosAction::new(
+            "GoalUpdated".to_string(),
+            vec![],
+            r#"
+// Checks if the global navigation goal has changed in the blackboard.
+// Returns failure if the goal is the same, if it changes, it returns success.
+// <GoalUpdated/>
+|params_doc|
+cond |header|;
+"#.to_string(),
+        )),
+        kv(RosAction::new(
+            "GloballyUpdatedGoal".to_string(),
+            vec![],
+            r#"
+// Checks if the global navigation goal has changed in the blackboard.
+// Returns failure if the goal is the same, if it changes, it returns success.
+//
+// This node differs from the GoalUpdated by retaining the state of the current goal/goals
+// throughout each tick of the BehaviorTree such that it will update on any “global” change to the goal.
+// <GlobalUpdatedGoal/>
+|params_doc|
+cond |header|;
+"#.to_string(),
+        )),
+        kv(RosAction::new(
+            "InitialPoseReceived".to_string(),
+            vec![],
+            r#"
+// Node that returns success when the initial pose is sent to AMCL via /initial_pose`.
+// <InitialPoseReceived/>
+|params_doc|
+cond |header|;
+"#.to_string(),
+        )),
+        kv(RosAction::new(
+            "IsStuck".to_string(),
+            vec![],
+            r#"
+// Determines if the robot is not progressing towards the goal.
+// If the robot is stuck and not progressing, the condition returns SUCCESS, otherwise it returns FAILURE.
+// <IsStuck/>
+|params_doc|
+cond |header|;
+"#.to_string(),
+        )),
+        kv(RosAction::new(
+            "TimeExpired".to_string(),
+            vec![
+                RosParam::InputWithDefault(Param::new("seconds", MesType::Num), Message::float(1.0)),
+            ],
+            r#"
+// Node that returns success when a time duration has passed
+// <TimeExpired seconds="1.0"/>
+|params_doc|
+cond |header|;
+"#.to_string(),
+        )),
+        kv(RosAction::new(
+            "IsBatteryLow".to_string(),
+            vec![
+                RosParam::InputWithDefault(Param::new("min_battery", MesType::Num), Message::float(0.5)),
+                RosParam::InputWithDefault(Param::new("is_voltage", MesType::Bool), Message::bool(false)),
+                RosParam::Input(Param::new("battery_topic", MesType::String)),
+            ],
+            r#"
+// Checks if battery is low by subscribing to a sensor_msgs/BatteryState topic and checking if battery percentage/voltage is below a specified minimum value. By default percentage (in range 0 to 1) is used to check for low battery.
+// Set the is_voltage parameter to true to use voltage.
+// Returns SUCCESS when battery percentage/voltage is lower than the specified value, FAILURE otherwise.
+// <IsBatteryLow min_battery="0.5" battery_topic="/battery_status" is_voltage="false"/>
+|params_doc|
+cond |header|;
+"#.to_string(),
+        )),
+        kv(RosAction::new(
+            "IsPathValid".to_string(),
+            vec![
+                RosParam::InputWithDefault(Param::new("server_timeout", MesType::Num), Message::float(10.0)),
+                RosParam::Input(Param::new("path", MesType::Object)),
+            ],
+            r#"
+// Checks to see if the global path is valid. If there is a obstacle along the path,
+// the condition returns FAILURE, otherwise it returns SUCCESS.
+// <IsPathValid server_timeout="10" path="{path}"/>
+|params_doc|
+cond |header|;
+"#.to_string(),
+        )),
+        kv(RosAction::new(
+            "AreErrorCodesPresent".to_string(),
+            vec![
+                RosParam::Input(Param::new("error_code", MesType::Num)),
+                RosParam::Input(Param::new("error_codes_to_check", MesType::Num)),
+            ],
+            r#"
+// Checks the if the provided error code matches any error code within a set.
+//
+// If the active error code is a match, the node returns SUCCESS. Otherwise, it returns FAILURE.
+// Error codes to check are defined in another port:
+// <AreErrorCodesPresent error_code="{error_code}" error_codes_to_check="{error_codes_to_check}"/>
+//
+// Error codes to check are defined to be 101, 107 and 119.
+// <AreErrorCodesPresent error_code="{error_code}" error_codes_to_check="101,107,119"/>
+|params_doc|
+cond |header|;
+"#.to_string(),
+        )),
+        kv(RosAction::new(
+            "WouldAControllerRecoveryHelp".to_string(),
+            vec![
+                RosParam::Input(Param::new("error_code", MesType::Num)),
+            ],
+            r#"
+// Checks if the active controller server error code is UNKNOWN, PATIENCE_EXCEEDED, FAILED_TO_MAKE_PROGRESS, or NO_VALID_CONTROL.
+//
+// If the active error code is a match, the node returns SUCCESS. Otherwise, it returns FAILURE.
+// <WouldAControllerRecoveryHelp error_code="{follow_path_error_code}"/>
+|params_doc|
+cond |header|;
+"#.to_string(),
+        )),
+        kv(RosAction::new(
+            "WouldAPlannerRecoveryHelp".to_string(),
+            vec![
+                RosParam::Input(Param::new("error_code", MesType::Num)),
+            ],
+            r#"
+// Checks if the active controller server error code is UNKNOWN, NO_VALID_CONTROL, or TIMEOUT.
+//
+// If the active error code is a match, the node returns SUCCESS. Otherwise, it returns FAILURE.
+// <WouldAPlannerRecoveryHelp  error_code="{compute_path_to_pose_error_code}"/>
+|params_doc|
+cond |header|;
+"#.to_string(),
+        )),
+        kv(RosAction::new(
+            "WouldASmootherRecoveryHelp".to_string(),
+            vec![
+                RosParam::Input(Param::new("error_code", MesType::Num)),
+            ],
+            r#"
+// Checks if the active controller server error code is UNKNOWN, TIMEOUT, FAILED_TO_SMOOTH_PATH,
+// or SMOOTHED_PATH_IN_COLLISION.
+//
+// If the active error code is a match, the node returns SUCCESS. Otherwise, it returns FAILURE.
+// <WouldASmootherRecoveryHelp   error_code="{smoother_error_code}"/>
+|params_doc|
+cond |header|;
+"#.to_string(),
+        )),
+        kv(RosAction::new(
+            "IsBatteryCharging".to_string(),
+            vec![
+                RosParam::Input(Param::new("battery_topic", MesType::String)),
+            ],
+            r#"
+// Checks if the battery is charging by subscribing
+// to a sensor_msgs/BatteryState topic and checking
+// if the power_supply_status is POWER_SUPPLY_STATUS_CHARGING.
+// Returns SUCCESS in that case, FAILURE otherwise.
+// <IsBatteryCharging battery_topic="/battery_status"/>
+|params_doc|
+cond |header|;
+"#.to_string(),
+        )),
+        kv(RosAction::new(
+            "RateController".to_string(),
+            vec![
+                RosParam::InputWithDefault(Param::new("hz", MesType::Num), Message::float(10.0)),
+                RosParam::Input(Param::new("sub", MesType::Tree)),
+            ],
+            r#"
+// A node that throttles the tick rate for its child. The tick rate can be supplied to the node as a parameter.
+// The node returns RUNNING when it is not ticking its child.
+// Currently, in the navigation stack, the RateController is used to adjust the rate
+// at which the ComputePathToPose and GoalReached nodes are ticked.
+// <RateController hz="1.0">
+//     <!--Add tree components here--->
+// </RateController>
+|params_doc|
+sequence |header| sub(..)
+"#.to_string(),
+        )),
+        kv(RosAction::new(
+            "DistanceController".to_string(),
+            vec![
+                RosParam::InputWithDefault(Param::new("distance", MesType::Num), Message::float(1.0)),
+                RosParam::InputWithDefault(Param::new("global_frame", MesType::String), Message::str("map")),
+                RosParam::InputWithDefault(Param::new("robot_base_frame", MesType::String), Message::str("base_link")),
+                RosParam::Input(Param::new("sub", MesType::Tree)),
+            ],
+            r#"
+// A node that controls the tick rate for its child based on the distance traveled.
+// The distance to be traveled before replanning can be supplied to the node as a parameter.
+// The node returns RUNNING when it is not ticking its child.
+// Currently, in the navigation stack, the DistanceController is used to adjust the rate
+// at which the ComputePathToPose and GoalReached nodes are ticked.
+// <DistanceController distance="0.5" global_frame="map" robot_base_frame="base_link">
+//   <!--Add tree components here--->
+// </DistanceController>
+|params_doc|
+sequence |header| sub(..)
+"#.to_string(),
+        )),
+        kv(RosAction::new(
+            "SpeedController".to_string(),
+            vec![
+                RosParam::InputWithDefault(Param::new("min_rate", MesType::Num), Message::float(0.1)),
+                RosParam::InputWithDefault(Param::new("max_rate", MesType::Num), Message::float(1.0)),
+                RosParam::InputWithDefault(Param::new("min_speed", MesType::Num), Message::float(0.0)),
+                RosParam::InputWithDefault(Param::new("max_speed", MesType::Num), Message::float(0.5)),
+                RosParam::InputWithDefault(Param::new("filter_duration", MesType::Num), Message::float(0.3)),
+                RosParam::Input(Param::new("sub", MesType::Tree)),
+            ],
+            r#"
+// A node that controls the tick rate for its child based on current robot speed.
+// The maximum and minimum replanning rates can be supplied to the node as parameters along with maximum and minimum speed.
+// The node returns RUNNING when it is not ticking its child.
+// Currently, in the navigation stack,
+// the SpeedController is used to adjust the rate at which the ComputePathToPose and GoalReached nodes are ticked.
+// <SpeedController min_rate="0.1" max_rate="1.0" min_speed="0.0" max_speed="0.5" filter_duration="0.3">
+//   <!--Add tree components here--->
+// </SpeedController>
+|params_doc|
+sequence |header| sub(..)
+"#.to_string(),
+        )),
+        kv(RosAction::new(
+            "GoalUpdater".to_string(),
+            vec![
+                RosParam::Input(Param::new("input_goal", MesType::Object)),
+                RosParam::Input(Param::new("output_goal", MesType::Object)),
+                RosParam::Input(Param::new("sub", MesType::Tree)),
+            ],
+            r#"
+// A custom control node, which updates the goal pose.
+// It subscribes to a topic in which it can receive an updated goal pose to use instead of the one commanded in action.
+// It is useful for dynamic object following tasks.
+// <GoalUpdater input_goal="{goal}" output_goal="{updated_goal}">
+//   <!--Add tree components here--->
+// </GoalUpdater>
+|params_doc|
+sequence |header| sub(..)
+"#.to_string(),
+        )),
+        kv(RosAction::new(
+            "PathLongerOnApproach".to_string(),
+            vec![
+                RosParam::Input(Param::new("path", MesType::Object)),
+                RosParam::InputWithDefault(Param::new("prox_len", MesType::Num), Message::float(3.0)),
+                RosParam::InputWithDefault(Param::new("length_factor", MesType::Num), Message::float(2.0)),
+                RosParam::Input(Param::new("sub", MesType::Tree)),
+            ],
+            r#"
+// This node checks if the newly generated global path is significantly larger
+// than the old global path in the user-defined robot’s goal proximity
+// and triggers their corresponding children.
+// This allows users to enact special behaviors before a robot attempts
+// to execute a path significantly longer than the prior path
+// when close to a goal (e.g. going around an dynamic obstacle
+// that may just need a few seconds to move out of the way).
+// <PathLongerOnApproach path="{path}" prox_len="3.0" length_factor="2.0">
+//   <!--Add tree components here--->
+// </PathLongerOnApproach>
+|params_doc|
+sequence |header| sub(..)
+"#.to_string(),
+        )),
+        kv(RosAction::new(
+            "SingleTrigger".to_string(),
+            vec![
+                RosParam::Input(Param::new("sub", MesType::Tree)),
+            ],
+            r#"
+// This node triggers its child only once and returns FAILURE for every succeeding tick.
+// <SingleTrigger>
+//   <!--Add tree components here--->
+// </SingleTrigger>
+|params_doc|
+sequence |header| sub(..)
+"#.to_string(),
+        )),
     ])
+}
+
+pub fn find_ros_action(name: &str) -> Option<RosAction> {
+    ros_actions().get(name).cloned()
 }
 
 fn kv(a: RosAction) -> (String, RosAction) {
     (a.name.clone(), a)
 }
 
+#[derive(Debug, Clone)]
 pub struct RosAction {
-    name: String,
-    params: Vec<RosParam>,
-    show: String,
+    pub name: String,
+    pub params: Vec<RosParam>,
+    pub show: String,
 }
 
 impl Display for RosAction {
@@ -555,7 +904,7 @@ impl RosAction {
     }
 }
 
-
+#[derive(Debug, Clone)]
 pub enum RosParam {
     Input(Param),
     InputWithDefault(Param, Message),

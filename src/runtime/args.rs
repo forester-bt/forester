@@ -281,8 +281,8 @@ impl Display for RtArgs {
 /// It is used in bb to store the arguments of the tree.
 #[derive(Debug, PartialEq, Clone, Deserialize, Serialize)]
 pub struct RtArgument {
-    name: RtAKey,
-    value: RtValue,
+    pub name: RtAKey,
+    pub value: RtValue,
 }
 
 impl Display for RtValueNumber {
