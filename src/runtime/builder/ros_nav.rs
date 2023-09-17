@@ -39,7 +39,7 @@ pub fn ros_actions_file() -> String {
 // The user can specify how many times the recovery actions should be taken before returning FAILURE.
 // In nav2, the RecoveryNode is included in Behavior Trees to implement recovery actions upon failures.
 // In Forester, it is represented as a decorator retry
-
+// Also there is a specific node RecoveryNode that is used in the nav2 Behavior Trees.
 
 
 // --- Actions ---
@@ -824,6 +824,26 @@ sequence |header| sub(..)
 // <PathLongerOnApproach path="{path}" prox_len="3.0" length_factor="2.0">
 //   <!--Add tree components here--->
 // </PathLongerOnApproach>
+|params_doc|
+sequence |header| sub(..)
+"#.to_string(),
+        )),
+        kv(RosAction::new(
+            "RecoveryNode".to_string(),
+            vec![
+                RosParam::InputWithDefault(Param::new("number_of_retries", MesType::Num), Message::int(1)),
+                RosParam::Input(Param::new("sub", MesType::Tree)),
+            ],
+            r#"
+// The RecoveryNode is a control flow node with two children.
+// It returns SUCCESS if and only if the first child returns SUCCESS.
+// The second child will be executed only if the first child returns FAILURE.
+// If the second child SUCCEEDS, then the first child will be executed again.
+// The user can specify how many times the recovery actions should be taken before returning FAILURE.
+// In nav2, the RecoveryNode is included in Behavior Trees to implement recovery actions upon failures.
+// <RecoveryNode number_of_retries="1">
+//     <!--Add tree components here--->
+// </RecoveryNode>
 |params_doc|
 sequence |header| sub(..)
 "#.to_string(),

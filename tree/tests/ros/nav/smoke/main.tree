@@ -1,8 +1,31 @@
 import "ros::nav2"
 
 
-root main sequence {
-    ComputePathToPose(goal=goal, path=path, planner_id="GridBased")
-    GoalUpdated()
-    ClearEntireCostmap(name="ClearGlobalCostmap-Context",service_name="global_costmap/clear_entirely_global_costmap")
+root MainTree RecoveryNode(number_of_retries = 6, name = "NavigateRecovery", sub = NavigateWithReplanning())
+
+sequence NavigateWithReplanning {
+    RateController(
+        hz = 1.0,
+        sub = RecoveryNode(
+            number_of_retries = 1,
+            name = "ComputePathToPose",
+            sub = retry(1) sequence {
+                ComputePathToPose(goal=goal,path=path,planner_id = "GridBased")
+                ComputePathToPoseRecoveryFallback()
+            }))
+    retry(1) sequence {
+        FollowPath(path=path,controller_id = "FollowPath")
+        FollowPathRecoveryFallback()
+    }
 }
+
+r_fallback ComputePathToPoseRecoveryFallback {
+    GoalUpdated()
+    ClearEntireCostmap(name = "ClearGlobalCostmap-Context", service_name = "global_costmap/clear_entirely_global_costmap")
+}
+r_fallback FollowPathRecoveryFallback {
+    GoalUpdated()
+    ClearEntireCostmap(name = "ClearLocalCostmap-Context", service_name = "local_costmap/clear_entirely_local_costmap")
+}
+
+

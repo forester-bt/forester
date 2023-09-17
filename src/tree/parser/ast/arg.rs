@@ -168,7 +168,7 @@ impl Arguments {
                 (Argument::Unassigned(_), Some(Unnamed)) => {}
                 _ => {
                     return Err(cerr(
-                        "the arguments should be either named ot unnamed but not a mix".to_string(),
+                        format!("the arguments ({}) should be either named ot unnamed but not a mix",self)
                     ))
                 }
             }

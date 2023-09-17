@@ -94,6 +94,13 @@ impl RNodeName {
             RNodeName::Alias(n, _) => Ok(n),
         }
     }
+    pub fn has_name(&self) -> bool {
+        match self {
+            RNodeName::Lambda => false,
+            RNodeName::Name(_) => true,
+            RNodeName::Alias(_, _) => true,
+        }
+    }
 }
 
 /// A runtime node is a node that is used to execute a tree.
