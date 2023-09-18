@@ -29,7 +29,7 @@
   - [Visualization](./viz.md)
   - [Tracing](./trace.md)
   - [Simulation](./sim.md)
-  - [Export to Ros Nav2](./ros_nav2.md)
+  - [Export to ROS Nav2](./ros_nav2.md)
 - [Examples](./f_examples.md)
 - [Tools](./tools.md)
   - [Intellij plugin](./intellij.md)

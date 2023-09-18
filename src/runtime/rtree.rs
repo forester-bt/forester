@@ -263,6 +263,7 @@ impl RuntimeTree {
         self.nodes.keys().max().cloned().unwrap_or_default()
     }
 
+    /// Converts the runtime tree into the ROS navigation xml file
     pub fn to_ros_nav(&self, xml: PathBuf) -> RtOk {
         ToRosNavConverter::new(&self, xml).convert()
     }

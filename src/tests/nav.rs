@@ -22,7 +22,7 @@ fn smoke() {
         <RateController hz="1">
           <RecoveryNode number_of_retries="1" name="ComputePathToPose">
             <RecoveryNode number_of_retries="1">
-              <PipelineSequence>
+              <PipelineSequence name="ComputePathWithFallback">
                 <ComputePathToPose goal="{goal}" path="{path}" planner_id="GridBased"/>
                 <ReactiveFallback name="ComputePathToPoseRecoveryFallback">
                   <GoalUpdated/>
@@ -33,7 +33,7 @@ fn smoke() {
           </RecoveryNode>
         </RateController>
         <RecoveryNode number_of_retries="1">
-          <PipelineSequence>
+          <PipelineSequence name="FollowPathWithFallback">
             <FollowPath path="{path}" controller_id="FollowPath"/>
             <ReactiveFallback name="FollowPathRecoveryFallback">
               <GoalUpdated/>
