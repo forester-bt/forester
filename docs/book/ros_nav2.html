@@ -193,6 +193,22 @@ The intermediate format is <a href="https://navigation.ros.org/behavior_trees/in
 <p>Every action can implicitly take a <code>name</code> parameter, which is used as the name of the action in the nav2 tree. 
 But the name parameter can be omitted also.</p>
 <p>Some of the actions take the subtree as a parameter. The parameter has a name <code>sub</code></p>
+<h3 id="retry"><a class="header" href="#retry">Retry</a></h3>
+<p>Retry is represented in two options:</p>
+<ul>
+<li><code>Retry</code> - the number of retries is specified  without a name like <code>retry(3)</code></li>
+<li><code>RecoveryNode</code> - the number of retries is specified with the default way like <code>RecoveryNode(number_of_retries = 3)</code>. 
+This becomes only way to convey the name of the node.</li>
+</ul>
+<pre><code class="language-f-tree">    RecoveryNode(
+            number_of_retries = 1,
+            name = &quot;ComputePathToPose&quot;, // it allows to convey the name
+            sub = ComputePathWithFallback()
+        )
+    retry(1) ComputePathWithFallback() // it is not possible to convey the name
+    
+    // but everything else is the same    
+</code></pre>
 <h2 id="example"><a class="header" href="#example">Example</a></h2>
 <pre><code class="language-f-tree">import &quot;ros::nav2&quot;
 

@@ -34,6 +34,23 @@ But the name parameter can be omitted also.
 
 Some of the actions take the subtree as a parameter. The parameter has a name `sub`
 
+### Retry
+Retry is represented in two options:
+ - `Retry` - the number of retries is specified  without a name like `retry(3)`
+ - `RecoveryNode` - the number of retries is specified with the default way like `RecoveryNode(number_of_retries = 3)`. 
+This becomes only way to convey the name of the node.
+
+```f-tree
+    RecoveryNode(
+            number_of_retries = 1,
+            name = "ComputePathToPose", // it allows to convey the name
+            sub = ComputePathWithFallback()
+        )
+    retry(1) ComputePathWithFallback() // it is not possible to convey the name
+    
+    // but everything else is the same    
+```
+
 ## Example
 
 ```f-tree
