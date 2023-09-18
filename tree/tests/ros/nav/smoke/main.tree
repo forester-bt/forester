@@ -9,14 +9,19 @@ sequence NavigateWithReplanning {
         sub = RecoveryNode(
             number_of_retries = 1,
             name = "ComputePathToPose",
-            sub = retry(1) sequence {
-                ComputePathToPose(goal=goal,path=path,planner_id = "GridBased")
-                ComputePathToPoseRecoveryFallback()
-            }))
-    retry(1) sequence {
-        FollowPath(path=path,controller_id = "FollowPath")
-        FollowPathRecoveryFallback()
-    }
+            sub = retry(1) ComputePathWithFallback()
+        )
+    )
+    retry(1) FollowPathWithFallback()
+}
+sequence ComputePathWithFallback{
+    ComputePathToPose(goal = goal,path = path,planner_id = "GridBased")
+    ComputePathToPoseRecoveryFallback()
+}
+
+sequence FollowPathWithFallback{
+    FollowPath(path = path,controller_id = "FollowPath")
+    FollowPathRecoveryFallback()
 }
 
 r_fallback ComputePathToPoseRecoveryFallback {

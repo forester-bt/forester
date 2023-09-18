@@ -1,6 +1,6 @@
 mod statements;
 
-use crate::get_pb;
+use crate::{get_pb, runtime_tree_default};
 use crate::runtime::rtree::rnode::{RNode, RNodeId};
 use crate::runtime::rtree::RuntimeTree;
 
@@ -64,26 +64,9 @@ impl Visualizer {
         tree: Option<&String>,
         output: Option<&String>,
     ) -> Result<String, TreeError> {
-        let project = match (file, tree) {
-            (Some(file), Some(tree)) => {
-                Project::build_with_root(file.to_string(), tree.to_string(), root)
-            }
-            (Some(file), None) => Project::build(file.to_string(), root),
-            _ => Project::build("main.tree".to_string(), root),
-        }?;
-        let output_pb = match output {
-            Some(path) => get_pb(&PathBuf::from(path), &Some(project.root.clone()))?,
-            None => {
-                let mut output_name = PathBuf::from(project.main.0.clone());
-                let _ = output_name.set_extension("svg");
-                let mut new_output = project.root.clone();
-                new_output.push(output_name);
-                new_output
-            }
-        };
+        let (rts, output_pb) = runtime_tree_default(root, file, tree, output,"svg".to_string())?;
         debug!(target:"visualizer","visualize a given project to a file {:?}", &output_pb);
-        let rt = RuntimeTree::build(project)?.tree;
-        Visualizer::rt_tree_svg_to_file(&rt, output_pb)
+        Visualizer::rt_tree_svg_to_file(&rts.tree, output_pb)
     }
     pub fn rt_tree_svg_to_file(
         runtime_tree: &RuntimeTree,
@@ -100,7 +83,7 @@ impl Visualizer {
             &mut PrinterContext::default(),
             vec![Format::Svg.into(), CommandArg::Output(p.to_string())],
         )
-        .map_err(|e| TreeError::VisualizationError(e.to_string()))
+            .map_err(|e| TreeError::VisualizationError(e.to_string()))
     }
 }
 
@@ -127,9 +110,9 @@ mod tests {
         }
         
         "#
-            .to_string(),
+                .to_string(),
         )
-        .unwrap();
+            .unwrap();
         let tree = RuntimeTree::build(p).unwrap().tree;
 
         let result = Visualizer::dot(&tree).unwrap();
