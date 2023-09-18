@@ -45,6 +45,9 @@ impl Call {
     pub fn is_lambda(&self) -> bool {
         matches!(self, Call::Lambda(_, _))
     }
+    pub fn is_decorator(&self) -> bool {
+        matches!(self, Call::Decorator(_,_, _))
+    }
 
     pub fn get_ho_invocation(&self) -> Option<Key> {
         match self {

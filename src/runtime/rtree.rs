@@ -10,7 +10,7 @@ use crate::runtime::args::transform::{to_dec_rt_args, to_rt_args};
 
 use crate::runtime::rtree::rnode::{DecoratorType, RNode, RNodeId};
 use crate::runtime::rtree::transform::{StackItem, Transformer};
-use crate::runtime::{RtResult, RuntimeError};
+use crate::runtime::{RtOk, RtResult, RuntimeError};
 use crate::tree::parser::ast::call::Call;
 
 use crate::runtime::rtree::analyzer::RtTreeAnalyzer;
@@ -19,6 +19,9 @@ use crate::tree::project::imports::ImportMap;
 use crate::tree::project::Project;
 use crate::tree::{cerr, TreeError};
 use std::collections::{HashMap, HashSet, VecDeque};
+use std::path::PathBuf;
+use crate::converter::Converter;
+use crate::converter::ros_nav::ToRosNavConverter;
 
 /// The auxiliary structure that encapsulates the runtime tree
 /// and some additional information about actions
@@ -134,12 +137,12 @@ impl RuntimeTree {
                     let (p_id, parent_args, parent_params) =
                         builder.get_chain_skip_lambda(&parent_id)?.get_tree();
                     let call = builder.find_ho_call(&parent_id, &key)?;
-                    if call.is_lambda() {
+                    if call.is_lambda() || call.is_decorator() {
                         builder.push_front(id, call, p_id, file_name.clone());
                     } else {
                         let k = call
                             .key()
-                            .ok_or(cerr(format!("the call {:?} does not have a name", call)))?;
+                            .ok_or(cerr(format!("the call {:?} does not have a name. Therefore, it is no possible to invoke it by name.", call)))?;
 
                         builder.push_front(
                             id,
@@ -259,17 +262,22 @@ impl RuntimeTree {
     pub fn max_id(&self) -> RNodeId {
         self.nodes.keys().max().cloned().unwrap_or_default()
     }
+
+    pub fn to_ros_nav(&self, xml: PathBuf) -> RtOk {
+        ToRosNavConverter::new(&self, xml).convert()
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::runtime::args::RtArgs;
+    use crate::runtime::args::{RtArgs, RtArgument, RtValue};
     use crate::runtime::rtree::rnode::FlowType::{Fallback, Root, Sequence};
     use crate::runtime::rtree::rnode::RNode::{Flow, Leaf};
     use crate::runtime::rtree::rnode::RNodeName::{Lambda, Name};
     use crate::runtime::rtree::RuntimeTree;
     use crate::tree::project::Project;
     use std::collections::{HashMap, HashSet};
+
 
     #[test]
     fn smoke() {
@@ -284,9 +292,9 @@ mod tests {
                 }
             }        
         "#
-            .to_string(),
+                .to_string(),
         )
-        .unwrap();
+            .unwrap();
 
         let st_tree = RuntimeTree::build(project).unwrap();
 
@@ -311,8 +319,25 @@ mod tests {
                     1,
                     Flow(Root, Name("main".to_string()), RtArgs(vec![]), vec![2])
                 ),
-                (4, Leaf(Name("action".to_string()), RtArgs(vec![])))
+                (4, Leaf(Name("action".to_string()), RtArgs(vec![]))),
             ])
         );
+    }
+
+    #[test]
+    fn decorator_lambda() {
+        let project = Project::build_from_text(
+            r#"
+          impl action();
+          root main f(t = retry(1) action())
+          sequence f(t:tree) t(..)
+        "#
+                .to_string(),
+        )
+            .unwrap();
+
+        let st_tree = RuntimeTree::build(project).unwrap().tree;
+
+        assert_eq!(st_tree.nodes.len(), 4)
     }
 }

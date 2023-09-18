@@ -1,5 +1,4 @@
-use crate::exporter::Exporter;
-use crate::exporter::ros_nav::RosNavBTree;
+use crate::read_file;
 use crate::runtime::rtree::RuntimeTree;
 use crate::tests::{fb, test_folder};
 use crate::tree::project::Project;
@@ -12,7 +11,38 @@ fn smoke() {
     let tree = RuntimeTree::build(project).unwrap().tree;
 
     fb.push("test.xml");
-    let exporter = RosNavBTree::new(fb);
-    let mut writer = exporter.writer().unwrap();
-    let _ = exporter.export(&mut writer, &tree).unwrap();
+    tree.to_ros_nav(fb.clone()).unwrap();
+
+    let result = read_file(&fb).unwrap();
+
+    assert_eq!(result, r#"<root main_tree_to_execute="MainTree">
+  <BehaviorTree ID="MainTree">
+    <RecoveryNode number_of_retries="6" name="NavigateRecovery">
+      <PipelineSequence name="NavigateWithReplanning">
+        <RateController hz="1">
+          <RecoveryNode number_of_retries="1" name="ComputePathToPose">
+            <RecoveryNode number_of_retries="1">
+              <PipelineSequence>
+                <ComputePathToPose goal="{goal}" path="{path}" planner_id="GridBased"/>
+                <ReactiveFallback name="ComputePathToPoseRecoveryFallback">
+                  <GoalUpdated/>
+                  <ClearEntireCostmap name="ClearGlobalCostmap-Context" service_name="global_costmap/clear_entirely_global_costmap"/>
+                </ReactiveFallback>
+              </PipelineSequence>
+            </RecoveryNode>
+          </RecoveryNode>
+        </RateController>
+        <RecoveryNode number_of_retries="1">
+          <PipelineSequence>
+            <FollowPath path="{path}" controller_id="FollowPath"/>
+            <ReactiveFallback name="FollowPathRecoveryFallback">
+              <GoalUpdated/>
+              <ClearEntireCostmap name="ClearLocalCostmap-Context" service_name="local_costmap/clear_entirely_local_costmap"/>
+            </ReactiveFallback>
+          </PipelineSequence>
+        </RecoveryNode>
+      </PipelineSequence>
+    </RecoveryNode>
+  </BehaviorTree>
+</root>"#);
 }

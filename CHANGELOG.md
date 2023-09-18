@@ -37,4 +37,6 @@
   * fix bugs
 * **`0.2.4`**
   * add remote action to simulation 
+* **`0.2.5`**
+  * add export to ros nav 
  
