@@ -932,6 +932,16 @@ pub enum RosParam {
 }
 
 impl RosParam {
+    pub fn test(&self, name: &str) -> bool {
+        self.param().name.as_str() == name
+    }
+    pub fn tpe(&self) -> MesType {
+        match self {
+            RosParam::Input(p) => p.tpe.clone(),
+            RosParam::InputWithDefault(p, _) => p.tpe.clone(),
+            RosParam::Output(p) => p.tpe.clone(),
+        }
+    }
     fn param(&self) -> &Param {
         match self {
             RosParam::Input(p) => p,

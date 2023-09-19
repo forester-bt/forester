@@ -1,10 +1,12 @@
+use crate::converter::Converter;
+use crate::converter::from_nav::FromNav2;
 use crate::read_file;
 use crate::runtime::rtree::RuntimeTree;
 use crate::tests::{fb, test_folder};
 use crate::tree::project::Project;
 
 #[test]
-fn smoke() {
+fn export_smoke() {
     let mut fb = test_folder("ros/nav/smoke");
 
     let project = Project::build("main.tree".to_string(), fb.clone()).unwrap();
@@ -45,4 +47,13 @@ fn smoke() {
     </RecoveryNode>
   </BehaviorTree>
 </root>"#);
+}
+#[test]
+fn import_smoke() {
+    let mut fb = test_folder("ros/nav/smoke");
+    fb.push("test.xml");
+    let project = FromNav2::read_file(&fb).unwrap().convert().unwrap();
+    println!("{:?}",project)
+
+
 }

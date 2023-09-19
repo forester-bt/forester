@@ -126,6 +126,9 @@ impl RtValue {
     pub fn int(i: i64) -> Self {
         RtValue::Number(RtValueNumber::Int(i))
     }
+    pub fn float(f: f64) -> Self {
+        RtValue::Number(RtValueNumber::Float(f))
+    }
     pub fn str(s: String) -> Self {
         RtValue::String(s)
     }

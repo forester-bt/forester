@@ -21,7 +21,7 @@ use crate::tree::{cerr, TreeError};
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::path::PathBuf;
 use crate::converter::Converter;
-use crate::converter::ros_nav::ToRosNavConverter;
+use crate::converter::to_nav::ToRosNavConverter;
 
 /// The auxiliary structure that encapsulates the runtime tree
 /// and some additional information about actions

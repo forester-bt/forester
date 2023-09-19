@@ -11,7 +11,10 @@ pub mod trimmer;
 use crate::tree::TreeError;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display, Formatter};
+use std::str::ParseBoolError;
+use std::string::FromUtf8Error;
 use std::sync::{MutexGuard, PoisonError};
+use quick_xml::events::attributes::AttrError;
 
 /// The major type of every result in Forester.
 pub type RtResult<T> = Result<T, RuntimeError>;
@@ -172,6 +175,23 @@ impl<T> From<PoisonError<MutexGuard<'_, T>>> for RuntimeError {
 impl From<quick_xml::Error> for RuntimeError {
     fn from(value: quick_xml::Error) -> Self {
         RuntimeError::IOError(format!("export to xml error: {}",value.to_string()))
+    }
+}
+impl From<AttrError> for RuntimeError {
+    fn from(value: AttrError) -> Self {
+        RuntimeError::IOError(format!("export attributes from xml,  error: {}",value.to_string()))
+    }
+}
+impl From<FromUtf8Error> for RuntimeError {
+    fn from(value: FromUtf8Error) -> Self {
+        RuntimeError::IOError(format!("export attributes,  error: {}",value.to_string()))
+    }
+}
+
+
+impl From<ParseBoolError> for RuntimeError {
+    fn from(value: ParseBoolError) -> Self {
+        RuntimeError::IOError(format!("export attributes,  error: {}",value.to_string()))
     }
 }
 
