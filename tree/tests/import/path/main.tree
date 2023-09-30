@@ -1,0 +1,9 @@
+import "nested/nested2.tree" { action => action1 }
+import "nested/nested.tree"
+import "../util.tree"
+
+root main sequence {
+    action()
+    action1()
+    h()
+}

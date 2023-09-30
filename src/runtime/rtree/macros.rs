@@ -199,11 +199,15 @@ macro_rules! rt_obj {
 ///         );
 ///         assert_eq!(
 ///           node_name!("name"),
-///           RNodeName::Name("name".to_string())  
+///           RNodeName::Name("name".to_string(),"".to_string())
 ///         );
 ///         assert_eq!(
 ///           node_name!("name", "alias"),
-///           RNodeName::Alias("name".to_string(),"alias".to_string())  
+///           RNodeName::Alias("name".to_string(),"alias".to_string(),"".to_string())
+///         );
+///         assert_eq!(
+///           node_name!("name", "alias", "path"),
+///           RNodeName::Alias("name".to_string(),"alias".to_string(),"path".to_string())
 ///         );
 ///
 /// }
@@ -215,10 +219,13 @@ macro_rules! node_name {
         RNodeName::Lambda
     }};
     ($name:expr) => {{
-        RNodeName::Name($name.to_string())
+        RNodeName::Name($name.to_string(),"".to_string())
     }};
     ($name:expr, $alias:expr) => {{
-        RNodeName::Alias($name.to_string(), $alias.to_string())
+        RNodeName::Alias($name.to_string(), $alias.to_string(),"".to_string())
+    }};
+    ($name:expr, $alias:expr, $path:expr) => {{
+        RNodeName::Alias($name.to_string(), $alias.to_string(),$path.to_string())
     }};
 }
 

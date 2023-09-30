@@ -8,18 +8,18 @@ use std::collections::HashMap;
 fn import() {
     let parser = Parser::new(
         r#"
-    import "nested/impls.tree"
+    import "nested.tree/impls.tree"
     "#,
     )
     .unwrap();
-    expect(parser.import(0), Import::file("nested/impls.tree"));
+    expect(parser.import(0), Import::file("nested.tree/impls.tree"));
 }
 
 #[test]
 fn import_names() {
     let parser = Parser::new(
         r#"
-    import "nested/impls.tree" {
+    import "nested.tree/impls.tree" {
         first,
         second,
     }
@@ -28,14 +28,14 @@ fn import_names() {
     .unwrap();
     expect(
         parser.import(0),
-        Import::names("nested/impls.tree", vec!["first", "second"]),
+        Import::names("nested.tree/impls.tree", vec!["first", "second"]),
     );
 }
 #[test]
 fn import_names_alias() {
     let parser = Parser::new(
         r#"
-    import "nested/impls.tree" {
+    import "nested.tree/impls.tree" {
         first => f,
         second,
         third => t,
@@ -46,7 +46,7 @@ fn import_names_alias() {
     expect(
         parser.import(0),
         Import::names_mixed(
-            "nested/impls.tree",
+            "nested.tree/impls.tree",
             vec![
                 ImportName::alias("first", "f"),
                 ImportName::id("second"),

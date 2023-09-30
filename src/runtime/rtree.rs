@@ -105,7 +105,7 @@ impl RuntimeTree {
         builder.add_chain_root(root_id);
 
         let children = builder.push_vec(root.calls.clone(), root_id, file.clone());
-        let root_node = RNode::root(root.name.to_string(), children);
+        let root_node = RNode::root(root.name.to_string(), file.clone(), children);
         r_tree.root = root_id;
         r_tree.nodes.insert(root_id, root_node);
 
@@ -182,14 +182,14 @@ impl RuntimeTree {
                             )?;
                             builder.add_chain(id, parent_id, args.clone(), tree.params.clone());
                             if tree.tpe.is_action() {
-                                r_tree.nodes.insert(id, RNode::action(name, rt_args));
+                                r_tree.nodes.insert(id, RNode::action(name, curr_file.name.clone(), rt_args));
                                 actions.insert(tree.name.clone());
                             } else {
                                 let children =
                                     builder.push_vec(tree.calls.clone(), id, file_name.clone());
                                 r_tree.nodes.insert(
                                     id,
-                                    RNode::flow(tree.tpe.try_into()?, name, rt_args, children),
+                                    RNode::flow(tree.tpe.try_into()?, name, curr_file.name.clone(), rt_args, children),
                                 );
                             }
                         }
@@ -214,7 +214,7 @@ impl RuntimeTree {
                                     actions.insert(tree.name.clone());
                                     r_tree.nodes.insert(
                                         id,
-                                        RNode::action_alias(tree.name.clone(), name, rt_args),
+                                        RNode::action_alias(tree.name.clone(), file.clone(), name, rt_args),
                                     );
                                 } else {
                                     r_tree.nodes.insert(
@@ -222,6 +222,7 @@ impl RuntimeTree {
                                         RNode::flow_alias(
                                             tree.tpe.try_into()?,
                                             tree.name.clone(),
+                                            file.clone(),
                                             name,
                                             rt_args,
                                             children,
@@ -231,12 +232,12 @@ impl RuntimeTree {
                             } else if tree.tpe.is_action() {
                                 r_tree
                                     .nodes
-                                    .insert(id, RNode::action(name.clone(), rt_args));
+                                    .insert(id, RNode::action(name.clone(), file.clone(), rt_args));
                                 actions.insert(name);
                             } else {
                                 r_tree.nodes.insert(
                                     id,
-                                    RNode::flow(tree.tpe.try_into()?, name, rt_args, children),
+                                    RNode::flow(tree.tpe.try_into()?, name, file.clone(), rt_args, children),
                                 );
                             };
                         }
@@ -278,6 +279,7 @@ mod tests {
     use crate::runtime::rtree::RuntimeTree;
     use crate::tree::project::Project;
     use std::collections::{HashMap, HashSet};
+    use itertools::Itertools;
 
 
     #[test]
@@ -310,18 +312,19 @@ mod tests {
         assert_eq!(st_tree.tree.nodes.len(), 5);
         assert_eq!(st_tree.tree.root, 1);
         assert_eq!(st_tree.tree.max_id(), 5);
+        let items: Vec<_> = st_tree.tree.nodes.iter().sorted_by_key(|e| e.0).collect();
         assert_eq!(
-            st_tree.tree.nodes,
-            HashMap::from_iter(vec![
-                (5, Leaf(Name("success".to_string()), RtArgs(vec![]))),
-                (2, Flow(Fallback, Lambda, RtArgs(vec![]), vec![3])),
-                (3, Flow(Sequence, Lambda, RtArgs(vec![]), vec![4, 5])),
+            items,
+            vec![
                 (
-                    1,
-                    Flow(Root, Name("main".to_string()), RtArgs(vec![]), vec![2])
+                    &1usize,
+                    &Flow(Root, Name("main".to_string(), "_".to_string()), RtArgs(vec![]), vec![2])
                 ),
-                (4, Leaf(Name("action".to_string()), RtArgs(vec![]))),
-            ])
+                (&2usize, &Flow(Fallback, Lambda, RtArgs(vec![]), vec![3])),
+                (&3usize, &Flow(Sequence, Lambda, RtArgs(vec![]), vec![4, 5])),
+                (&4usize, &Leaf(Name("action".to_string(), "_".to_string()), RtArgs(vec![]))),
+                (&5usize, &Leaf(Name("success".to_string(), "std::actions".to_string()), RtArgs(vec![]))),
+            ]
         );
     }
 

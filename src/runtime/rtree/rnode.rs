@@ -9,6 +9,7 @@ use strum_macros::EnumString;
 pub type RNodeId = usize;
 pub type Name = String;
 pub type Alias = String;
+pub type Path = String;
 
 #[derive(Display, Debug, Clone, Copy, Eq, PartialEq, EnumString)]
 #[strum(serialize_all = "snake_case")]
@@ -79,8 +80,8 @@ impl TryFrom<TreeType> for FlowType {
 #[derive(Debug, PartialEq, Clone)]
 pub enum RNodeName {
     Lambda,
-    Name(Name),
-    Alias(Name, Alias),
+    Name(Name, Path),
+    Alias(Name, Alias, Path),
 }
 
 impl RNodeName {
@@ -90,15 +91,15 @@ impl RNodeName {
                 "unexpected: lambda is in the unexpected place, the named tree is supposed to be."
                     .to_string(),
             )),
-            RNodeName::Name(n) => Ok(n),
-            RNodeName::Alias(n, _) => Ok(n),
+            RNodeName::Name(n,_) => Ok(n),
+            RNodeName::Alias(n, _, _) => Ok(n),
         }
     }
     pub fn has_name(&self) -> bool {
         match self {
             RNodeName::Lambda => false,
-            RNodeName::Name(_) => true,
-            RNodeName::Alias(_, _) => true,
+            RNodeName::Name(_,_) => true,
+            RNodeName::Alias(_, _,_) => true,
         }
     }
 }
@@ -179,30 +180,31 @@ impl RNode {
     pub fn lambda(t: FlowType, children: Vec<RNodeId>) -> Self {
         RNode::Flow(t, RNodeName::Lambda, RtArgs::default(), children)
     }
-    pub fn root(name: Name, children: Vec<RNodeId>) -> Self {
+    pub fn root(name: Name,p:Path, children: Vec<RNodeId>) -> Self {
         RNode::Flow(
             FlowType::Root,
-            RNodeName::Name(name),
+            RNodeName::Name(name,p),
             RtArgs::default(),
             children,
         )
     }
-    pub fn flow(f: FlowType, name: Name, args: RtArgs, children: Vec<RNodeId>) -> Self {
-        RNode::Flow(f, RNodeName::Name(name), args, children)
+    pub fn flow(f: FlowType, name: Name, p:Path, args: RtArgs, children: Vec<RNodeId>) -> Self {
+        RNode::Flow(f, RNodeName::Name(name,p), args, children)
     }
-    pub fn action(name: Name, args: RtArgs) -> Self {
-        RNode::Leaf(RNodeName::Name(name), args)
+    pub fn action(name: Name,path:Path, args: RtArgs) -> Self {
+        RNode::Leaf(RNodeName::Name(name,path), args)
     }
-    pub fn action_alias(name: Name, alias: Alias, args: RtArgs) -> Self {
-        RNode::Leaf(RNodeName::Alias(name, alias), args)
+    pub fn action_alias(name: Name, path:Path, alias: Alias, args: RtArgs) -> Self {
+        RNode::Leaf(RNodeName::Alias(name, alias, path), args)
     }
     pub fn flow_alias(
         f: FlowType,
         name: Name,
+        path:Path,
         alias: Alias,
         args: RtArgs,
         children: Vec<RNodeId>,
     ) -> Self {
-        RNode::Flow(f, RNodeName::Alias(name, alias), args, children)
+        RNode::Flow(f, RNodeName::Alias(name, alias, path), args, children)
     }
 }

@@ -33,13 +33,14 @@ mod tests {
             RuntimeTree {
                 root: 1,
                 nodes: HashMap::from_iter(vec![
-                    (4, RNode::action("say_hi".to_string(), RtArgs::default())),
-                    (1, RNode::root("main".to_string(), vec![2])),
+                    (4, RNode::action("say_hi".to_string(), "main.tree".to_string(),RtArgs::default())),
+                    (1, RNode::root("main".to_string(), "main.tree".to_string(),vec![2])),
                     (
                         3,
                         RNode::flow(
                             FlowType::Sequence,
                             "wrapper".to_string(),
+                            "main.tree".to_string(),
                             RtArgs(vec![RtArgument::new(
                                 "operation".to_string(),
                                 RtValue::Call(Call::ho_invocation("op")),
@@ -52,6 +53,7 @@ mod tests {
                         RNode::flow(
                             FlowType::Sequence,
                             "id".to_string(),
+                            "main.tree".to_string(),
                             RtArgs(vec![RtArgument::new(
                                 "op".to_string(),
                                 RtValue::Call(Call::invocation("say_hi", Default::default()))
@@ -72,13 +74,14 @@ mod tests {
             nodes: HashMap::from_iter(vec![
                 (
                     1,
-                    RNode::flow(Root, "main".to_string(), RtArgs::default(), vec![2]),
+                    RNode::flow(Root, "main".to_string(), "main.tree".to_string(),RtArgs::default(), vec![2]),
                 ),
                 (
                     2,
                     RNode::flow(
                         RSequence,
                         "x".to_string(),
+                        "main.tree".to_string(),
                         RtArgs(vec![RtArgument::new(
                             "t".to_string(),
                             RtValue::Call(Call::Lambda(
@@ -94,7 +97,7 @@ mod tests {
                 (3, RNode::lambda(Sequence, vec![4])),
                 (
                     4,
-                    RNode::Leaf(Name("success".to_string()), Default::default()),
+                    RNode::Leaf(Name("success".to_string(),"std::actions".to_string()), Default::default()),
                 ),
             ]),
         };
@@ -109,12 +112,12 @@ mod tests {
             nodes: HashMap::from_iter(vec![
                 (
                     1,
-                    RNode::flow(Root, "main".to_string(), RtArgs::default(), vec![2]),
+                    RNode::flow(Root, "main".to_string(), "std_actions.tree".to_string(),RtArgs::default(), vec![2]),
                 ),
                 (
                     2,
                     RNode::Leaf(
-                        RNodeName::Name("fail".to_string()),
+                        RNodeName::Name("fail".to_string(),"std::actions".to_string()),
                         RtArgs(vec![RtArgument::new(
                             "reason".to_string(),
                             RtValue::String("test".to_string()),

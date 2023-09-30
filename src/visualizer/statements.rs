@@ -11,8 +11,8 @@ pub trait ToStmt {
 fn name_to_label(name: &RNodeName) -> String {
     match name {
         RNodeName::Lambda => "".to_string(),
-        RNodeName::Name(name) => name.to_string(),
-        RNodeName::Alias(n, a) => format!("{n}[{a}]"),
+        RNodeName::Name(name,_) => name.to_string(),
+        RNodeName::Alias(n, a,_) => format!("{n}[{a}]"),
     }
 }
 

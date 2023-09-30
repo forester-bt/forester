@@ -11,7 +11,7 @@ use std::collections::HashMap;
 fn file() {
     let parser = Parser::new(
         r#"
-import "nested/impls.tree"
+import "nested.tree/impls.tree"
 
 root ball fallback {
     try_to_place_to() // the objects in bb that denote ball and bin
@@ -33,7 +33,7 @@ cond grasped(obj:object)
     expect(
         parser.file(0),
         AstFile(vec![
-            FileEntity::Import(Import::file("nested/impls.tree")),
+            FileEntity::Import(Import::file("nested.tree/impls.tree")),
             FileEntity::Tree(Tree::new(
                 TreeType::Root,
                 "ball".to_string(),

@@ -1,5 +1,5 @@
 import "C:\projects\forester\tree\tests\plain_project\nested\impls.tree"
-import "nested/impls.tree" {
+import "nested.tree/impls.tree" {
     grasp => grasp_ball,
 }
 
