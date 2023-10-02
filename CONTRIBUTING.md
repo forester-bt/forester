@@ -2,23 +2,16 @@
 
 Thank you for your interest in contributing to Forester!
 
-Table of Contents:
-
-1. [Feature Requests](#feature-requests)
-2. [Bug Reports](#bug-reports)
-3. [Patches / Pull Requests](#patches--pull-requests)
-    1. [Testing](#testing)
-    2. [Performance](#performance)
-    3. [Documentation](#documentation)
-    4. [Style](#style)
-4. [Release Process](#release-process)
-5. [Contact](#contact)
-
 ## Feature Requests and Bug Reports
 
 Feature requests should be reported in the
 [issue page](https://github.com/besok/forester/issues). To reduce the number of
 duplicates, please make sure to check the existing issues.
+
+In general, the future request are labeled with 'enhancement' label and 'bug' label for bug reports.
+
+If the story is not clear or big or supposed to be discussed and then broken down into the independent tasks, 
+it should be labeled with 'design' label. 
 
 ## Patches / Pull Requests
 
@@ -32,7 +25,7 @@ list of [issues](https://github.com/besok/forester/issues).
 To make sure no regressions were introduced, all tests should be run before sending a pull request.
 The following command can be run to test Alacritty:
 
-Additionally if there's any functionality included which would lend itself to additional testing,
+Additionally, if there's any functionality included which would lend itself to additional testing,
 new tests should be added. These can either be in the form of Rust tests using the `#[test]`
 annotation.
 
