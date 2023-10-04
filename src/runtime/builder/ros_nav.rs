@@ -9,12 +9,10 @@ use crate::tree::parser::ast::message::Message;
 
 
 pub(super) fn action_impl(action: &ActionName) -> RtResult<Action> {
-    match action.as_str() {
-        _ if ros_actions().contains_key(action) => Ok(Action::sync(ReturnResult::success())),
-
-        _ => Err(RuntimeError::UnImplementedAction(format!(
-            "action {action} is absent in the library"
-        ))),
+    if ros_actions().contains_key(action) {
+        Ok(Action::sync(ReturnResult::success()))
+    } else {
+        Err(RuntimeError::UnImplementedAction(format!("action {action} is absent in the library")))
     }
 }
 

@@ -3,6 +3,7 @@ pub mod custom_builder;
 pub mod file_builder;
 pub mod text_builder;
 pub mod ros_nav;
+pub mod ros_core;
 
 use crate::get_pb;
 use crate::runtime::action::builtin::remote::RemoteHttpAction;
