@@ -1,0 +1,15 @@
+import "std::actions"
+
+cond fail_before_tick();
+
+root main parallel {
+    fallback {
+        fail_before_tick()
+        running()
+    }
+    fallback{
+        fail_before_tick()
+        store_tick("tick1")
+    }
+    store_tick("tick2")
+}

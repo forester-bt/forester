@@ -3,14 +3,25 @@ use crate::runtime::action::builtin::data::{
 };
 use crate::runtime::action::builtin::http::HttpGet;
 use crate::runtime::action::builtin::ReturnResult;
-use crate::runtime::action::{Action, ActionName};
+use crate::runtime::action::{Action, ActionName, ros};
 use crate::runtime::{RtResult, RuntimeError};
 use crate::runtime::builder::ros_nav;
+use crate::tree::project::FileName;
+
+
+pub(super) fn pick_action(action: &ActionName, file: &FileName) -> RtResult<Action> {
+    match file.as_str() {
+        "std::actions" => action_impl(action),
+        "ros::nav2" => ros_nav::action_impl(action),
+        "ros::core" => ros::action_impl(action),
+        _ => Err(RuntimeError::UnImplementedAction(format!("{}::{}", file, action)))
+    }
+}
 
 /// Built-in actions
 /// The actions are accessible using the import 'import "std::actions"'
 
-pub(super) fn action_impl(action: &ActionName) -> RtResult<Action> {
+fn action_impl(action: &ActionName) -> RtResult<Action> {
     match action.as_str() {
         "fail_empty" => Ok(Action::sync(ReturnResult::fail_empty())),
         "fail" => Ok(Action::sync(ReturnResult::fail_empty())),
@@ -26,7 +37,7 @@ pub(super) fn action_impl(action: &ActionName) -> RtResult<Action> {
         "lock" => Ok(Action::sync(LockUnlockBBKey::Lock)),
         "unlock" => Ok(Action::sync(LockUnlockBBKey::Unlock)),
         "locked" => Ok(Action::sync(Locked)),
-        _ => ros_nav::action_impl(action),
+        _ => Err(RuntimeError::UnImplementedAction(format!("std::actions::{}", action))),
     }
 }
 

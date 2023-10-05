@@ -232,3 +232,27 @@ fn fallback_retry() {
     let result = f.run();
     assert_eq!(result, Ok(TickResult::success()));
 }
+
+#[test]
+fn parallel_simple() {
+    turn_on_logs();
+
+    struct Condition;
+    impl Impl for Condition {
+        fn tick(&self, _args: RtArgs, ctx: TreeContextRef) -> Tick {
+            if ctx.current_tick() > 2 {
+                Ok(TickResult::Success)
+            } else {
+                Ok(TickResult::Failure("".to_string()))
+            }
+        }
+    }
+
+    let mut fb = fb("flow/parallel/simple");
+
+    fb.register_sync_action("fail_before_tick", Condition);
+
+    let mut f = fb.build().unwrap();
+    let result = f.run();
+    assert_eq!(result, Ok(TickResult::success()));
+}

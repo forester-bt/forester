@@ -16,7 +16,7 @@ use crate::tree::parser::ast::call::Call;
 use crate::runtime::rtree::analyzer::RtTreeAnalyzer;
 use crate::runtime::rtree::iter::RtTreeBfsIter;
 use crate::tree::project::imports::ImportMap;
-use crate::tree::project::Project;
+use crate::tree::project::{FileName, Project};
 use crate::tree::{cerr, TreeError};
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::path::PathBuf;
@@ -30,7 +30,7 @@ pub struct RuntimeTreeStarter {
     // the separate tables for standard and all actions
     // the reason for this is that the user actions can have the same name as the standard ones
     // and we need to distinguish them
-    pub std_actions: HashSet<ActionName>,
+    pub std_actions: HashSet<(ActionName,FileName)>,
     pub actions: HashSet<ActionName>,
 }
 
@@ -196,7 +196,7 @@ impl RuntimeTree {
                         None => {
                             let (tree, file) = import_map.find(&name, &project)?;
                             if file.contains("::") {
-                                std_actions.insert(tree.name.clone());
+                                std_actions.insert((tree.name.clone(),file.clone()));
                             }
                             let rt_args = to_rt_args(
                                 name.as_str(),
@@ -303,7 +303,7 @@ mod tests {
 
         assert_eq!(
             st_tree.std_actions,
-            HashSet::from_iter(vec!["success".to_string()])
+            HashSet::from_iter(vec![("success".to_string(),"std::actions".to_string())])
         );
         assert_eq!(
             st_tree.actions,

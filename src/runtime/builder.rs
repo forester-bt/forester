@@ -244,10 +244,10 @@ impl ForesterBuilder {
                     actions,
                 } = RuntimeTree::build(project)?;
                 let mut impl_actions = cfb.actions;
-                for action_name in std_actions.iter() {
+                for (action_name, file_name) in std_actions.iter() {
                     impl_actions.insert(
                         action_name.clone(),
-                        builtin::action_impl(action_name)?,
+                        builtin::pick_action(action_name,file_name)?,
                     );
                 }
                 (
@@ -269,8 +269,8 @@ impl ForesterBuilder {
                     actions,
                 } = RuntimeTree::build(project)?;
                 let mut impl_actions = cfb.actions;
-                for action_name in std_actions.iter() {
-                    let action = builtin::action_impl(action_name)?;
+                for (action_name, file_name) in std_actions.iter() {
+                    let action = builtin::pick_action(action_name,file_name)?;
                     impl_actions.insert(action_name.clone(), action);
                 }
                 (
