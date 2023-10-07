@@ -1,7 +1,7 @@
 import "std::actions"
 
 cond fail_before_tick();
-cond increment(key:string);
+cond increment(key:string,default:num);
 
 root main parallel {
     r_fallback {
@@ -10,7 +10,7 @@ root main parallel {
     }
     r_fallback{
         fail_before_tick()
-        increment("tick1")
+        increment("tick1",1)
     }
-    increment("tick2")
+    increment("tick2",1)
 }

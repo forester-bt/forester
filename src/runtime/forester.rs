@@ -172,6 +172,7 @@ impl Forester {
                     // But then we do nothing but switch the state to running in the current tick.
                     RNodeState::Ready(tick_args) => {
                         let len = children.len() as i64;
+                        debug!(target:"flow[ready]", "tick:{}, {tpe}. Start node",ctx.curr_ts());
                         let new_state =
                             if tpe.is_par() {
                                 RNodeState::Running(run_with_par(tick_args, 0, len))
@@ -189,6 +190,7 @@ impl Forester {
                     RNodeState::Running(tick_args) => {
                         let cursor = read_cursor_as_usize(tick_args.clone())?;
                         let child = children[cursor];
+                        debug!(target:"flow[run]", "tick:{}, {tpe}. Running child {child}, cursor:{cursor}",ctx.curr_ts());
                         match ctx.state_in_ts(&child) {
                             // we are about to kick off the child.
                             // Just pass the control to the child
@@ -210,6 +212,7 @@ impl Forester {
                                     debug!(target:"trim","attempt to trim is  {:?}", self.trim(&ctx));
                                     ctx.push(child)?;
                                 } else {
+                                    debug!(target:"flow[run]", "tick:{}, {tpe}. The '{child}' is running, decide go up or stay here.",ctx.curr_ts());
                                     // for parallel node we need to proceed with other children regardless of the current result
                                     match flow::monitor(tpe, args.clone(), tick_args, &mut ctx)? {
                                         FlowDecision::PopNode(ns) => {
@@ -218,7 +221,7 @@ impl Forester {
                                             ctx.pop()?;
                                         }
                                         FlowDecision::Stay(ns) => {
-                                            debug!(target:"flow[run]", "tick:{}, {tpe}. Go up with the new state: {}",ctx.curr_ts(),&ns);
+                                            debug!(target:"flow[run]", "tick:{}, {tpe}. stay with the new state: {}",ctx.curr_ts(),&ns);
                                             ctx.new_state(id, ns)?;
                                         }
                                     }
@@ -228,6 +231,7 @@ impl Forester {
                             // this stage just updates the status and depending on the status,
                             // the flow goes further or stays on the node but on the next loop of while.
                             s @ (RNodeState::Failure(_) | RNodeState::Success(_)) => {
+                                debug!(target:"flow[run]", "tick:{}, {tpe}. The '{child}' is finished, decide go up or stay here.",ctx.curr_ts());
                                 let decision = flow::finalize(
                                     tpe,
                                     args.clone(),
@@ -238,7 +242,7 @@ impl Forester {
 
                                 match decision {
                                     FlowDecision::PopNode(ns) => {
-                                        debug!(target:"flow[run]", "tick:{}, {tpe}. The '{}' is finished as {}, the new state: {} ",ctx.curr_ts(),child,s, &ns);
+                                        debug!(target:"flow[run]", "tick:{}, {tpe}. The '{}' is finished as {}, the new state: {}. Pop the node.",ctx.curr_ts(),child,s, &ns);
                                         ctx.new_state(id, ns)?;
                                         ctx.pop()?;
                                     }
@@ -264,6 +268,7 @@ impl Forester {
                     // since it is ready we need to prepare decorator to start
                     // But then we do nothing but switch the state to running in the current tick.
                     RNodeState::Ready(tick_args) => {
+                        debug!(target:"decorator[ready]", "tick:{}, {tpe}. Start decorator",ctx.curr_ts());
                         let new_state =
                             decorator::prepare(tpe, init_args.clone(), tick_args, &mut ctx)?;
                         debug!(target:"decorator[ready]", "tick:{}, the new_state: {}",ctx.curr_ts(),&new_state);
@@ -286,6 +291,7 @@ impl Forester {
                         // we can use this to monitor the progress and make a decision
                         // (for Timeout for example)
                         RNodeState::Running { .. } => {
+                            debug!(target:"decorator[run]", "tick:{}, {tpe}. Running decorator",ctx.curr_ts());
                             let new_state =
                                 decorator::monitor(tpe, init_args.clone(), tick_args, &mut ctx)?;
                             debug!(target:"decorator[run]", "tick:{},The '{}' is running, the new state: {} ",ctx.curr_ts(),child, &new_state);
@@ -296,6 +302,7 @@ impl Forester {
                         // this stage just updates the status and depending on the status,
                         // the flow goes further or stays on the node but on the next loop of while.
                         s @ (RNodeState::Success(_) | RNodeState::Failure(_)) => {
+                            debug!(target:"decorator[run]", "tick:{}, {tpe}. Running decorator child",ctx.curr_ts());
                             let new_state = decorator::finalize(
                                 tpe,
                                 tick_args,

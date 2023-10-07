@@ -6,6 +6,7 @@ use crate::runtime::args::{RtArgs, RtValue};
 use crate::runtime::context::{TreeContext, TreeContextRef};
 use crate::runtime::TickResult;
 use crate::tests::{fb, test_folder, turn_on_logs};
+use crate::visualizer::Visualizer;
 
 struct StoreTick;
 

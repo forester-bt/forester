@@ -179,8 +179,8 @@ pub fn finalize(
             let len = read_len_or_zero(tick_args.clone());
 
             let st = match res {
-                TickResultFin::Failure(_) => 1,
-                TickResultFin::Success => 2
+                TickResultFin::Failure(_) => 2,
+                TickResultFin::Success => 3
             };
 
             let tick_args = replace_child_state(tick_args, cursor as usize, st);
@@ -279,7 +279,7 @@ pub enum FlowDecision {
 fn replace_child_state(args: RtArgs, idx: usize, v: i64) -> RtArgs {
     let mut args = args;
     let mut elems = read_children_state(args.clone());
-    debug!(target:"params", "prev : {args}, idx:{idx}, new state: {v}");
+    debug!(target:"params in child", "prev : [{args}], idx:{idx}, new state: {v}");
     elems[idx] = v;
     args.with(CHILDRENS, RtValue::Array(elems.into_iter().map(RtValue::int).collect()))
 }
