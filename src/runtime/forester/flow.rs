@@ -3,6 +3,8 @@ use crate::runtime::context::{RNodeState, TreeContext};
 use crate::runtime::rtree::rnode::FlowType;
 use crate::runtime::{RtResult, RuntimeError, TickResult};
 use std::cmp::max;
+use itertools::Itertools;
+use FlowDecision::{PopNode, Stay};
 
 // current child
 pub const CURSOR: &str = "cursor";
@@ -15,12 +17,38 @@ pub const P_CURSOR: &str = "prev_cursor";
 // reason for the failure
 pub const REASON: &str = "reason";
 
-pub const CHILDREN_PAR: &str = "children";
+// the list of children and states, where
+// 0 is ready,
+// 1 is running,
+// 2 is failure,
+// 3 is success
+pub const CHILDRENS: &str = "children";
 
-pub fn run_with(tick_args: RtArgs, c: i64, l: i64) -> RtArgs {
+pub fn run_with(tick_args: RtArgs, cursor: i64, len: i64) -> RtArgs {
+    debug!(target:"params", "{}, cur:{cursor}, len:{len}", tick_args);
     tick_args
-        .with(CURSOR, RtValue::int(c))
-        .with(LEN, RtValue::int(l))
+        .with(CURSOR, RtValue::int(cursor))
+        .with(LEN, RtValue::int(len))
+}
+
+// parallel node needs to know the previous state of the children.
+// It acts non reactively
+// therefore if there is a previous state it tries to find a child that either running or ready
+pub fn run_with_par(tick_args: RtArgs, cursor: i64, len: i64) -> RtArgs {
+    let prev_children_states = read_children_state(tick_args.clone());
+    if prev_children_states.is_empty() {
+        run_with(
+            tick_args.with(
+                CHILDRENS,
+                RtValue::Array(vec![RtValue::int(0); len as usize])),
+            cursor, len)
+    } else {
+        let idx = prev_children_states
+            .into_iter()
+            .find_position(|c| *c == 0 || *c == 1).map(|(idx, _)| idx)
+            .unwrap_or_default();
+        run_with(tick_args, idx as i64, len)
+    }
 }
 
 pub(crate) fn read_len_or_zero(args: RtArgs) -> i64 {
@@ -86,9 +114,9 @@ pub fn finalize(
     tick_args: RtArgs,
     res: TickResultFin,
     _ctx: &mut TreeContext,
-) -> RtResult<RNodeState> {
+) -> RtResult<FlowDecision> {
     match tpe {
-        FlowType::Root => Ok(RNodeState::from(run_with(tick_args, 0, 1), res.into())),
+        FlowType::Root => Ok(Stay(RNodeState::from(run_with(tick_args, 0, 1), res.into()))),
         FlowType::Sequence | FlowType::RSequence => {
             let cursor = read_cursor(tick_args.clone())?;
             let len = read_len_or_zero(tick_args.clone());
@@ -97,13 +125,13 @@ pub fn finalize(
                 TickResultFin::Failure(v) => {
                     let args = run_with(tick_args, cursor, len).with(REASON, RtValue::str(v));
 
-                    Ok(RNodeState::Failure(args))
+                    Ok(Stay(RNodeState::Failure(args)))
                 }
                 TickResultFin::Success => {
                     if cursor == len - 1 {
-                        Ok(RNodeState::Success(run_with(tick_args, cursor, len)))
+                        Ok(Stay(RNodeState::Success(run_with(tick_args, cursor, len))))
                     } else {
-                        Ok(RNodeState::Running(run_with(tick_args, cursor + 1, len)))
+                        Ok(Stay(RNodeState::Running(run_with(tick_args, cursor + 1, len))))
                     }
                 }
             }
@@ -118,13 +146,13 @@ pub fn finalize(
                         run_with(tick_args.with(P_CURSOR, RtValue::int(cursor)), cursor, len)
                             .with(REASON, RtValue::str(v));
 
-                    Ok(RNodeState::Failure(args))
+                    Ok(Stay(RNodeState::Failure(args)))
                 }
                 TickResultFin::Success => {
                     if cursor == len - 1 {
-                        Ok(RNodeState::Success(run_with(tick_args, cursor, len)))
+                        Ok(Stay(RNodeState::Success(run_with(tick_args, cursor, len))))
                     } else {
-                        Ok(RNodeState::Running(run_with(tick_args, cursor + 1, len)))
+                        Ok(Stay(RNodeState::Running(run_with(tick_args, cursor + 1, len))))
                     }
                 }
             }
@@ -137,13 +165,13 @@ pub fn finalize(
             match res {
                 TickResultFin::Failure(v) => {
                     if cursor == len - 1 {
-                        let args = run_with(tick_args, cursor, len).with(REASON, RtValue::str(v));
-                        Ok(RNodeState::Failure(args))
+                        Ok(Stay(RNodeState::Failure(run_with(tick_args, cursor, len)
+                            .with(REASON, RtValue::str(v)))))
                     } else {
-                        Ok(RNodeState::Running(run_with(tick_args, cursor + 1, len)))
+                        Ok(Stay(RNodeState::Running(run_with(tick_args, cursor + 1, len))))
                     }
                 }
-                TickResultFin::Success => Ok(RNodeState::Success(run_with(tick_args, cursor, len))),
+                TickResultFin::Success => Ok(Stay(RNodeState::Success(run_with(tick_args, cursor, len)))),
             }
         }
         FlowType::Parallel => {
@@ -151,25 +179,37 @@ pub fn finalize(
             let len = read_len_or_zero(tick_args.clone());
 
             let st = match res {
-                TickResultFin::Failure(_) => -1,
-                TickResultFin::Success => 1
+                TickResultFin::Failure(_) => 1,
+                TickResultFin::Success => 2
             };
 
             let tick_args = replace_child_state(tick_args, cursor as usize, st);
+            let children = read_children_state(tick_args.clone());
 
-            if cursor == len - 1 {
-                let mut elems = read_children_state(tick_args.clone());
-                if elems.contains(&-1) {
+            // if some child is running or ready, we continue
+            if let Some(idx) = find_next_idx(&children, cursor) {
+                Ok(Stay(RNodeState::Running(
+                    tick_args.with(CURSOR, RtValue::int(idx as i64)),
+                )))
+            } else {
+                if children.contains(&1) || children.contains(&0) {
+                    let next_cursor = find_first_idx(&children, cursor).unwrap_or(0);
+                    let next_state = RNodeState::Running(
+                        run_with(
+                            tick_args,
+                            next_cursor as i64, len)
+                            .with(P_CURSOR, RtValue::int(0i64)) // reset the prev cursor
+                    );
+                    Ok(PopNode(next_state))
+                } else if children.contains(&2) {
                     let args = run_with(tick_args, cursor, len)
                         .with(REASON, RtValue::str("parallel failure".to_string()));
-                    Ok(RNodeState::Failure(args))
-                } else if elems.contains(&0) {
-                    Ok(RNodeState::Running(run_with(tick_args, cursor, len)))
+                    // we stay allowing to remove us on the next it of the loop
+                    Ok(Stay(RNodeState::Failure(args)))
                 } else {
-                    Ok(RNodeState::Success(run_with(tick_args, cursor, len)))
+                    // we stay allowing to remove us on the next it of the loop
+                    Ok(Stay(RNodeState::Success(run_with(tick_args, cursor, len))))
                 }
-            } else {
-                Ok(RNodeState::Running(run_with(tick_args, cursor + 1, len)))
             }
         }
 
@@ -184,60 +224,96 @@ pub fn monitor(
     _args: RtArgs,
     tick_args: RtArgs,
     _ctx: &mut TreeContext,
-) -> RtResult<RNodeState> {
+) -> RtResult<FlowDecision> {
     match tpe {
         FlowType::Sequence => {
             let cursor = read_cursor(tick_args.clone())?;
-            Ok(RNodeState::Running(
+            Ok(PopNode(RNodeState::Running(
                 tick_args.with(P_CURSOR, RtValue::int(cursor)),
-            ))
+            )))
         }
         FlowType::Fallback => {
             let cursor = read_cursor(tick_args.clone())?;
-            Ok(RNodeState::Running(
+            Ok(PopNode(RNodeState::Running(
                 tick_args.with(P_CURSOR, RtValue::int(cursor)),
-            ))
+            )))
         }
         FlowType::MSequence => {
             let cursor = read_cursor(tick_args.clone())?;
-            Ok(RNodeState::Running(
+            Ok(PopNode(RNodeState::Running(
                 tick_args.with(P_CURSOR, RtValue::int(cursor)),
-            ))
+            )))
         }
         FlowType::Parallel => {
-            let cursor = read_cursor(tick_args.clone())?;
-            let len = read_len_or_zero(tick_args.clone());
+            let mut cursor = read_cursor(tick_args.clone())?;
+            let new_args = replace_child_state(
+                tick_args.with(P_CURSOR, RtValue::int(cursor)),
+                cursor as usize,
+                1,
+            );
 
-            let mut tick_args = tick_args;
+            let children = read_children_state(new_args.clone());
 
-            if tick_args.find(CHILDREN_PAR.to_string()).is_none() {
-                tick_args = tick_args.with(
-                    CHILDREN_PAR,
-                    RtValue::Array(vec![RtValue::int(0); len as usize]),
-                );
+            if let Some(idx) = find_next_idx(&children, cursor) {
+                Ok(Stay(RNodeState::Running(
+                    new_args.with(CURSOR, RtValue::int(idx as i64)),
+                )))
+            } else {
+                Ok(PopNode(RNodeState::Running(new_args)))
             }
-
-            Ok(RNodeState::Running(
-                replace_child_state(
-                    tick_args.with(P_CURSOR, RtValue::int(cursor)),
-                    cursor as usize, 0,
-                )
-            ))
         }
-        _ => Ok(RNodeState::Running(tick_args)),
+        _ => Ok(PopNode(RNodeState::Running(tick_args))),
     }
+}
+
+// decision impacts on the case when we decide if we stay on the node
+// and go farther down or we climb up the tree
+// basically it processes the case when we have a running child before and after cursor.
+// in the latter we stay and in the former we climb up and eventually end up ticking the root
+#[derive(Debug, Clone)]
+pub enum FlowDecision {
+    PopNode(RNodeState),
+    Stay(RNodeState),
 }
 
 fn replace_child_state(args: RtArgs, idx: usize, v: i64) -> RtArgs {
     let mut args = args;
     let mut elems = read_children_state(args.clone());
-
-    elems.insert(idx, v);
-    args.with(CHILDREN_PAR, RtValue::Array(elems.into_iter().map(RtValue::int).collect()))
+    debug!(target:"params", "prev : {args}, idx:{idx}, new state: {v}");
+    elems[idx] = v;
+    args.with(CHILDRENS, RtValue::Array(elems.into_iter().map(RtValue::int).collect()))
 }
 
 fn read_children_state(args: RtArgs) -> Vec<i64> {
-    args.find(CHILDREN_PAR.to_string())
+    args.find(CHILDRENS.to_string())
         .and_then(|v| v.as_vec(|v| v.as_int().unwrap()))
         .unwrap_or_default()
+}
+
+// find the next idx that is either running or ready
+fn find_next_idx(children: &Vec<i64>, current: i64) -> Option<usize> {
+    let mut cursor = (current + 1) as usize;
+    let mut next_idx = None;
+    while cursor < children.len() {
+        if children[cursor] == 0 || children[cursor] == 1 {
+            next_idx = Some(cursor);
+            break;
+        }
+        cursor = cursor + 1;
+    }
+    next_idx
+}
+
+// find the next idx that is either running or ready before the current idx
+fn find_first_idx(children: &Vec<i64>, current: i64) -> Option<usize> {
+    let mut cursor = 0;
+    let mut next_idx = None;
+    while cursor < current as usize {
+        if children[cursor] == 0 || children[cursor] == 1 {
+            next_idx = Some(cursor);
+            break;
+        }
+        cursor = cursor + 1;
+    }
+    next_idx
 }

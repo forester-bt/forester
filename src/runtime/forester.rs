@@ -8,7 +8,7 @@ use crate::runtime::args::RtArgs;
 use crate::runtime::blackboard::BlackBoard;
 use crate::runtime::context::{RNodeState, TreeContext, TreeContextRef};
 use crate::runtime::env::RtEnv;
-use crate::runtime::forester::flow::{read_cursor, run_with};
+use crate::runtime::forester::flow::{FlowDecision, read_cursor, run_with, run_with_par};
 use crate::runtime::forester::serv::ServInfo;
 use crate::runtime::rtree::rnode::RNode;
 use crate::runtime::rtree::RuntimeTree;
@@ -171,9 +171,15 @@ impl Forester {
                     // for some memory nodes we can switch it after.
                     // But then we do nothing but switch the state to running in the current tick.
                     RNodeState::Ready(tick_args) => {
+                        let len = children.len() as i64;
                         let new_state =
-                            RNodeState::Running(run_with(tick_args, 0, children.len() as i64));
-                        debug!(target:"flow[ready]", "tick:{}, {tpe}. Just switch to the new_state:{:?}",ctx.curr_ts(),&new_state);
+                            if tpe.is_par() {
+                                RNodeState::Running(run_with_par(tick_args, 0, len))
+                            } else {
+                                RNodeState::Running(run_with(tick_args, 0, len))
+                            };
+
+                        debug!(target:"flow[ready]", "tick:{}, {tpe}. Switch to the new_state:{}",ctx.curr_ts(),&new_state);
                         ctx.new_state(id, new_state)?;
                     }
                     // the flow can arrive here in 2 possible cases:
@@ -192,7 +198,10 @@ impl Forester {
                             }
                             // child is already running and since the flow is here in the parent,
                             // he decided that it is a final state for the tick,
-                            // thus pass the control to the parent
+                            // thus pass the control to the parent.
+                            // here, we need to decide whether we need to go up or not.
+                            // In the most cases, we go up by popping the current element.
+                            // Only with parallel nodes, we need to check if we have other elements to kick off
                             RNodeState::Running(_) => {
                                 // root does not have parent so, just proceed to the next tick
                                 if tpe.is_root() {
@@ -201,26 +210,45 @@ impl Forester {
                                     debug!(target:"trim","attempt to trim is  {:?}", self.trim(&ctx));
                                     ctx.push(child)?;
                                 } else {
-                                    let next_state =
-                                        flow::monitor(tpe, args.clone(), tick_args, &mut ctx)?;
-                                    debug!(target:"flow[run]", "tick:{}, {tpe}. Go up with the new state: {:?}",ctx.curr_ts(),&next_state);
-                                    ctx.new_state(id, next_state)?;
-                                    ctx.pop()?;
+                                    // for parallel node we need to proceed with other children regardless of the current result
+                                    match flow::monitor(tpe, args.clone(), tick_args, &mut ctx)? {
+                                        FlowDecision::PopNode(ns) => {
+                                            debug!(target:"flow[run]", "tick:{}, {tpe}. Go up with the new state: {}",ctx.curr_ts(),&ns);
+                                            ctx.new_state(id, ns)?;
+                                            ctx.pop()?;
+                                        }
+                                        FlowDecision::Stay(ns) => {
+                                            debug!(target:"flow[run]", "tick:{}, {tpe}. Go up with the new state: {}",ctx.curr_ts(),&ns);
+                                            ctx.new_state(id, ns)?;
+                                        }
+                                    }
                                 }
                             }
                             // child is finished, thus the node needs to make a decision how to proceed.
                             // this stage just updates the status and depending on the status,
                             // the flow goes further or stays on the node but on the next loop of while.
                             s @ (RNodeState::Failure(_) | RNodeState::Success(_)) => {
-                                let new_state = flow::finalize(
+                                let decision = flow::finalize(
                                     tpe,
                                     args.clone(),
                                     tick_args.clone(),
                                     s.clone().try_into()?,
                                     &mut ctx,
                                 )?;
-                                debug!(target:"flow[run]", "tick:{}, {tpe}. The '{}' is finished as {:?}, the new state: {:?} ",ctx.curr_ts(),child,s, &new_state);
-                                ctx.new_state(id, new_state)?;
+
+                                match decision {
+                                    FlowDecision::PopNode(ns) => {
+                                        debug!(target:"flow[run]", "tick:{}, {tpe}. The '{}' is finished as {}, the new state: {} ",ctx.curr_ts(),child,s, &ns);
+                                        ctx.new_state(id, ns)?;
+                                        ctx.pop()?;
+                                    }
+                                    FlowDecision::Stay(ns) => {
+                                        debug!(target:"flow[run]", "tick:{}, {tpe}. The '{}' is finished as {}, the new state: {} ",ctx.curr_ts(),child,s, &ns);
+                                        ctx.new_state(id, ns)?;
+                                    }
+                                }
+
+
                             }
                         }
                     }
@@ -238,7 +266,7 @@ impl Forester {
                     RNodeState::Ready(tick_args) => {
                         let new_state =
                             decorator::prepare(tpe, init_args.clone(), tick_args, &mut ctx)?;
-                        debug!(target:"decorator[ready]", "tick:{}, the new_state: {:?}",ctx.curr_ts(),&new_state);
+                        debug!(target:"decorator[ready]", "tick:{}, the new_state: {}",ctx.curr_ts(),&new_state);
                         ctx.new_state(id, new_state)?;
                     }
                     // the flow can arrive here in 2 possible cases:
@@ -260,7 +288,7 @@ impl Forester {
                         RNodeState::Running { .. } => {
                             let new_state =
                                 decorator::monitor(tpe, init_args.clone(), tick_args, &mut ctx)?;
-                            debug!(target:"decorator[run]", "tick:{},The '{}' is running, the new state: {:?} ",ctx.curr_ts(),child, &new_state);
+                            debug!(target:"decorator[run]", "tick:{},The '{}' is running, the new state: {} ",ctx.curr_ts(),child, &new_state);
                             ctx.new_state(id, new_state)?;
                             ctx.pop()?;
                         }
@@ -275,7 +303,7 @@ impl Forester {
                                 s.to_tick_result()?,
                                 &mut ctx,
                             )?;
-                            debug!(target:"decorator[run]", "tick:{},The '{}' is finished, the new state: {:?} ",ctx.curr_ts(),child, &new_state);
+                            debug!(target:"decorator[run]", "tick:{},The '{}' is finished, the new state: {} ",ctx.curr_ts(),child, &new_state);
                             ctx.new_state(id, new_state)?;
                             ctx.pop()?;
                         }
@@ -301,7 +329,7 @@ impl Forester {
                             &self.serv,
                         ))?;
                         let new_state = RNodeState::from(args.clone(), res);
-                        debug!(target:"leaf", "tick:{}, the new state: {:?}",ctx.curr_ts(),&new_state);
+                        debug!(target:"leaf", "tick:{}, the new state: {}",ctx.curr_ts(),&new_state);
                         ctx.new_state(id, new_state)?;
                     }
                     ctx.pop()?;

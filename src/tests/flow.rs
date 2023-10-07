@@ -1,3 +1,4 @@
+use std::net::Incoming;
 use crate::runtime::action::builtin::data::GenerateData;
 use crate::runtime::action::builtin::ReturnResult;
 use crate::runtime::action::{Action, Impl, Tick};
@@ -220,6 +221,7 @@ fn fallback() {
             .unwrap();
     assert_eq!(x, 1);
 }
+
 #[test]
 fn fallback_retry() {
     turn_on_logs();
@@ -251,8 +253,13 @@ fn parallel_simple() {
     let mut fb = fb("flow/parallel/simple");
 
     fb.register_sync_action("fail_before_tick", Condition);
+    fb.register_sync_action("increment", GenerateData::new(|v| {
+        RtValue::int(v.as_int().unwrap_or(0) + 1)
+    }));
 
     let mut f = fb.build().unwrap();
-    let result = f.run();
+    let result = f.run_until(Some(10));
+
+    f.bb.lock().unwrap().print_dump().unwrap();
     assert_eq!(result, Ok(TickResult::success()));
 }

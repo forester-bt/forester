@@ -1,15 +1,16 @@
 import "std::actions"
 
 cond fail_before_tick();
+cond increment(key:string);
 
 root main parallel {
-    fallback {
+    r_fallback {
         fail_before_tick()
         running()
     }
-    fallback{
+    r_fallback{
         fail_before_tick()
-        store_tick("tick1")
+        increment("tick1")
     }
-    store_tick("tick2")
+    increment("tick2")
 }

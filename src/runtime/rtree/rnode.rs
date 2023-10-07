@@ -39,6 +39,9 @@ impl FlowType {
     pub fn is_root(&self) -> bool {
         matches!(self, FlowType::Root)
     }
+    pub fn is_par(&self) -> bool {
+        matches!(self, FlowType::Parallel)
+    }
 }
 
 impl TryFrom<TreeType> for DecoratorType {

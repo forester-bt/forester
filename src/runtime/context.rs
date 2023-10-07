@@ -206,8 +206,6 @@ impl TreeContext {
     }
 }
 
-pub type ChildIndex = usize;
-
 /// The current state of the node.
 /// RtArgs here represent the arguments that are passed between ticks and used as meta info
 #[derive(Clone, Debug)]
