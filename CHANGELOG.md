@@ -39,4 +39,7 @@
   * add remote action to simulation 
 * **`0.2.5`**
   * add export to ros nav 
+* **`0.2.7`**
+  * add parallel node
+  * fix bugs in decorator repeat
  
