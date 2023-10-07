@@ -3,7 +3,7 @@ import "std::actions"
 cond fail_before_tick();
 cond increment(key:string,default:num);
 
-root main parallel {
+root main repeat(2) parallel {
     r_fallback {
         fail_before_tick()
         running()

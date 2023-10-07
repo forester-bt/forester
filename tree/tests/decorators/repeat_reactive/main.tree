@@ -1,0 +1,5 @@
+import "std::actions"
+
+root main repeat(3) sequence {
+    store_tick("tick")
+}

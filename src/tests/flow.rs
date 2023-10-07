@@ -259,8 +259,46 @@ fn parallel_simple() {
     }));
 
     let mut f = fb.build().unwrap();
-    let result = f.run_until(Some(10));
+    let result = f.run_until(Some(5));
 
-    f.bb.lock().unwrap().print_dump().unwrap();
+    let bb = f.bb.lock().unwrap();
     assert_eq!(result, Ok(TickResult::success()));
+
+    let t1 = bb.get("tick1".to_string()).ok().flatten().unwrap().clone().as_int();
+    assert_eq!(t1, Some(3));
+    let t2 = bb.get("tick2".to_string()).ok().flatten().unwrap().clone().as_int();
+    assert_eq!(t2, Some(1));
+}
+#[test]
+fn parallel_simple_w_retry() {
+    turn_on_logs();
+
+    struct Condition;
+    impl Impl for Condition {
+        fn tick(&self, _args: RtArgs, ctx: TreeContextRef) -> Tick {
+            if ctx.current_tick() > 2 {
+                Ok(TickResult::Success)
+            } else {
+                Ok(TickResult::Failure("".to_string()))
+            }
+        }
+    }
+
+    let mut fb = fb("flow/parallel/simple_w_retry");
+
+    fb.register_sync_action("fail_before_tick", Condition);
+    fb.register_sync_action("increment", GenerateData::new(|v| {
+        RtValue::int(v.as_int().unwrap_or(0) + 1)
+    }));
+
+    let mut f = fb.build().unwrap();
+    let result = f.run_until(Some(20));
+
+    let bb = f.bb.lock().unwrap();
+    assert_eq!(result, Ok(TickResult::success()));
+
+    let t1 = bb.get("tick1".to_string()).ok().flatten().unwrap().clone().as_int();
+    assert_eq!(t1, Some(3));
+    let t2 = bb.get("tick2".to_string()).ok().flatten().unwrap().clone().as_int();
+    assert_eq!(t2, Some(1));
 }

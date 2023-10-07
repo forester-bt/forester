@@ -170,12 +170,13 @@ impl Forester {
                     // since it is ready we need to zero cursor for the children
                     // for some memory nodes we can switch it after.
                     // But then we do nothing but switch the state to running in the current tick.
+                    // the parallel case is processed a bit differently since we need to memorize the children state, see run_with_par
                     RNodeState::Ready(tick_args) => {
                         let len = children.len() as i64;
                         debug!(target:"flow[ready]", "tick:{}, {tpe}. Start node",ctx.curr_ts());
                         let new_state =
                             if tpe.is_par() {
-                                RNodeState::Running(run_with_par(tick_args, 0, len))
+                                RNodeState::Running(run_with_par(tick_args, len))
                             } else {
                                 RNodeState::Running(run_with(tick_args, 0, len))
                             };
@@ -268,7 +269,7 @@ impl Forester {
                     // since it is ready we need to prepare decorator to start
                     // But then we do nothing but switch the state to running in the current tick.
                     RNodeState::Ready(tick_args) => {
-                        debug!(target:"decorator[ready]", "tick:{}, {tpe}. Start decorator",ctx.curr_ts());
+                        debug!(target:"decorator[ready]", "tick:{}, {tpe}. Start decorator({init_args}) and child args({tick_args})",ctx.curr_ts());
                         let new_state =
                             decorator::prepare(tpe, init_args.clone(), tick_args, &mut ctx)?;
                         debug!(target:"decorator[ready]", "tick:{}, the new_state: {}",ctx.curr_ts(),&new_state);
@@ -282,7 +283,7 @@ impl Forester {
                         // we are about to kick off the child.
                         // Just pass the control to the child
                         RNodeState::Ready(..) => {
-                            debug!(target:"decorator[run]", "tick:{}, The '{}' is ready, push it on the stack",ctx.curr_ts(),&child);
+                            debug!(target:"decorator[run]", "tick:{}, The decorator({init_args}) has the '{}' ready, push it on the stack",ctx.curr_ts(),&child);
                             ctx.push(*child)?;
                         }
                         // child is already running and since the flow is here in the parent,
@@ -302,7 +303,7 @@ impl Forester {
                         // this stage just updates the status and depending on the status,
                         // the flow goes further or stays on the node but on the next loop of while.
                         s @ (RNodeState::Success(_) | RNodeState::Failure(_)) => {
-                            debug!(target:"decorator[run]", "tick:{}, {tpe}. Running decorator child",ctx.curr_ts());
+                            debug!(target:"decorator[run]", "tick:{}, {tpe}. Running a child of the decorator({init_args})",ctx.curr_ts());
                             let new_state = decorator::finalize(
                                 tpe,
                                 tick_args,
@@ -318,7 +319,7 @@ impl Forester {
                     // the node is finished. pass the control further or if it is root,
                     // finish the whole procedure
                     RNodeState::Success(_) | RNodeState::Failure(_) => {
-                        debug!(target:"decorator[fin]", "tick:{}, it gets popped up",ctx.curr_ts());
+                        debug!(target:"decorator[fin]", "tick:{}, The decorator({init_args}) has a child finished. it gets popped up",ctx.curr_ts());
                         ctx.pop()?;
                     }
                 },

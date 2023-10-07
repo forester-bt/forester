@@ -86,3 +86,43 @@ fn simple_delay() {
             .unwrap();
     assert_eq!(x.as_str(), "1")
 }
+#[test]
+fn repeat_reactive() {
+    let mut fb = fb("decorators/repeat_reactive");
+
+    let mut f = fb.build().unwrap();
+    assert_eq!(f.run(), Ok(TickResult::success()));
+
+
+    let x =
+        f.bb.lock()
+            .unwrap()
+            .get("tick".to_string())
+            .ok()
+            .flatten()
+            .unwrap()
+            .clone()
+            .as_int()
+            .unwrap();
+    assert_eq!(x, 3)
+}
+#[test]
+fn repeat_failure() {
+    let mut fb = fb("decorators/repeat_failure");
+
+    let mut f = fb.build().unwrap();
+    assert_eq!(f.run(), Ok(TickResult::failure("test".to_string())));
+
+
+    let x =
+        f.bb.lock()
+            .unwrap()
+            .get("tick".to_string())
+            .ok()
+            .flatten()
+            .unwrap()
+            .clone()
+            .as_int()
+            .unwrap();
+    assert_eq!(x, 1)
+}

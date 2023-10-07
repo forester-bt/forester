@@ -48,3 +48,5 @@ it needs to be aware of the following peculiarities:
 - If a child returns `running` the node will return `running` as well.
 - If a child returns `failure` or `success` but another child returns `running` the node will return `running` as well.
   - The next tick the finished nodes will be skipped and the node will tick the running node.
+
+_The parallel node is not reactive, which means the finished(success or failure) nodes will be skipped in the next tick._

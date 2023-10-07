@@ -22,7 +22,7 @@ pub const REASON: &str = "reason";
 // 1 is running,
 // 2 is failure,
 // 3 is success
-pub const CHILDRENS: &str = "children";
+pub const CHILDREN: &str = "children";
 
 pub fn run_with(tick_args: RtArgs, cursor: i64, len: i64) -> RtArgs {
     debug!(target:"params", "{}, cur:{cursor}, len:{len}", tick_args);
@@ -34,20 +34,21 @@ pub fn run_with(tick_args: RtArgs, cursor: i64, len: i64) -> RtArgs {
 // parallel node needs to know the previous state of the children.
 // It acts non reactively
 // therefore if there is a previous state it tries to find a child that either running or ready
-pub fn run_with_par(tick_args: RtArgs, cursor: i64, len: i64) -> RtArgs {
-    let prev_children_states = read_children_state(tick_args.clone());
-    if prev_children_states.is_empty() {
+pub fn run_with_par(tick_args: RtArgs, len: i64) -> RtArgs {
+    let prev_states = read_children_state(tick_args.clone());
+    if prev_states.is_empty() {
+        // the first time we create the children array
         run_with(
             tick_args.with(
-                CHILDRENS,
+                CHILDREN,
                 RtValue::Array(vec![RtValue::int(0); len as usize])),
-            cursor, len)
+            0, len)
     } else {
-        let idx = prev_children_states
-            .into_iter()
-            .find_position(|c| *c == 0 || *c == 1).map(|(idx, _)| idx)
-            .unwrap_or_default();
-        run_with(tick_args, idx as i64, len)
+        run_with(
+            tick_args.clone(),
+            read_cursor(tick_args).unwrap_or(0),
+            len,
+        )
     }
 }
 
@@ -177,15 +178,12 @@ pub fn finalize(
         FlowType::Parallel => {
             let cursor = read_cursor(tick_args.clone())?;
             let len = read_len_or_zero(tick_args.clone());
-
             let st = match res {
                 TickResultFin::Failure(_) => 2,
                 TickResultFin::Success => 3
             };
-
             let tick_args = replace_child_state(tick_args, cursor as usize, st);
             let children = read_children_state(tick_args.clone());
-
             // if some child is running or ready, we continue
             if let Some(idx) = find_next_idx(&children, cursor) {
                 Ok(Stay(RNodeState::Running(
@@ -198,16 +196,20 @@ pub fn finalize(
                         run_with(
                             tick_args,
                             next_cursor as i64, len)
-                            .with(P_CURSOR, RtValue::int(0i64)) // reset the prev cursor
+                            // reset the prev cursor otherwise it weill be greater then the current cursor and the prev one will be taken
+                            .with(P_CURSOR, RtValue::int(0i64))
                     );
+                    // we know there are some nodes needs to be run but they are behind so we can touch them in the next tick only.
+                    // And we pop up the node to allow the next tick to run the children
+                    // if we stay the running nodes will be touched in the same tick
                     Ok(PopNode(next_state))
                 } else if children.contains(&2) {
                     let args = run_with(tick_args, cursor, len)
                         .with(REASON, RtValue::str("parallel failure".to_string()));
-                    // we stay allowing to remove us on the next it of the loop
+                    // we stay allowing to remove us on the next iteration of the loop
                     Ok(Stay(RNodeState::Failure(args)))
                 } else {
-                    // we stay allowing to remove us on the next it of the loop
+                    // we stay allowing to remove us on the next iteration of the loop
                     Ok(Stay(RNodeState::Success(run_with(tick_args, cursor, len))))
                 }
             }
@@ -251,13 +253,10 @@ pub fn monitor(
                 cursor as usize,
                 1,
             );
-
             let children = read_children_state(new_args.clone());
-
             if let Some(idx) = find_next_idx(&children, cursor) {
                 Ok(Stay(RNodeState::Running(
-                    new_args.with(CURSOR, RtValue::int(idx as i64)),
-                )))
+                    new_args.with(CURSOR, RtValue::int(idx as i64)))))
             } else {
                 Ok(PopNode(RNodeState::Running(new_args)))
             }
@@ -281,34 +280,29 @@ fn replace_child_state(args: RtArgs, idx: usize, v: i64) -> RtArgs {
     let mut elems = read_children_state(args.clone());
     debug!(target:"params in child", "prev : [{args}], idx:{idx}, new state: {v}");
     elems[idx] = v;
-    args.with(CHILDRENS, RtValue::Array(elems.into_iter().map(RtValue::int).collect()))
+    args.with(CHILDREN, RtValue::Array(elems.into_iter().map(RtValue::int).collect()))
 }
 
 fn read_children_state(args: RtArgs) -> Vec<i64> {
-    args.find(CHILDRENS.to_string())
+    args.find(CHILDREN.to_string())
         .and_then(|v| v.as_vec(|v| v.as_int().unwrap()))
         .unwrap_or_default()
 }
 
 // find the next idx that is either running or ready
 fn find_next_idx(children: &Vec<i64>, current: i64) -> Option<usize> {
-    let mut cursor = (current + 1) as usize;
-    let mut next_idx = None;
-    while cursor < children.len() {
-        if children[cursor] == 0 || children[cursor] == 1 {
-            next_idx = Some(cursor);
-            break;
-        }
-        cursor = cursor + 1;
-    }
-    next_idx
+    find_pos(children, current + 1, children.len() as i64)
 }
 
 // find the next idx that is either running or ready before the current idx
 fn find_first_idx(children: &Vec<i64>, current: i64) -> Option<usize> {
-    let mut cursor = 0;
+    find_pos(children, 0, current)
+}
+
+fn find_pos(children: &Vec<i64>, low: i64, high: i64) -> Option<usize> {
+    let mut cursor = low as usize;
     let mut next_idx = None;
-    while cursor < current as usize {
+    while cursor < high as usize {
         if children[cursor] == 0 || children[cursor] == 1 {
             next_idx = Some(cursor);
             break;
