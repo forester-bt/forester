@@ -252,11 +252,7 @@ fn parallel_simple() {
     }
 
     let mut fb = fb("flow/parallel/simple");
-
     fb.register_sync_action("fail_before_tick", Condition);
-    fb.register_sync_action("increment", GenerateData::new(|v| {
-        RtValue::int(v.as_int().unwrap_or(0) + 1)
-    }));
 
     let mut f = fb.build().unwrap();
     let result = f.run_until(Some(5));
@@ -287,7 +283,7 @@ fn parallel_simple_w_retry() {
     let mut fb = fb("flow/parallel/simple_w_retry");
 
     fb.register_sync_action("fail_before_tick", Condition);
-    fb.register_sync_action("increment", GenerateData::new(|v| {
+    fb.register_sync_action("incr", GenerateData::new(|v|{
         RtValue::int(v.as_int().unwrap_or(0) + 1)
     }));
 
@@ -297,8 +293,8 @@ fn parallel_simple_w_retry() {
     let bb = f.bb.lock().unwrap();
     assert_eq!(result, Ok(TickResult::success()));
 
-    let t1 = bb.get("tick1".to_string()).ok().flatten().unwrap().clone().as_int();
+    let t1 = bb.get("t1".to_string()).ok().flatten().unwrap().clone().as_int();
     assert_eq!(t1, Some(3));
-    let t2 = bb.get("tick2".to_string()).ok().flatten().unwrap().clone().as_int();
-    assert_eq!(t2, Some(1));
+    let t2 = bb.get("t2".to_string()).ok().flatten().unwrap().clone().as_int();
+    assert_eq!(t2, Some(3));
 }

@@ -303,7 +303,7 @@ impl Forester {
                         // this stage just updates the status and depending on the status,
                         // the flow goes further or stays on the node but on the next loop of while.
                         s @ (RNodeState::Success(_) | RNodeState::Failure(_)) => {
-                            debug!(target:"decorator[run]", "tick:{}, {tpe}. Running a child of the decorator({init_args})",ctx.curr_ts());
+                            debug!(target:"decorator[run]", "tick:{}, {tpe}. Running a child of the decorator({tick_args}), child args({})",ctx.curr_ts(),s.args());
                             let new_state = decorator::finalize(
                                 tpe,
                                 tick_args,

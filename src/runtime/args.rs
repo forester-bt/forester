@@ -44,6 +44,7 @@ impl From<Number> for RtValueNumber {
         }
     }
 }
+
 /// The structure that represents the value type in runtime.
 /// The value type is a value in BlackBoard or a message.
 /// # Notes
@@ -107,16 +108,16 @@ impl RtValueCast {
     }
     /// tries to convert to vec and map each element
     pub fn map_vec<Map, To>(self, map: Map) -> RtResult<Option<Vec<To>>>
-    where
-        Map: Fn(RtValue) -> To,
+        where
+            Map: Fn(RtValue) -> To,
     {
         self.with_ptr().map(|v| v.as_vec(map))
     }
 
     /// tries to convert obj to map
     pub fn map_obj<Map, To>(self, map: Map) -> RtResult<Option<HashMap<String, To>>>
-    where
-        Map: Fn((String, RtValue)) -> (String, To),
+        where
+            Map: Fn((String, RtValue)) -> (String, To),
     {
         self.with_ptr().map(|v| v.as_map(map))
     }
@@ -150,8 +151,8 @@ impl RtValue {
         }
     }
     pub fn as_vec<Map, To>(self, map: Map) -> Option<Vec<To>>
-    where
-        Map: Fn(RtValue) -> To,
+        where
+            Map: Fn(RtValue) -> To,
     {
         match self {
             RtValue::Array(elems) => Some(elems.into_iter().map(map).collect()),
@@ -159,8 +160,8 @@ impl RtValue {
         }
     }
     pub fn as_map<Map, To>(self, map: Map) -> Option<HashMap<String, To>>
-    where
-        Map: Fn((String, RtValue)) -> (String, To),
+        where
+            Map: Fn((String, RtValue)) -> (String, To),
     {
         match self {
             RtValue::Object(elems) => Some(HashMap::from_iter(
@@ -231,8 +232,8 @@ impl RtArgs {
     }
     /// takes the first one and transform
     pub fn first_as<M, To>(&self, map: M) -> Option<To>
-    where
-        M: Fn(RtValue) -> Option<To>,
+        where
+            M: Fn(RtValue) -> Option<To>,
     {
         self.0.first().and_then(|v| map(v.value.clone()))
     }
@@ -271,6 +272,11 @@ impl RtArgs {
 
         RtArgs(elems)
     }
+
+    /// remove from the given list of RtValues another one.
+    pub fn remove(self, key: &str) -> RtArgs {
+        RtArgs(self.0.into_iter().filter(|v| v.name != key).collect())
+    }
 }
 
 impl Display for RtArgs {
@@ -280,6 +286,7 @@ impl Display for RtArgs {
         Ok(())
     }
 }
+
 /// The structure that represents the pair of the argument name and the value.
 /// It is used in bb to store the arguments of the tree.
 #[derive(Debug, PartialEq, Clone, Deserialize, Serialize)]
@@ -298,6 +305,7 @@ impl Display for RtValueNumber {
         }
     }
 }
+
 impl Display for RtValue {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {

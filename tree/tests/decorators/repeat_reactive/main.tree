@@ -1,5 +1,7 @@
 import "std::actions"
 
-root main repeat(3) sequence {
-    store_tick("tick")
+impl incr(key:string,default:num);
+
+root main repeat(5) sequence {
+    incr("tick",0)
 }

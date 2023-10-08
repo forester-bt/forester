@@ -3,7 +3,7 @@ use crate::runtime::action::builtin::ReturnResult;
 use crate::runtime::action::Action;
 use crate::runtime::args::RtValue;
 use crate::runtime::TickResult;
-use crate::tests::fb;
+use crate::tests::{fb, turn_on_logs};
 use std::time::SystemTime;
 
 #[test]
@@ -88,11 +88,15 @@ fn simple_delay() {
 }
 #[test]
 fn repeat_reactive() {
+    turn_on_logs();
     let mut fb = fb("decorators/repeat_reactive");
+
+    fb.register_sync_action("incr", GenerateData::new(|v|{
+        RtValue::int(v.as_int().unwrap_or(0) + 1)
+    }));
 
     let mut f = fb.build().unwrap();
     assert_eq!(f.run(), Ok(TickResult::success()));
-
 
     let x =
         f.bb.lock()
@@ -104,7 +108,7 @@ fn repeat_reactive() {
             .clone()
             .as_int()
             .unwrap();
-    assert_eq!(x, 3)
+    assert_eq!(x, 5)
 }
 #[test]
 fn repeat_failure() {

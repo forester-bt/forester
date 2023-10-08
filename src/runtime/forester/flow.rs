@@ -205,12 +205,13 @@ pub fn finalize(
                     Ok(PopNode(next_state))
                 } else if children.contains(&2) {
                     let args = run_with(tick_args, cursor, len)
-                        .with(REASON, RtValue::str("parallel failure".to_string()));
+                        .with(REASON, RtValue::str("parallel failure".to_string()))
+                        .remove(CHILDREN);
                     // we stay allowing to remove us on the next iteration of the loop
                     Ok(Stay(RNodeState::Failure(args)))
                 } else {
                     // we stay allowing to remove us on the next iteration of the loop
-                    Ok(Stay(RNodeState::Success(run_with(tick_args, cursor, len))))
+                    Ok(Stay(RNodeState::Success(run_with(tick_args, cursor, len).remove(CHILDREN))))
                 }
             }
         }

@@ -1,9 +1,9 @@
 import "std::actions"
 
 cond fail_before_tick();
-cond increment(key:string,default:num);
+cond incr(key:string,default:num);
 
-root main repeat(2) parallel {
+root main repeat(3) parallel {
     r_fallback {
         fail_before_tick()
         running()
@@ -11,9 +11,9 @@ root main repeat(2) parallel {
     r_fallback {
         r_sequence {
             fail_before_tick()
-            store_tick("tick1")
+            incr("t1",0)
         }
         running()
     }
-    store_tick("tick2")
+    incr("t2",0)
 }
