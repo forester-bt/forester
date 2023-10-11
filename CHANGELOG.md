@@ -42,4 +42,6 @@
 * **`0.2.7`**
   * add parallel node
   * fix bugs in decorator repeat
+* **`0.2.8`**
+  * generalize the message
  
