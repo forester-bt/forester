@@ -1,0 +1,13 @@
+
+
+root main sequence {
+    test(1)
+}
+
+sequence test(b:any){
+    test2(b,b)
+}
+
+sequence test2(a:num, b:string){
+
+}

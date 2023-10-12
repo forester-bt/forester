@@ -71,6 +71,8 @@ pub enum Token {
     ObjectT,
     #[token("string")]
     StringT,
+    #[token("any")]
+    AnyT,
     #[token("bool")]
     BoolT,
     #[token("tree")]

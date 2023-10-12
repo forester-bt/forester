@@ -1,0 +1,37 @@
+use crate::runtime::action::{Impl, Tick};
+use crate::runtime::args::{RtArgs, RtValue};
+use crate::runtime::context::TreeContextRef;
+use crate::runtime::{RuntimeError, TickResult};
+use crate::tests::{fb, test_folder, turn_on_logs};
+use crate::tree::TreeError;
+use crate::tree::TreeError::CompileError;
+use crate::visualizer::Visualizer;
+
+#[test]
+fn fail_types() {
+    assert_eq!(fb("params/any_fail").build().is_err(), true);
+}
+
+#[test]
+fn any_type() {
+    turn_on_logs();
+    struct X;
+    impl Impl for X {
+        fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
+            let key = args.first().unwrap().clone().as_string().unwrap();
+            let value = args.find_or_ith("arg".to_string(), 1).unwrap();
+            println!("key: {:?}, value: {:?}", key, value);
+            ctx.bb().lock().unwrap().put(key, value).unwrap();
+            Ok(TickResult::success())
+        }
+    }
+
+    let mut fb = fb("params/any");
+    fb.register_sync_action("consumer", X);
+    let mut f = fb.build().unwrap();
+    let result = f.run();
+    assert_eq!(result, Ok(TickResult::success()));
+
+    let string = f.bb.lock().unwrap().text_dump().unwrap();
+    assert_eq!(string, "{\n  \"storage\": {\n    \"a\": {\n      \"Unlocked\": 1\n    },\n    \"b\": {\n      \"Unlocked\": \"2\"\n    }\n  }\n}");
+}

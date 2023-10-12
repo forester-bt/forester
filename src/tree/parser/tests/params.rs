@@ -22,4 +22,11 @@ fn params() {
             Param::new("b", MesType::String),
         ]),
     );
+    let parser = Parser::new(r#"(a:any)"#).unwrap();
+    expect(
+        parser.params(0),
+        Params::new(vec![
+            Param::new("a", MesType::Any),
+        ]),
+    );
 }

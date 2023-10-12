@@ -5,7 +5,7 @@ use crate::tree::parser::ast::Key;
 use crate::tree::{cerr, TreeError};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
-use std::fmt::{Display, Formatter, Write};
+use std::fmt::{Display, format, Formatter, Write};
 
 /// Just a pair of name and type
 /// This is a representation of a tree parameter
@@ -67,7 +67,7 @@ impl ArgumentRhs {
 impl Display for ArgumentRhs {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            ArgumentRhs::Id(id) => f.write_str(id),
+            ArgumentRhs::Id(id) => write!(f, "&{}", id),
             ArgumentRhs::Mes(m) => write!(f, "{}", m),
             ArgumentRhs::Call(c) => match c {
                 Call::Invocation(name, args) => {
@@ -157,6 +157,7 @@ pub enum ArgumentsType {
 }
 
 impl Arguments {
+
     pub fn get_type(&self) -> Result<ArgumentsType, TreeError> {
         let mut curr = None;
 
@@ -192,6 +193,7 @@ impl Arguments {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum MesType {
+    Any,
     Num,
     Array,
     Object,
@@ -203,6 +205,7 @@ pub enum MesType {
 impl Display for MesType {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
+            MesType::Any => write!(f, "any"),
             MesType::Num => write!(f, "num"),
             MesType::Array => write!(f, "array"),
             MesType::Object => write!(f, "object"),

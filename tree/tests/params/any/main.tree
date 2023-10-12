@@ -1,0 +1,14 @@
+
+impl consumer(k:string,arg:any);
+
+root main test(1,"2")
+
+
+sequence test(a:any, b:any){
+    test2(a,b)
+}
+
+sequence test2(a1:num, b1:string){
+    consumer("a",a1)
+    consumer("b",b1)
+}

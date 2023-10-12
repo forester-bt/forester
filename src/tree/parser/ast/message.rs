@@ -80,8 +80,8 @@ impl Message {
                 | (Message::String(_), MesType::String)
                 | (Message::Bool(_), MesType::Bool)
                 | (Message::Array(_), MesType::Array)
-                | (Message::Object(_), MesType::Object)
-        )
+                | (Message::Object(_), MesType::Object))
+            || matches!(mt, MesType::Any)
     }
 
     pub fn str(v: &str) -> Self {

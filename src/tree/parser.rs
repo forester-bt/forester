@@ -208,7 +208,8 @@ impl<'a> Parser<'a> {
                 Token::ArrayT => MesType::Array,
                 Token::BoolT => MesType::Bool,
                 Token::TreeT => MesType::Tree,
-                Token::ObjectT => MesType::Object
+                Token::ObjectT => MesType::Object,
+                Token::AnyT => MesType::Any
         )
     }
 

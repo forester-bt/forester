@@ -11,6 +11,7 @@ mod trimmer;
 mod vizualizer;
 mod nav;
 mod import;
+mod params;
 
 use crate::runtime::builder::file_builder::FileForesterBuilder;
 use crate::runtime::builder::ForesterBuilder;

@@ -203,3 +203,23 @@ root main sequence {
     action(bb_key) 
 }
 ```
+
+### Any
+
+The `any` type is a special type that can be used to pass any type of value to the parameter.
+
+**The type any can take any message type except call**
+
+The intention to provide a simple way to generalize the parameters and pass any type of value to the parameter.
+
+```f-tree
+// can take anything except call
+impl action(value:any);
+
+root main sequence {
+    
+    action(1) 
+    action("a") 
+    action([1]) 
+}
+```

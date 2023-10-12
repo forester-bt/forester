@@ -30,7 +30,7 @@ pub struct RuntimeTreeStarter {
     // the separate tables for standard and all actions
     // the reason for this is that the user actions can have the same name as the standard ones
     // and we need to distinguish them
-    pub std_actions: HashSet<(ActionName,FileName)>,
+    pub std_actions: HashSet<(ActionName, FileName)>,
     pub actions: HashSet<ActionName>,
 }
 
@@ -173,14 +173,14 @@ impl RuntimeTree {
                         .unwrap_or_default();
                     match curr_file.definitions.get(&name) {
                         Some(tree) => {
-                            let rt_args = to_rt_args(
+                            let (rt_args,upd_args) = to_rt_args(
                                 name.as_str(),
                                 args.clone(),
                                 tree.params.clone(),
                                 parent_args,
                                 parent_params,
                             )?;
-                            builder.add_chain(id, parent_id, args.clone(), tree.params.clone());
+                            builder.add_chain(id, parent_id, upd_args, tree.params.clone());
                             if tree.tpe.is_action() {
                                 r_tree.nodes.insert(id, RNode::action(name, curr_file.name.clone(), rt_args));
                                 actions.insert(tree.name.clone());
@@ -196,16 +196,16 @@ impl RuntimeTree {
                         None => {
                             let (tree, file) = import_map.find(&name, &project)?;
                             if file.contains("::") {
-                                std_actions.insert((tree.name.clone(),file.clone()));
+                                std_actions.insert((tree.name.clone(), file.clone()));
                             }
-                            let rt_args = to_rt_args(
+                            let (rt_args,upd_args)  = to_rt_args(
                                 name.as_str(),
                                 args.clone(),
                                 tree.params.clone(),
                                 parent_args,
                                 parent_params,
                             )?;
-                            builder.add_chain(id, parent_id, args.clone(), tree.params.clone());
+                            builder.add_chain(id, parent_id, upd_args, tree.params.clone());
                             let children =
                                 builder.push_vec(tree.calls.clone(), id, file_name.clone());
 
@@ -303,7 +303,7 @@ mod tests {
 
         assert_eq!(
             st_tree.std_actions,
-            HashSet::from_iter(vec![("success".to_string(),"std::actions".to_string())])
+            HashSet::from_iter(vec![("success".to_string(), "std::actions".to_string())])
         );
         assert_eq!(
             st_tree.actions,
@@ -343,5 +343,106 @@ mod tests {
         let st_tree = RuntimeTree::build(project).unwrap().tree;
 
         assert_eq!(st_tree.nodes.len(), 4)
+    }
+
+    #[test]
+    fn params() {
+        let project = Project::build_from_text(
+            r#"
+        impl consumer(arg:any);
+
+        root main test(1)
+
+        sequence test(a:any){
+            test2(a)
+        }
+
+        sequence test2(a1:num){
+            consumer(a1)
+        }
+        "#
+                .to_string(),
+        )
+            .unwrap();
+
+        let st_tree = RuntimeTree::build(project).unwrap().tree;
+
+        let items: Vec<_> = st_tree.nodes.iter().sorted_by_key(|e| e.0).collect();
+        assert_eq!(
+            items,
+            vec![
+                (
+                    &1usize,
+                    &Flow(
+                        Root,
+                        Name("main".to_string(), "_".to_string()),
+                        RtArgs(vec![]),
+                        vec![2],
+                    )
+                ),
+                (
+                    &2usize,
+                    &Flow(
+                        Sequence,
+                        Name("test".to_string(), "_".to_string()),
+                        RtArgs(vec![RtArgument::new(
+                            "a".to_string(),
+                            RtValue::int(1))]),
+                        vec![3],
+                    )
+                ),
+                (
+                    &3usize,
+                    &Flow(
+                        Sequence,
+                        Name("test2".to_string(), "_".to_string()),
+                        RtArgs(vec![RtArgument::new(
+                            "a1".to_string(),
+                            RtValue::int(1))]),
+                        vec![4],
+                    )
+                ),
+                (
+                    &4usize,
+                    &Leaf(
+                        Name("consumer".to_string(), "_".to_string()),
+                        RtArgs(vec![RtArgument::new(
+                            "arg".to_string(),
+                            RtValue::int(1))]),
+                    )
+                ),
+            ]
+        );
+    }
+
+    #[test]
+    fn params2() {
+        let project = Project::build_from_text(
+            r#"
+        impl consumer(arg0:any,arg:any);
+        root main test("-b-",1)
+
+        sequence test(b:any,a:any){
+            test2(a,b)
+        }
+
+        sequence test2(b1:num,a1:any){
+            consumer(b1,a1)
+        }
+        "#
+                .to_string(),
+        )
+            .unwrap();
+
+        let st_tree = RuntimeTree::build(project).unwrap().tree;
+
+        let item  = st_tree.nodes.iter().find(|(id,_)|**id == 4).unwrap().1.args();
+        assert_eq!(
+            item,
+            RtArgs(vec![
+                RtArgument::new("arg0".to_string(), RtValue::int(1) ),
+                RtArgument::new("arg".to_string(), RtValue::str("-b-".to_string()))
+            ])
+        );
     }
 }

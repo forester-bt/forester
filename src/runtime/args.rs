@@ -14,7 +14,7 @@ use itertools::Itertools;
 use serde::de::{Error, MapAccess, SeqAccess, Visitor};
 use serde::{Deserialize, Deserializer, Serialize};
 use std::collections::HashMap;
-use std::fmt::{Display, Formatter};
+use std::fmt::{Display, format, Formatter};
 
 /// Just a Key class for the arguments that represents the key in BB
 pub type RtAKey = String;
@@ -320,7 +320,7 @@ impl Display for RtValue {
                 f.write_str(format!("[{}]", elems).as_str())?;
             }
             RtValue::Number(n) => f.write_str(format!("{}", n).as_str())?,
-            RtValue::Pointer(p) => f.write_str(p)?,
+            RtValue::Pointer(p) => f.write_str(format!("&{p}").as_str())?,
             RtValue::Call(_) => f.write_str("<Call>>")?,
         }
         Ok(())
@@ -363,36 +363,39 @@ impl RtArgument {
         p: Param,
         parent_args: Arguments,
         parent_params: Params,
-    ) -> Result<RtArgument, TreeError> {
+    ) -> Result<(RtArgument,ArgumentRhs), TreeError> {
         RtArgument::validate_type(a.clone(), p.clone().tpe)?;
         match &a {
             ArgumentRhs::Id(id) => match find_arg_value(id, &parent_params, &parent_args).ok() {
-                None => Ok(RtArgument::new(p.name, RtValue::Pointer(id.clone()))),
+                None => Ok((RtArgument::new(p.name, RtValue::Pointer(id.clone())),a)),
                 Some(v) => RtArgument::try_from(v, p, Arguments::default(), Params::default()),
             },
-            ArgumentRhs::Mes(m) => Ok(RtArgument::new(p.name, m.clone().into())),
-            ArgumentRhs::Call(c) => Ok(RtArgument::new(p.name, RtValue::Call(c.clone()))),
+            ArgumentRhs::Mes(m) => Ok((RtArgument::new(p.name, m.clone().into()),a)),
+            ArgumentRhs::Call(c) => Ok((RtArgument::new(p.name, RtValue::Call(c.clone())),a)),
         }
     }
     /// validates the type of the argument in accordance with the type of the parameter
     pub fn validate_type(arg: ArgumentRhs, param: MesType) -> Result<(), TreeError> {
         let error = |lhs: &str, rhs: &str| {
             Err(cerr(format!(
-                "the type '{lhs}' of the argument does not coincide to the type '{rhs}' of the definition ",
+                "the type of the given value '{lhs}' of the argument does not coincide to the type '{rhs}' of the definition ",
             )))
         };
 
         match (arg, param) {
             (ArgumentRhs::Call(_), MesType::Tree) => Ok(()),
+            (ArgumentRhs::Call(_), m) => error("call", format!("{:?}", m).as_str()),
             (ArgumentRhs::Id(_), MesType::Tree) => error("pointer", "call"),
             (ArgumentRhs::Mes(_), MesType::Tree) => error("message", "call"),
 
-            (ArgumentRhs::Call(_), m) => error("call", format!("{:?}", m).as_str()),
             (ArgumentRhs::Id(_), _) => Ok(()),
 
-            (ArgumentRhs::Mes(m), m_t) if m.same(&m_t) => Ok(()),
             (ArgumentRhs::Mes(m), m_t) => {
-                error(format!("{}", m).as_str(), format!("{:?}", m_t).as_str())
+                if m.same(&m_t) {
+                    Ok(())
+                } else {
+                    error(format!("{}", m).as_str(), format!("{:?}", m_t).as_str())
+                }
             }
         }
     }

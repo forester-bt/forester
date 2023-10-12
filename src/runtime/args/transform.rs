@@ -72,13 +72,14 @@ pub fn to_dec_rt_args(
 /// It extracts and validates the arguments for decorators since the contract is fixed.
 /// The parent attributes  are used to find the arguments
 /// that comes from parents as pointer the from `parent(x:num) retry(x) action()`
+/// returns the runtime arguments and the arguments that get updated (unfolded pointers)
 pub fn to_rt_args(
     name: &str,
     args: Arguments,
     params: Params,
     p_args: Arguments,
     p_params: Params,
-) -> Result<RtArgs, TreeError> {
+) -> Result<(RtArgs, Arguments), TreeError> {
     let mut rt_args: Vec<RtArgument> = vec![];
     match args.get_type()? {
         // we can't traverse the parameters if some of them are skipped
@@ -90,17 +91,20 @@ pub fn to_rt_args(
         }
         // find by the index according to the parameters
         ArgumentsType::Unnamed => {
+            let mut upd_args = vec![];
             for (a, p) in args.args.into_iter().zip(params.params) {
                 // if the that is a pointer we need to check parent also.
                 let rhs = a.value().clone();
-                let rt_arg = RtArgument::try_from(rhs, p, p_args.clone(), p_params.clone())
+                let (rt_arg, upd_rhs) = RtArgument::try_from(rhs, p, p_args.clone(), p_params.clone())
                     .map_err(|r| r.modify(|s| format!("tree: {}, {}", name, s)))?;
                 rt_args.push(rt_arg);
+                upd_args.push(Argument::Unassigned(upd_rhs));
             }
-            Ok(RtArgs(rt_args))
+            Ok((RtArgs(rt_args), Arguments::new(upd_args)))
         }
         // find by the name according to the parameters
         ArgumentsType::Named => {
+            let mut upd_args = vec![];
             let param_map: HashMap<String, Param> =
                 HashMap::from_iter(params.params.into_iter().map(|p| (p.name.clone(), p)));
 
@@ -109,15 +113,17 @@ pub fn to_rt_args(
                     "the argument {a} does not correspond to the definition"
                 )))?;
                 // if the that is a pointer we need to check parent also.
+                let key = a.name().unwrap().to_string();
                 let rhs = a.value().clone();
-                let rt_arg =
+                let (rt_arg, upd_rhs) =
                     RtArgument::try_from(rhs, p.clone(), p_args.clone(), p_params.clone())
                         .map_err(|r| r.modify(|s| format!("tree: {}, {}", name, s)))?;
                 rt_args.push(rt_arg);
+                upd_args.push(Argument::Assigned(key, upd_rhs));
             }
-            Ok(RtArgs(rt_args))
+            Ok((RtArgs(rt_args), Arguments::new(upd_args)))
         }
-        ArgumentsType::Empty => Ok(RtArgs(rt_args)),
+        ArgumentsType::Empty => Ok((RtArgs(rt_args), args)),
     }
 }
 
