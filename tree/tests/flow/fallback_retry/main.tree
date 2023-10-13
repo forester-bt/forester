@@ -1,9 +1,9 @@
 import "std::actions"
 
 root main sequence {
-    store_str("info", "initial")
+    store("info", "initial")
     retryer(fail_empty(), success())
-    store_str("field","some_info")
+    store("field","some_info")
 }
 
 fallback retryer(t:tree, default:tree){

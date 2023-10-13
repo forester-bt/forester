@@ -27,9 +27,8 @@ fn action_impl(action: &ActionName) -> RtResult<Action> {
         "fail" => Ok(Action::sync(ReturnResult::fail_empty())),
         "success" => Ok(Action::sync(ReturnResult::success())),
         "running" => Ok(Action::sync(ReturnResult::running())),
-        "store_str" => Ok(Action::sync(StoreData)),
-        "eq_str" => Ok(Action::sync(CheckEq)),
-        "eq_num" => Ok(Action::sync(CheckEq)),
+        "store" => Ok(Action::sync(StoreData)),
+        "equal" => Ok(Action::sync(CheckEq)),
         "test" => Ok(Action::sync(TestBool)),
         "store_tick" => Ok(Action::sync(StoreTick)),
         "http_get" => Ok(Action::sync(HttpGet)),
@@ -47,7 +46,7 @@ pub fn builtin_actions_file() -> String {
 //
 // Built-in actions.
 // The actions are accessible using the import 'import "std::actions"'
-// Better off, the file be avoided modifying
+// Better to avoid modifying the file
 //
 
 // Fails execution, returning Result::Failure
@@ -63,20 +62,15 @@ impl running();
 // Sleeps on duration(milliseconds) then returns Result::Success
 // impl sleep(duration:num);
 
-// Stores the string value in the given key. Returns Result::Success.
+// Stores the value in the given key. Returns Result::Success.
 // If the cell is locked, returns Result::Failure
-impl store_str(key:string, value:string);
+impl store(key:string, value:any);
 
-// Stores the num value in the given key. Returns Result::Success.
-// If the cell is locked, returns Result::Failure
-impl store_num(key:string, value:num);
-
-// Compares given string value with what is in the cell:
+// Compares a given value with what is in the cell:
 // - Returns Result::Success if they are equal
 // - Returns Fail(reason)if they are not equal
 // - Returns Fail(reason) if there is no cell in bbe with the given key.
-impl eq_str(key:string, expected:string);
-impl eq_num(key:string, expected:num);
+impl equal(key:string, expected:any);
 
 // Compares given bool value with true:
 // - Returns Result::Success if they are equal

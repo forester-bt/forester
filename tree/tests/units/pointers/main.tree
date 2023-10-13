@@ -1,6 +1,6 @@
 import "std::actions"
 
 root main sequence {
-    store_str("k", "mes")
-    eq_str(k,"mes")
+    store("k", "mes")
+    equal(k,"mes")
 }

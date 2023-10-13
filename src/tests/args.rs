@@ -153,7 +153,7 @@ fn inter_args_pointers() {
         r#"
 import "std::actions"
 root main {
-    store_str("t","test")
+    store("t","test")
     test(t)
 }
 sequence test(a:string) t(a)

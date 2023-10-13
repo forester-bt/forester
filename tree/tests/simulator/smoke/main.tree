@@ -2,8 +2,8 @@ import "std::actions"
 import "actions.tree"
 
 root main sequence {
-    store_str("info1", "initial")
+    store("info1", "initial")
     retryer(task(config = obj), success())
-    store_str("info2","finish")
+    store("info2","finish")
 }
 impl task(config: object);

@@ -2,12 +2,12 @@ import "std::actions"
 impl incr(k:string, i:num);
 
 root main r_sequence{
-    store_str("x","tick")
+    store("x","tick")
     store_tick(x)
     sequence {
         incr("a",1)
         r_fallback {
-            eq_num(tick, 10)
+            equal(tick, 10)
             running()
         }
     }

@@ -23,7 +23,7 @@ The types `String`, `Bool`, `Number` are primitive types. They act as their coun
 The types `Object` acts as a json map and `Array` just as an array.
 
 ### Pointer
-Represents a name of the cell in bb. For example, in the expression `eq_num(tick, 10)` the tick is a pointer and represents 
+Represents a name of the cell in bb. For example, in the expression `equal(tick, 10)` the tick is a pointer and represents 
 a name of the cell where the value is stored. Thus, the action will go to the cell `tick` and extract the value and compare 
 it with number.
 
@@ -36,7 +36,7 @@ root main r_sequence{
     store_tick("tick")
     sequence {
         r_fallback {
-            eq_num(tick, 10)
+            equal(tick, 10)
             running()
         }
     }
@@ -50,9 +50,9 @@ otherwise if it is a pointer the action will be looking a name inside the cell w
 The example depicts it:
 
 ```
-    store_str("x","tick")
+    store("x","tick")
     store_tick(x)
-    eq_num(tick, 10)
+    equal(tick, 10)
 ```
 
 ### How to work with arguments

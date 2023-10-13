@@ -37,14 +37,13 @@ impl running();
 
 // Stores the string value in the given key. Returns Result::Success. 
 // If the cell is locked, returns Result::Failure   
-impl store_str(key:string, value:string);
+impl store(key:string, value:string);
 
-// Compares given string value with what is in the cell:
+// Compares a given value with what is in the cell:
 // - Returns Result::Success if they are equal
 // - Returns Fail(reason)if they are not equal
 // - Returns Fail(reason) if there is no cell in bbe with the given key.
-impl eq_str(key:string, expected:string);
-impl eq_num(key:string, expected:num);
+impl equal(key:string, expected:any);
 
 // Store the current tick
 impl store_tick(name:string);

@@ -15,9 +15,9 @@ sequence main_seq {
 }
 
 sequence check_distance(item:object){
-        store_str("log","start")
+        store("log","start")
         handle_distance(item)
-        store_str("log","end")
+        store("log","end")
 }
 
 // definition

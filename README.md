@@ -24,9 +24,9 @@ The language is very simple
 import "std::actions"
 
 root main sequence {
-    store_str("info", "initial")
+    store("info", "initial")
     retryer(task({}), success())
-    store_str("field","some_info")
+    store("field","some_info")
 }
 
 fallback retryer(t:tree, default:tree){

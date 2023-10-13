@@ -32,6 +32,9 @@ fn any_type() {
     let result = f.run();
     assert_eq!(result, Ok(TickResult::success()));
 
-    let string = f.bb.lock().unwrap().text_dump().unwrap();
-    assert_eq!(string, "{\n  \"storage\": {\n    \"a\": {\n      \"Unlocked\": 1\n    },\n    \"b\": {\n      \"Unlocked\": \"2\"\n    }\n  }\n}");
+    let bb = f.bb.lock().unwrap();
+    let a = bb.get("a".to_string()).unwrap().unwrap().clone().as_int().unwrap();
+    let b = bb.get("b".to_string()).unwrap().unwrap().clone().as_string().unwrap();
+    assert_eq!(a, 1);
+    assert_eq!(b, "2".to_string());
 }

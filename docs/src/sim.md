@@ -122,9 +122,9 @@ fn smoke() {
  import "std::actions"
 
  root main sequence {
-     store_str("info1", "initial")
+     store("info1", "initial")
      retryer(task(config = obj), success())
-     store_str("info2","finish")
+     store("info2","finish")
  }
 
  fallback retryer(t:tree, default:tree){
