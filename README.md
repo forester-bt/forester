@@ -1,7 +1,7 @@
 <p align="center">
     <img width="255" alt="Logo" src="docs/src/pics/logo.png">
 </p>
-<h1 align="center">Forester - A fast orchestration engine, implementing behavior trees.</h1>
+<h1 align="center">Forester - A fast and modular orchestration engine, implementing behavior trees.</h1>
 
 
 <p align="center">
@@ -11,7 +11,7 @@
 
 ## About
 
-Forester represents a framework that provides the toolkit to perform the effective task orckestrations.
+Forester represents a framework that provides the toolkit to perform the effective task orchestrations.
 The tasks can be performed synchronously or asynchronously, locally or remotely.
 Forester takes care of the correct performance and distribution of the tasks.
 The main concept of the framework is the flow based on the behavior trees
@@ -84,7 +84,7 @@ Firstly, they provide a strong math abstraction over the orchestration logic \
 and enables to separate the business logic and the tree logic itself.
 
 On the other hand, they have only a small set of logically conjucted components making the design easier,
-
+One of the great advantages of the behavior trees is that they provide a good conception of modularity. \
 Articles that introduce into the basics of the behavior trees
 - [Chris Simpson’s Behavior trees for AI: How they work](https://outforafight.wordpress.com/2014/07/15/behaviour-behavior-trees-for-ai-dudes-part-1/)
 - [Introduction to behavior trees](https://robohub.org/introduction-to-behavior-trees/)

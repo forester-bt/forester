@@ -44,7 +44,7 @@ The user-defined validations can be useful to restrict some features of the fram
 ## Why behavior trees
 Firstly, they provide a strong math abstraction over the orchestration logic \
 and enables to separate the business logic and the tree logic itself.
-
+One of the great advantages of the behavior trees is that they provide a good conception of modularity. \
 On the other hand, they have only a small set of logically conjucted components making the design easier,
 
 ### Articles that introduce into the basics of the behaviour trees
