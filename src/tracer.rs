@@ -246,6 +246,10 @@ pub enum Event {
     NextTick,
     /// The current node updates its state
     NewState(RNodeId, RNodeState),
+
+    /// The information from daemon
+    Daemon(String),
+
     /// The custom user information.
     Custom(String),
 
@@ -266,6 +270,9 @@ impl Display for Event {
             }
             Event::Trim(id, txt) => {
                 f.write_str(format!("trim {id} : {txt}").as_str())?;
+            }
+            Event::Daemon(s) => {
+                f.write_str(format!("daemon: {s}").as_str())?;
             }
         }
 

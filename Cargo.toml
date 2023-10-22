@@ -28,6 +28,8 @@ hyper = "0.14.27"
 chrono = "0.4.26"
 quick-xml = "0.30.0"
 
+#rustdds = "0.8.5"
+
 [dev-dependencies]
 wiremock = "0.5.19"
 forester-http = "0.1.0"

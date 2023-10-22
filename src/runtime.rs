@@ -7,6 +7,7 @@ pub mod env;
 pub mod forester;
 pub mod rtree;
 pub mod trimmer;
+pub mod dds;
 
 use crate::tree::TreeError;
 use serde::{Deserialize, Serialize};

@@ -22,14 +22,14 @@ pub type Timestamp = usize;
 /// #Note
 /// The port defines the port of the http server
 /// that is used to send the information to the remote action(current http server).
-pub struct TreeRemoteContextRef<'a> {
+pub struct TreeRemoteContextRef {
     pub curr_ts: Timestamp,
     pub port: u16,
-    pub env: &'a mut RtEnv,
+    pub env: Arc<Mutex<RtEnv>>,
 }
 
-impl<'a> TreeRemoteContextRef<'a> {
-    pub fn new(curr_ts: Timestamp, port: u16, env: &'a mut RtEnv) -> Self {
+impl TreeRemoteContextRef {
+    pub fn new(curr_ts: Timestamp, port: u16, env: Arc<Mutex<RtEnv>>) -> Self {
         Self { curr_ts, port, env }
     }
 }
@@ -99,6 +99,9 @@ pub struct TreeContext {
 
     /// the max amount of ticks
     tick_limit: Timestamp,
+
+    /// The runtime environment
+    rt_env: Arc<Mutex<RtEnv>>,
 }
 
 impl TreeContext {
@@ -110,10 +113,14 @@ impl TreeContext {
     pub fn bb(&mut self) -> Arc<Mutex<BlackBoard>> {
         self.bb.clone()
     }
+    pub fn tracer(&mut self) -> Arc<Mutex<Tracer>> {
+        self.tracer.clone()
+    }
     pub fn new(
         bb: Arc<Mutex<BlackBoard>>,
         tracer: Arc<Mutex<Tracer>>,
         tick_limit: Timestamp,
+        rt_env: Arc<Mutex<RtEnv>>,
     ) -> Self {
         Self {
             bb,
@@ -123,6 +130,7 @@ impl TreeContext {
             ts_map: Default::default(),
             curr_ts: 1,
             tick_limit,
+            rt_env
         }
     }
 }

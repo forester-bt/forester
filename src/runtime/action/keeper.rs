@@ -7,6 +7,7 @@ use crate::runtime::env::TaskState;
 use crate::runtime::forester::serv::ServInfo;
 use crate::runtime::{RtResult, RuntimeError, TickResult};
 use std::collections::{HashMap, HashSet};
+use std::sync::{Arc, Mutex};
 
 /// Just an action map to register and execute the actions.
 /// The actions are registered by the `ActionName` and the `Action` impl.
@@ -53,8 +54,8 @@ impl ActionKeeper {
         // the default action impl for the set = all_actions - impl_actions
         default: T,
     ) -> RtResult<Self>
-    where
-        T: Fn() -> ActionImpl,
+        where
+            T: Fn() -> ActionImpl,
     {
         let mut impl_actions = impl_actions;
         let mut actions = HashMap::new();
@@ -94,7 +95,7 @@ impl ActionKeeper {
     /// If the action is async and running, check the process instead.
     pub fn on_tick(
         &mut self,
-        env: &mut RtEnv,
+        env: Arc<Mutex<RtEnv>>,
         name: &ActionName,
         args: RtArgs,
         ctx: TreeContextRef,
@@ -106,23 +107,28 @@ impl ActionKeeper {
                 args,
                 TreeRemoteContextRef::new(ctx.current_tick(), get_port(http_serv)?, env),
             ),
-            Action::Async(ref mut action) => match env.task_state(name)? {
-                // just to start it in the separate thread(supposedly)
-                TaskState::Absent => {
-                    let action = action.clone();
-                    env.tasks.insert(
-                        name.to_string(),
-                        env.runtime.spawn_blocking(move || action.tick(args, ctx)),
-                    );
-                    Ok(TickResult::running())
+            Action::Async(ref mut action) => {
+                let mut env = env.lock()?;
+
+                match env.task_state(name)? {
+                    // just to start it in the separate thread(supposedly)
+                    TaskState::Absent => {
+                        let action = action.clone();
+                        let tick_handle = env.runtime.spawn_blocking(move || action.tick(args, ctx));
+                        env.tasks.insert(
+                            name.to_string(),
+                            tick_handle,
+                        );
+                        Ok(TickResult::running())
+                    }
+                    TaskState::Started(handle) => {
+                        // return it to the running tasks instantly.
+                        env.tasks.insert(name.to_string(), handle);
+                        Ok(TickResult::running())
+                    }
+                    TaskState::Finished(r) => r,
                 }
-                TaskState::Started(handle) => {
-                    // return it to the running tasks instantly.
-                    env.tasks.insert(name.to_string(), handle);
-                    Ok(TickResult::running())
-                }
-                TaskState::Finished(r) => r,
-            },
+            }
         }
     }
 }

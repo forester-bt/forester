@@ -2,6 +2,7 @@ pub mod decorator;
 pub mod flow;
 pub mod serv;
 
+
 use crate::runtime::action::keeper::ActionKeeper;
 use crate::runtime::action::{recover, Tick};
 use crate::runtime::args::RtArgs;
@@ -37,7 +38,7 @@ pub struct Forester {
     pub bb: Arc<Mutex<BlackBoard>>,
     pub tracer: Arc<Mutex<Tracer>>,
     pub keeper: ActionKeeper,
-    pub env: RtEnv,
+    pub env: Arc<Mutex<RtEnv>>,
     pub trimmer: Arc<Mutex<TrimmingQueue>>,
     serv: Option<ServInfo>,
 }
@@ -48,7 +49,7 @@ impl Forester {
         bb: Arc<Mutex<BlackBoard>>,
         tracer: Arc<Mutex<Tracer>>,
         keeper: ActionKeeper,
-        env: RtEnv,
+        env: Arc<Mutex<RtEnv>>,
         serv: Option<ServInfo>,
     ) -> RtResult<Self> {
         let trimmer = Arc::new(Mutex::new(TrimmingQueue::default()));
@@ -127,13 +128,14 @@ impl Forester {
         Ok(())
     }
 
-    pub fn add_trim_task(&mut self, task: TrimTask) -> JoinHandle<RtOk> {
+    pub fn add_trim_task(&mut self, task: TrimTask) -> RtResult<JoinHandle<RtOk>> {
         let arc = self.trimmer.clone();
-        self.env.runtime.spawn(async move {
+        let env = &self.env.lock()?;
+        Ok(env.runtime.spawn(async move {
             arc.lock()
                 .map(|mut t| t.push(task))
                 .map_err(|e| RuntimeError::TrimmingError(e.to_string()))
-        })
+        }))
     }
 
     /// Runs the execution.
@@ -152,6 +154,7 @@ impl Forester {
             self.bb.clone(),
             self.tracer.clone(),
             max_tick.unwrap_or_default(),
+            self.env.clone(),
         );
         ctx.push(self.tree.root)?;
         // starts from root and pops up the element when either it is finished
@@ -252,8 +255,6 @@ impl Forester {
                                         ctx.new_state(id, ns)?;
                                     }
                                 }
-
-
                             }
                         }
                     }
@@ -327,10 +328,9 @@ impl Forester {
                 RNode::Leaf(f_name, args) => {
                     debug!(target:"leaf","args :{:?}",args);
                     if ctx.state_in_ts(&id).is_ready() {
-                        let env = &mut self.env;
                         let ctx_ref = TreeContextRef::from_ctx(&ctx, self.trimmer.clone());
                         let res = recover(self.keeper.on_tick(
-                            env,
+                            self.env.clone(),
                             f_name.name()?,
                             args.clone(),
                             ctx_ref,

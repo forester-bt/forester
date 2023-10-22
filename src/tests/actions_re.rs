@@ -21,17 +21,18 @@ fn smoke_serv() {
     let bb = Arc::new(Mutex::new(BlackBoard::default()));
     let tr = Arc::new(Mutex::new(Tracer::default()));
 
-    let rt = RtEnv::try_new().unwrap().runtime;
+    let rt = Arc::new(Mutex::new(RtEnv::try_new().unwrap()));
 
-    let info = start(&rt, ServerPort::Static(20000), bb.clone(), tr.clone()).unwrap();
+    let info = start(rt.clone(), ServerPort::Static(20000), bb.clone(), tr.clone()).unwrap();
     let stop = info.stop_cmd;
 
-    rt.spawn(async {
+    let runtime =  rt.lock().unwrap();
+    runtime.runtime.spawn(async {
         tokio::time::sleep(Duration::from_secs(1)).await;
         stop.send(()).unwrap();
     });
 
-    rt.block_on(async {
+    runtime.runtime.block_on(async {
         info.status.await.unwrap().unwrap();
     })
 }
@@ -66,7 +67,7 @@ fn remote_smoke() {
                 RtValue::Array(vec![RtValue::int(1), RtValue::int(2)]),
             ),
         ]),
-        TreeRemoteContextRef::new(1, 9999, &mut env),
+        TreeRemoteContextRef::new(1, 9999, Arc::new(Mutex::new(env))),
     );
 
     assert_eq!(result, Ok(TickResult::success()));

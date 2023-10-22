@@ -1,8 +1,8 @@
 config:
-  trace: \\wsl$\Ubuntu\home\besok\forester\tree/tests\simulator/smoke/gen\main.log
-  graph: \\wsl$\Ubuntu\home\besok\forester\tree/tests\simulator/smoke/gen\main.svg
+  trace: C:\projects\forester\tree/tests\simulator/smoke/gen\main.log
+  graph: C:\projects\forester\tree/tests\simulator/smoke/gen\main.svg
   bb:
-    dump: \\wsl$\Ubuntu\home\besok\forester\tree/tests\simulator/smoke/gen\bb.json
+    dump: C:\projects\forester\tree/tests\simulator/smoke/gen\bb.json
   max_ticks: 10
 
 actions:

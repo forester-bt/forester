@@ -58,7 +58,8 @@ impl ImplRemote for RemoteHttpAction {
 
         debug!(target:"remote_action", "remote request {:?} to {}",&request, &self.url.clone());
 
-        let resp = ctx.env.runtime.block_on(async {
+        let env = ctx.env.lock()?;
+        let resp = env.runtime.block_on(async {
             let client: Client<HttpConnector, Body> =
                 hyper::Client::builder().build(HttpConnector::new());
             /// todo with vec is slow. Bytes?
@@ -154,7 +155,7 @@ mod tests {
         let mut action = RemoteHttpAction::new(format!("http://localhost:{}/action", port));
 
         let bb = Arc::new(Mutex::new(BlackBoard::default()));
-        let r = action.tick(RtArgs(vec![]), TreeRemoteContextRef::new(1, port, &mut env));
+        let r = action.tick(RtArgs(vec![]), TreeRemoteContextRef::new(1, port, Arc::new(Mutex::new(env))));
 
         assert_eq!(r, Ok(TickResult::success()));
     }

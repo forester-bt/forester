@@ -20,6 +20,7 @@ use std::sync::{Arc, Mutex};
 use tokio::runtime::Runtime;
 use tokio::sync::oneshot::Sender;
 use tokio::task::JoinHandle;
+use crate::runtime::env::RtEnv;
 
 /// The struct defines the http server that can be used to interface the remote actions.
 /// By default, the server is deployed to the localhost.
@@ -73,7 +74,7 @@ impl HttpServ {
 /// # Returns
 /// the information of the server
 pub fn start(
-    rt: &Runtime,
+    rt: Arc<Mutex<RtEnv>>,
     port: ServerPort,
     bb: Arc<Mutex<BlackBoard>>,
     tracer: Arc<Mutex<Tracer>>,
@@ -84,7 +85,8 @@ pub fn start(
     } else {
         0
     };
-    let handle: JoinHandle<RtOk> = rt.spawn(async {
+    let rt = rt.lock()?;
+    let handle: JoinHandle<RtOk> = rt.runtime.spawn(async {
         match bind(port) {
             Ok(builder) => {
                 let client:Client<HttpConnector,Body> = hyper::Client::builder().build(HttpConnector::new());
