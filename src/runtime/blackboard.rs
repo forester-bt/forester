@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
+use std::sync::{Arc, Mutex};
 
 pub type BBKey = String;
 
@@ -140,6 +141,7 @@ impl BlackBoard {
             }
         }
     }
+
     pub fn new(elems: Vec<(BBKey, BBValue)>) -> Self {
         debug!(target:"bb", "create an empty bb");
         Self {
@@ -176,3 +178,28 @@ impl BlackBoard {
         Ok(bb)
     }
 }
+
+pub struct BBHelper;
+
+impl BBHelper {
+    pub fn push_to_arr(bb:Arc<Mutex<BlackBoard>>, key: BBKey, value: RtValue) -> RtOk {
+        let mut bb = bb.lock()?;
+        let value = match  bb.get(key.clone())? {
+            None => {
+                RtValue::Array(vec![value])
+            }
+            Some(RtValue::Array(elems)) => {
+                let mut elems = elems.clone();
+                elems.push(value);
+                RtValue::Array(elems)
+            }
+            Some(v) => {
+                RtValue::Array(vec![v.clone(), value])
+            }
+        };
+
+
+        bb.put(key, value)
+    }
+}
+

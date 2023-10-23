@@ -44,4 +44,6 @@
   * fix bugs in decorator repeat
 * **`0.2.8`**
   * generalize the message
+* **`0.2.8`**
+  * add daemons
  

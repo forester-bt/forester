@@ -345,6 +345,7 @@ impl Forester {
             }
         }
         self.stop_http();
+        self.env.lock().map(|mut e| e.stop_all_daemons())?;
         ctx.root_state(self.tree.root)
     }
 

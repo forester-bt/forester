@@ -5,10 +5,14 @@ use crate::runtime::action::Tick;
 use crate::runtime::{RtOk, RtResult, RuntimeError};
 use std::collections::HashMap;
 use std::future::IntoFuture;
+use std::sync::Arc;
+use std::sync::atomic::AtomicBool;
 use itertools::Itertools;
 use tokio::runtime::{Builder, Runtime};
+use tokio::select;
 use tokio::task::JoinError;
 use tokio::task::JoinHandle;
+use tokio_util::sync::CancellationToken;
 use crate::runtime::env::daemon::{Daemon, DaemonContext, DaemonName, DaemonTask};
 
 /// Runtime to execute async tasks.
@@ -48,24 +52,26 @@ impl RtEnv {
             daemons: Vec::default(),
         })
     }
-    fn start_daemon_impl(&mut self, mut daemon: Box<dyn Daemon>, ctx: DaemonContext) -> RtResult<JoinHandle<RtOk>> {
-        Ok(self.runtime.spawn(async move {
-            daemon.start(ctx)
-        }))
+    fn start_daemon_impl(&mut self, mut daemon: Box<dyn Daemon>, ctx: DaemonContext) -> RtResult<(JoinHandle<()>, Arc<AtomicBool>)> {
+        let flag = daemon.signal();
+        Ok(
+            (self.runtime.spawn(async move {
+                daemon.start(ctx)
+            }), flag)
+        )
     }
     pub fn start_daemon(&mut self, daemon: Box<dyn Daemon>, ctx: DaemonContext) -> RtOk {
         debug!(target:"daemon","start an unnamed daemon");
-        let task = DaemonTask::Unnamed(self.start_daemon_impl(daemon, ctx)?);
+        let (jh, t) = self.start_daemon_impl(daemon, ctx)?;
+        let task = DaemonTask::Unnamed(jh, t);
         self.daemons.push(task);
-
         Ok(())
     }
     pub fn start_named_daemon(&mut self, name: DaemonName, daemon: Box<dyn Daemon>, ctx: DaemonContext) -> RtOk {
-        let handle = self.start_daemon_impl(daemon, ctx)?;
+        let (jh, t) = self.start_daemon_impl(daemon, ctx)?;
         debug!(target:"daemon","start a daemon {}",name);
-        let task = DaemonTask::Named(name, handle);
+        let task = DaemonTask::Named(name, jh, t);
         self.daemons.push(task);
-
         Ok(())
     }
 
@@ -78,11 +84,20 @@ impl RtEnv {
         if let Some(idx) = mb_idx {
             debug!(target:"daemon","stop a daemon {}, found at the {}",name,idx);
             let task = self.daemons.remove(idx);
-            task.jh().abort();
+            task.cancel();
         } else {
             debug!(target:"daemon","stop a daemon {}, but the daemon not found",name);
         }
     }
+
+    pub fn stop_all_daemons(&mut self) {
+        self.daemons.iter().for_each(|task| {
+            debug!(target:"daemon","stop a daemon {}",task.name().unwrap_or(&"unnamed".to_string()));
+            task.cancel();
+        });
+        self.daemons.clear();
+    }
+
     pub fn task_state(&mut self, name: &ActionName) -> RtResult<TaskState> {
         match self.tasks.remove(name) {
             None => Ok(TaskState::Absent),

@@ -181,6 +181,23 @@ impl ForesterBuilder {
         }
     }
 
+
+    /// Add a daemon
+    pub fn register_daemon<D>(&mut self, daemon: D)
+        where D: Daemon + 'static
+    {
+        self.cfb().register_daemon(daemon);
+    }
+
+    /// Add a daemon with a name
+    /// The name is used to stop the daemon
+    pub fn register_named_daemon<D>(&mut self, name: DaemonName, daemon: D)
+        where D: Daemon + 'static
+    {
+        self.cfb().register_named_daemon(name, daemon);
+    }
+
+
     /// Add a sync action according to the name.
     pub fn register_sync_action<A>(&mut self, name: &str, action: A)
         where

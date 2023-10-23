@@ -1,5 +1,9 @@
+use std::future::Future;
+use std::process::Output;
 use std::sync::{Arc, Mutex};
+use std::sync::atomic::AtomicBool;
 use tokio::task::JoinHandle;
+use tokio_util::sync::CancellationToken;
 use crate::runtime::{RtOk};
 use crate::runtime::blackboard::BlackBoard;
 use crate::runtime::context::TreeContext;
@@ -14,25 +18,33 @@ pub type DaemonName = String;
 /// It can solve the problems like:
 /// - sync a blackboard with the external sources
 /// - perform some actions periodically
-pub trait Daemon:Sync + Send {
-    fn start(&mut self, ctx: DaemonContext) -> RtOk;
+pub trait Daemon: Send + Sync {
+    fn start(&mut self, ctx: DaemonContext);
+    fn signal(&self) -> Arc<AtomicBool>;
 }
+
 pub enum DaemonTask {
-    Unnamed(JoinHandle<RtOk>),
-    Named(DaemonName, JoinHandle<RtOk>),
+    Unnamed(JoinHandle<()>, Arc<AtomicBool>),
+    Named(DaemonName, JoinHandle<()>, Arc<AtomicBool>),
 }
 
 impl DaemonTask {
     pub fn name(&self) -> Option<&DaemonName> {
         match self {
-            DaemonTask::Unnamed(_) => None,
-            DaemonTask::Named(name, _) => Some(name),
+            DaemonTask::Unnamed(_, _) => None,
+            DaemonTask::Named(name, _, _) => Some(name),
         }
     }
-    pub fn jh(&self) -> &JoinHandle<RtOk> {
+    pub fn jh(&self) -> &JoinHandle<()> {
         match self {
-            DaemonTask::Unnamed(jh) => jh,
-            DaemonTask::Named(_, jh) => jh,
+            DaemonTask::Unnamed(jh, _) => jh,
+            DaemonTask::Named(_, jh, _) => jh,
+        }
+    }
+    pub fn cancel(&self) {
+        match self {
+            DaemonTask::Unnamed(_, t) |
+            DaemonTask::Named(_, _, t) => t.store(true, std::sync::atomic::Ordering::Relaxed),
         }
     }
 }
@@ -54,19 +66,8 @@ impl From<TreeContext> for DaemonContext {
         DaemonContext {
             bb: value.bb(),
             tracer: value.tracer(),
+
         }
     }
 }
 
-#[cfg(test)]
-mod tests {
-
-    #[test]
-    fn smoke(){
-
-
-
-
-    }
-
-}

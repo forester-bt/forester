@@ -12,6 +12,7 @@ mod vizualizer;
 mod nav;
 mod import;
 mod params;
+mod daemons;
 
 use crate::runtime::builder::file_builder::FileForesterBuilder;
 use crate::runtime::builder::ForesterBuilder;
