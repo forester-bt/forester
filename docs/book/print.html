@@ -1,17 +1,17 @@
 <!DOCTYPE HTML>
-<html lang="en" class="sidebar-visible no-js light">
+<html lang="en" class="light" dir="ltr">
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
         <title>Documentation for Forester</title>
-        <meta name="robots" content="noindex" />
+        <meta name="robots" content="noindex">
 
 
         <!-- Custom HTML head -->
         
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="theme-color" content="#ffffff" />
+        <meta name="theme-color" content="#ffffff">
 
         <link rel="icon" href="favicon.svg">
         <link rel="shortcut icon" href="favicon.png">
@@ -32,7 +32,7 @@
         <!-- Custom theme stylesheets -->
 
     </head>
-    <body>
+    <body class="sidebar-visible no-js">
     <div id="body-container">
         <!-- Provide site root to javascript -->
         <script>
@@ -62,29 +62,34 @@
             try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
             if (theme === null || theme === undefined) { theme = default_theme; }
             var html = document.querySelector('html');
-            html.classList.remove('no-js')
             html.classList.remove('light')
             html.classList.add(theme);
-            html.classList.add('js');
+            var body = document.querySelector('body');
+            body.classList.remove('no-js')
+            body.classList.add('js');
         </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
 
         <!-- Hide / unhide sidebar before it is displayed -->
         <script>
-            var html = document.querySelector('html');
+            var body = document.querySelector('body');
             var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
             if (document.body.clientWidth >= 1080) {
                 try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
                 sidebar = sidebar || 'visible';
             } else {
                 sidebar = 'hidden';
             }
-            html.classList.remove('sidebar-visible');
-            html.classList.add("sidebar-" + sidebar);
+            sidebar_toggle.checked = sidebar === 'visible';
+            body.classList.remove('sidebar-visible');
+            body.classList.add("sidebar-" + sidebar);
         </script>
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="intro.html"><strong aria-hidden="true">1.</strong> Intro</a></li><li class="chapter-item expanded "><a href="components.html"><strong aria-hidden="true">2.</strong> Components</a></li><li class="chapter-item expanded "><a href="api.html"><strong aria-hidden="true">3.</strong> Setup</a></li><li class="chapter-item expanded "><a href="intro_lang.html"><strong aria-hidden="true">4.</strong> Tree language</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="syntax.html"><strong aria-hidden="true">4.1.</strong> Syntax</a></li><li class="chapter-item expanded "><a href="imports.html"><strong aria-hidden="true">4.2.</strong> Imports</a></li><li class="chapter-item expanded "><a href="definitions.html"><strong aria-hidden="true">4.3.</strong> Definitions</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="flow.html"><strong aria-hidden="true">4.3.1.</strong> Flow</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="seq.html"><strong aria-hidden="true">4.3.1.1.</strong> Sequences</a></li><li class="chapter-item expanded "><a href="falls.html"><strong aria-hidden="true">4.3.1.2.</strong> Fallbacks</a></li><li class="chapter-item expanded "><a href="par.html"><strong aria-hidden="true">4.3.1.3.</strong> Parallel</a></li></ol></li><li class="chapter-item expanded "><a href="decorators.html"><strong aria-hidden="true">4.3.2.</strong> Decorators</a></li><li class="chapter-item expanded "><a href="actions.html"><strong aria-hidden="true">4.3.3.</strong> Actions</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="builtin.html"><strong aria-hidden="true">4.3.3.1.</strong> Built-In</a></li></ol></li></ol></li><li class="chapter-item expanded "><a href="invoc_intro.html"><strong aria-hidden="true">4.4.</strong> Invocations</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="hot.html"><strong aria-hidden="true">4.4.1.</strong> Higher order tree</a></li><li class="chapter-item expanded "><a href="lambda.html"><strong aria-hidden="true">4.4.2.</strong> Lambda</a></li></ol></li><li class="chapter-item expanded "><a href="params.html"><strong aria-hidden="true">4.5.</strong> Parameters</a></li><li class="chapter-item expanded "><a href="antlr.html"><strong aria-hidden="true">4.6.</strong> Antlr grammar</a></li></ol></li><li class="chapter-item expanded "><a href="engine_intro.html"><strong aria-hidden="true">5.</strong> Runtime engine</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="engine.html"><strong aria-hidden="true">5.1.</strong> Engine</a></li><li class="chapter-item expanded "><a href="rt_args.html"><strong aria-hidden="true">5.2.</strong> Runtime arguments</a></li><li class="chapter-item expanded "><a href="bb.html"><strong aria-hidden="true">5.3.</strong> Blackboard</a></li><li class="chapter-item expanded "><a href="r_actions.html"><strong aria-hidden="true">5.4.</strong> Actions</a></li><li class="chapter-item expanded "><a href="trimming.html"><strong aria-hidden="true">5.5.</strong> Trimming</a></li></ol></li><li class="chapter-item expanded "><a href="analysis.html"><strong aria-hidden="true">6.</strong> Analysis</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="viz.html"><strong aria-hidden="true">6.1.</strong> Visualization</a></li><li class="chapter-item expanded "><a href="trace.html"><strong aria-hidden="true">6.2.</strong> Tracing</a></li><li class="chapter-item expanded "><a href="sim.html"><strong aria-hidden="true">6.3.</strong> Simulation</a></li><li class="chapter-item expanded "><a href="ros_nav2.html"><strong aria-hidden="true">6.4.</strong> Export to ROS Nav2</a></li></ol></li><li class="chapter-item expanded "><a href="f_examples.html"><strong aria-hidden="true">7.</strong> Examples</a></li><li class="chapter-item expanded "><a href="tools.html"><strong aria-hidden="true">8.</strong> Tools</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="intellij.html"><strong aria-hidden="true">8.1.</strong> Intellij plugin</a></li><li class="chapter-item expanded "><a href="rem_action.html"><strong aria-hidden="true">8.2.</strong> Remote Action</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="rem_action_rs.html"><strong aria-hidden="true">8.2.1.</strong> Rust library for Remote Action</a></li><li class="chapter-item expanded "><a href="rem_action_py.html"><strong aria-hidden="true">8.2.2.</strong> Python library for Remote Action</a></li></ol></li><li class="chapter-item expanded "><a href="console.html"><strong aria-hidden="true">8.3.</strong> Console</a></li></ol></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="intro.html"><strong aria-hidden="true">1.</strong> Intro</a></li><li class="chapter-item expanded "><a href="components.html"><strong aria-hidden="true">2.</strong> Components</a></li><li class="chapter-item expanded "><a href="api.html"><strong aria-hidden="true">3.</strong> Setup</a></li><li class="chapter-item expanded "><a href="intro_lang.html"><strong aria-hidden="true">4.</strong> Tree language</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="syntax.html"><strong aria-hidden="true">4.1.</strong> Syntax</a></li><li class="chapter-item expanded "><a href="imports.html"><strong aria-hidden="true">4.2.</strong> Imports</a></li><li class="chapter-item expanded "><a href="definitions.html"><strong aria-hidden="true">4.3.</strong> Definitions</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="flow.html"><strong aria-hidden="true">4.3.1.</strong> Flow</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="seq.html"><strong aria-hidden="true">4.3.1.1.</strong> Sequences</a></li><li class="chapter-item expanded "><a href="falls.html"><strong aria-hidden="true">4.3.1.2.</strong> Fallbacks</a></li><li class="chapter-item expanded "><a href="par.html"><strong aria-hidden="true">4.3.1.3.</strong> Parallel</a></li></ol></li><li class="chapter-item expanded "><a href="decorators.html"><strong aria-hidden="true">4.3.2.</strong> Decorators</a></li><li class="chapter-item expanded "><a href="actions.html"><strong aria-hidden="true">4.3.3.</strong> Actions</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="builtin.html"><strong aria-hidden="true">4.3.3.1.</strong> Built-In</a></li></ol></li></ol></li><li class="chapter-item expanded "><a href="invoc_intro.html"><strong aria-hidden="true">4.4.</strong> Invocations</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="hot.html"><strong aria-hidden="true">4.4.1.</strong> Higher order tree</a></li><li class="chapter-item expanded "><a href="lambda.html"><strong aria-hidden="true">4.4.2.</strong> Lambda</a></li></ol></li><li class="chapter-item expanded "><a href="params.html"><strong aria-hidden="true">4.5.</strong> Parameters</a></li><li class="chapter-item expanded "><a href="antlr.html"><strong aria-hidden="true">4.6.</strong> Antlr grammar</a></li></ol></li><li class="chapter-item expanded "><a href="engine_intro.html"><strong aria-hidden="true">5.</strong> Runtime engine</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="engine.html"><strong aria-hidden="true">5.1.</strong> Engine</a></li><li class="chapter-item expanded "><a href="rt_args.html"><strong aria-hidden="true">5.2.</strong> Runtime arguments</a></li><li class="chapter-item expanded "><a href="bb.html"><strong aria-hidden="true">5.3.</strong> Blackboard</a></li><li class="chapter-item expanded "><a href="r_actions.html"><strong aria-hidden="true">5.4.</strong> Actions</a></li><li class="chapter-item expanded "><a href="trimming.html"><strong aria-hidden="true">5.5.</strong> Trimming</a></li><li class="chapter-item expanded "><a href="daemons.html"><strong aria-hidden="true">5.6.</strong> Daemons</a></li></ol></li><li class="chapter-item expanded "><a href="analysis.html"><strong aria-hidden="true">6.</strong> Analysis</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="viz.html"><strong aria-hidden="true">6.1.</strong> Visualization</a></li><li class="chapter-item expanded "><a href="trace.html"><strong aria-hidden="true">6.2.</strong> Tracing</a></li><li class="chapter-item expanded "><a href="sim.html"><strong aria-hidden="true">6.3.</strong> Simulation</a></li><li class="chapter-item expanded "><a href="ros_nav2.html"><strong aria-hidden="true">6.4.</strong> Export to ROS Nav2</a></li></ol></li><li class="chapter-item expanded "><a href="f_examples.html"><strong aria-hidden="true">7.</strong> Examples</a></li><li class="chapter-item expanded "><a href="tools.html"><strong aria-hidden="true">8.</strong> Tools</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="intellij.html"><strong aria-hidden="true">8.1.</strong> Intellij plugin</a></li><li class="chapter-item expanded "><a href="rem_action.html"><strong aria-hidden="true">8.2.</strong> Remote Action</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="rem_action_rs.html"><strong aria-hidden="true">8.2.1.</strong> Rust library for Remote Action</a></li><li class="chapter-item expanded "><a href="rem_action_py.html"><strong aria-hidden="true">8.2.2.</strong> Python library for Remote Action</a></li></ol></li><li class="chapter-item expanded "><a href="console.html"><strong aria-hidden="true">8.3.</strong> Console</a></li></ol></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -117,9 +122,9 @@
                                 <div id="menu-bar-hover-placeholder"></div>
                 <div id="menu-bar" class="menu-bar sticky">
                     <div class="left-buttons">
-                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
                             <i class="fa fa-bars"></i>
-                        </button>
+                        </label>
                         <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
                             <i class="fa fa-paint-brush"></i>
                         </button>
@@ -200,8 +205,9 @@ or perform some validations on it.</p>
 <h4 id="integrations-tbd"><a class="header" href="#integrations-tbd">Integrations (TBD)</a></h4>
 <h2 id="why-behavior-trees"><a class="header" href="#why-behavior-trees">Why behavior trees</a></h2>
 <p>Firstly, they provide a strong math abstraction over the orchestration logic <br />
-and enables to separate the business logic and the tree logic itself.</p>
-<p>On the other hand, they have only a small set of logically conjucted components making the design easier,</p>
+and enables to separate the business logic and the tree logic itself.
+One of the great advantages of the behavior trees is that they provide a good conception of modularity. <br />
+On the other hand, they have only a small set of logically conjucted components making the design easier,</p>
 <h3 id="articles-that-introduce-into-the-basics-of-the-behaviour-trees"><a class="header" href="#articles-that-introduce-into-the-basics-of-the-behaviour-trees">Articles that introduce into the basics of the behaviour trees</a></h3>
 <ul>
 <li><a href="https://outforafight.wordpress.com/2014/07/15/behaviour-behavior-trees-for-ai-dudes-part-1/">Chris Simpson’s Behavior trees for AI: How they work</a></li>
@@ -668,7 +674,65 @@ root main {
 </code></pre>
 <p>The node <code>action</code> returns <code>running</code> and the whole sequence returns <code>running</code>
 but on the next tick it starts from the node <code>needs_to_charge</code> again.</p>
-<div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><h1 id="decorators"><a class="header" href="#decorators">Decorators</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="parallel"><a class="header" href="#parallel">Parallel</a></h1>
+<p>A parallel node provides so-called pseudo-parallelism. 
+It ticks all children sequentially but in one tick. 
+Therefore, regardless of the result that current child returns the node proceeds to the next one.
+The node returns <code>success</code> if all children return <code>success</code> and <code>failure</code> if at least one child returns <code>failure</code> 
+and <code>running</code> otherwise.</p>
+<p>In the language, it is defined with the keyword <code>parallel</code> and has the following syntax:</p>
+<pre><code class="language-f-tree">impl store(key:string, value:string); // store a string value to a key in blackboard 
+
+root main {
+    parallel {
+        store(&quot;a&quot;,&quot;1&quot;) // first tick ticks but waits the result 
+        store(&quot;b&quot;,&quot;2&quot;) // this node will be ticked in the same tick
+    }
+}
+</code></pre>
+<h2 id="common-behaviour-1"><a class="header" href="#common-behaviour-1">Common behaviour</a></h2>
+<p>In general, it has resemblance to <code>sequence</code> node but with a few differences:</p>
+<ul>
+<li>When it gets the first <code>tick</code> it switches to state <code>running</code></li>
+<li>When a child returns <code>success</code> it proceeds to the next one and ticks it
+<ul>
+<li>if this is a final child, it returns <code>success</code></li>
+</ul>
+</li>
+<li>If a child returns <code>running</code>, the node proceeds to the next one and ticks it
+<ul>
+<li>after that the node returns <code>running</code> as well</li>
+</ul>
+</li>
+<li>If a child returns <code>failure</code>, the node proceeds to the next one and ticks it
+<ul>
+<li>after that the node returns <code>failure</code> as well</li>
+</ul>
+</li>
+<li>When a node is restarted, the process starts from the beginning</li>
+</ul>
+<h2 id="intention-2"><a class="header" href="#intention-2">Intention</a></h2>
+<p>Often, it is used to run two independent (often async) actions</p>
+<pre><code class="language-f-tree">root main sequence {
+        clean_current_room() // async impl that immidiately returns running  
+        prepare_next_room()  // can be sync impl that returns success or failure
+}
+</code></pre>
+<h2 id="peculiarities"><a class="header" href="#peculiarities">Peculiarities</a></h2>
+<p>Since the actions are kicked off in the pseudo-parallel manner, 
+it needs to be aware of the following peculiarities:</p>
+<ul>
+<li>The order of children is not important. All children will be ticked in the same tick.</li>
+<li>The node does wait for the result of all children.</li>
+<li>If a child returns <code>running</code> the node will return <code>running</code> as well.</li>
+<li>If a child returns <code>failure</code> or <code>success</code> but another child returns <code>running</code> the node will return <code>running</code> as well.
+<ul>
+<li>The next tick the finished nodes will be skipped and the node will tick the running node.</li>
+</ul>
+</li>
+</ul>
+<p><em>The parallel node is not reactive, which means the finished(success or failure) nodes will be skipped in the next tick.</em></p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="decorators"><a class="header" href="#decorators">Decorators</a></h1>
 <p>The decorators are the specific type of node,
 that transforms the result of its child.
 Every decorator has a specific keyword and set of parameters.</p>
@@ -815,14 +879,13 @@ impl running();
 
 // Stores the string value in the given key. Returns Result::Success. 
 // If the cell is locked, returns Result::Failure   
-impl store_str(key:string, value:string);
+impl store(key:string, value:string);
 
-// Compares given string value with what is in the cell:
+// Compares a given value with what is in the cell:
 // - Returns Result::Success if they are equal
 // - Returns Fail(reason)if they are not equal
 // - Returns Fail(reason) if there is no cell in bbe with the given key.
-impl eq_str(key:string, expected:string);
-impl eq_num(key:string, expected:num);
+impl equal(key:string, expected:any);
 
 // Store the current tick
 impl store_tick(name:string);
@@ -854,9 +917,9 @@ sequence main_seq {
 }
 
 sequence check_distance(item:object){
-        store_str(&quot;log&quot;,&quot;start&quot;)
+        store(&quot;log&quot;,&quot;start&quot;)
         handle_distance(item)
-        store_str(&quot;log&quot;,&quot;end&quot;)
+        store(&quot;log&quot;,&quot;end&quot;)
 }
 
 // definition
@@ -1140,6 +1203,20 @@ Therefore, they can be used to obtain the value of the cell from bb, in argument
 root main sequence {
     // this is a pointer to a cell in bb with an id 'bb_key'
     action(bb_key) 
+}
+</code></pre>
+<h3 id="any"><a class="header" href="#any">Any</a></h3>
+<p>The <code>any</code> type is a special type that can be used to pass any type of value to the parameter.</p>
+<p><strong>The type any can take any message type except call</strong></p>
+<p>The intention to provide a simple way to generalize the parameters and pass any type of value to the parameter.</p>
+<pre><code class="language-f-tree">// can take anything except call
+impl action(value:any);
+
+root main sequence {
+    
+    action(1) 
+    action(&quot;a&quot;) 
+    action([1]) 
 }
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="antlr-grammar"><a class="header" href="#antlr-grammar">Antlr grammar</a></h1>
@@ -1458,7 +1535,7 @@ pub enum RtValue {
 <h3 id="complex-types"><a class="header" href="#complex-types">Complex types</a></h3>
 <p>The types <code>Object</code> acts as a json map and <code>Array</code> just as an array.</p>
 <h3 id="pointer"><a class="header" href="#pointer">Pointer</a></h3>
-<p>Represents a name of the cell in bb. For example, in the expression <code>eq_num(tick, 10)</code> the tick is a pointer and represents 
+<p>Represents a name of the cell in bb. For example, in the expression <code>equal(tick, 10)</code> the tick is a pointer and represents 
 a name of the cell where the value is stored. Thus, the action will go to the cell <code>tick</code> and extract the value and compare 
 it with number.</p>
 <pre><code class="language-f-tree">import &quot;std::actions&quot;
@@ -1468,7 +1545,7 @@ root main r_sequence{
     store_tick(&quot;tick&quot;)
     sequence {
         r_fallback {
-            eq_num(tick, 10)
+            equal(tick, 10)
             running()
         }
     }
@@ -1479,9 +1556,9 @@ root main r_sequence{
 The action <code>store_tick(&quot;tick&quot;)</code> accepts a cell name as a string,
 otherwise if it is a pointer the action will be looking a name inside the cell with the name <code>tick</code>.
 The example depicts it:</p>
-<pre><code>    store_str(&quot;x&quot;,&quot;tick&quot;)
+<pre><code>    store(&quot;x&quot;,&quot;tick&quot;)
     store_tick(x)
-    eq_num(tick, 10)
+    equal(tick, 10)
 </code></pre>
 <h3 id="how-to-work-with-arguments"><a class="header" href="#how-to-work-with-arguments">How to work with arguments</a></h3>
 <p>There are two ways to extract the values from the arguments:</p>
@@ -1528,9 +1605,18 @@ pub enum BBValue {
 <p>where <code>Locked</code> means the value is locked for everything, 
 <code>Unlocked</code> a normal value enables to read, write and other actions,
 <code>Taken</code> means the key exists but the value is taken from the Blackboard.</p>
-<h3 id="extra-utilities"><a class="header" href="#extra-utilities">Extra utilities</a></h3>
-<p>The Blackboard enables to <code>dump</code> the snapshot to the disk or print it and <code>load</code> the initial configuration from a file,
-see <code>ForesterBuilder</code> for details.</p>
+<h3 id="load-and-dump"><a class="header" href="#load-and-dump">Load and dump</a></h3>
+<p>The Blackboard enables to <code>dump</code> the snapshot to the disk 
+or print it and <code>load</code> the initial configuration from a file, see <code>ForesterBuilder</code> for details.</p>
+<ul>
+<li>dump: Drops the snapshot to the file in json format.</li>
+<li>print_dump: Prints the snapshot to the stdout in json format.</li>
+<li>text_dump: Returns the snapshot in json format.</li>
+<li>load: Loads the snapshot from the file in json format.</li>
+</ul>
+<h2 id="utils"><a class="header" href="#utils">Utils</a></h2>
+<p>A set of extra helper methods for the Blackboard is available in the <code>utils</code> 
+module for instance <code> blackboard::utils::push_to_arr</code> method.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="actions-1"><a class="header" href="#actions-1">Actions</a></h1>
 <p>Actions are the leaves of the tree. They require some implementation to be executed.</p>
 <h2 id="action-types"><a class="header" href="#action-types">Action types</a></h2>
@@ -1744,6 +1830,88 @@ or even will it be executed at all, therefore, better to pursue to create the ta
 
 
 <span class="boring">}</span></code></pre></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="daemons"><a class="header" href="#daemons">Daemons</a></h1>
+<p>Forester provides the conception of the background processes called daemons. <br />
+Daemons are used to perform some actions in the background. <br />
+For example, it can be used to publish some messages  or subscribe to the topics from the external system <br />
+or to perform some actions on the blackboard in the background.</p>
+<p><em>The daemons are executed at the same runtime environment 
+as a tree thus the daemons can affect the performance of the tree directly.</em></p>
+<h2 id="daemon-definition"><a class="header" href="#daemon-definition">Daemon definition</a></h2>
+<p>There is a specific trait <code>Daemon</code> that should be implemented for the daemon.</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub trait Daemon: Send + Sync {
+    fn perform(&amp;mut self, ctx: DaemonContext);
+    fn signal(&amp;self) -&gt; StopSignal;
+}
+<span class="boring">}</span></code></pre></pre>
+<p>The perform method is called by the engine in the background in the different thread (asynchronously). <br />
+The daemon should be able to stop the execution as soon as it receives the stop signal. <br />
+The stop signal is returned by the signal method. </p>
+<p>therefore most likely if the daemon should carry the state it should be wrapped into the <code>StopSignal = Arc&lt;Mutex&lt;bool&gt;&gt;</code></p>
+<p>The signal can be in the following cases:</p>
+<ul>
+<li>when the tree is stopped</li>
+<li>by the built-in action <code>stop_daemon</code> (see below)</li>
+<li>another action using, <code>rt_env.stop_daemon()</code></li>
+</ul>
+<h2 id="example-of-the-daemon"><a class="header" href="#example-of-the-daemon">Example of the daemon</a></h2>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct DaemonSync(StopSignal);
+
+impl Daemon for DaemonSync {
+    fn perform(&amp;mut self, ctx: DaemonContext) {
+        while !self.signal().load(Relaxed) {
+            std::thread::sleep(std::time::Duration::from_millis(50));
+            let mut bb = ctx.bb.lock().unwrap();
+            let v = 
+                bb.get(&quot;test&quot;.to_string())
+                    .expect(&quot;no errors&quot;)
+                    .cloned()
+                    .unwrap_or(RtValue::int(0));
+
+            bb.put(&quot;test_daemon&quot;.to_string(), v).unwrap();
+        }
+    }
+
+    fn signal(&amp;self) -&gt; StopSignal {
+        self.0.clone()
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<h2 id="daemon-registration"><a class="header" href="#daemon-registration">Daemon registration</a></h2>
+<p>The daemon can be registered as follows:</p>
+<h3 id="using-the-tree-builder"><a class="header" href="#using-the-tree-builder">Using the tree builder</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span>
+<span class="boring">fn main() {
+</span>fn register(fb:ForesterBuilder){
+    let signal = Arc::new(AtomicBool::new(false));
+    fb.register_named_daemon(&quot;daemon&quot;.to_string(), DaemonSync(signal));
+    fb.register_daemon(DaemonSync(signal));
+}
+
+
+<span class="boring">}</span></code></pre></pre>
+<h3 id="using-the-runtime-environment"><a class="header" href="#using-the-runtime-environment">Using the runtime environment</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>impl Impl for Action {
+    fn tick(&amp;self, args: RtArgs, ctx: TreeContextRef) -&gt; Tick {
+        let env = ctx.env().lock()?;
+        env.start_daemon(Box::new(Daemon::new()), ctx.into());
+        Ok(TickResult::success())
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<h2 id="builtin-actions"><a class="header" href="#builtin-actions">BuiltIn actions</a></h2>
+<p>There are 2 built-in actions that can be used to control the daemons:</p>
+<ul>
+<li><code>stop_daemon</code> - stops the daemon by the name</li>
+<li><code>daemon_alive</code> - check if the daemon is alive by the name</li>
+</ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="analysis-1"><a class="header" href="#analysis-1">Analysis</a></h1>
 <p>The framework provides a set of tools and methods to analyze the trees.</p>
 <ul>
@@ -1991,9 +2159,9 @@ please see the doc for <code>ForesterBuilder</code> and <code>SimulatorBuilder</
  import &quot;std::actions&quot;
 
  root main sequence {
-     store_str(&quot;info1&quot;, &quot;initial&quot;)
+     store(&quot;info1&quot;, &quot;initial&quot;)
      retryer(task(config = obj), success())
-     store_str(&quot;info2&quot;,&quot;finish&quot;)
+     store(&quot;info2&quot;,&quot;finish&quot;)
  }
 
  fallback retryer(t:tree, default:tree){
@@ -2234,7 +2402,7 @@ Simulate task executions to verify their correctness and efficiency, enabling yo
 <li><a href="">plugin</a></li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="library-to-create-remote-actions-using-rust"><a class="header" href="#library-to-create-remote-actions-using-rust">Library to create Remote Actions using Rust</a></h1>
-<p>The Forester provides an http library that alleviates writing the remote http actions.
+<p>The Forester provides a http library that alleviates writing the remote http actions.
 For now, the libraries are available for Rust and Python.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="library-to-create-remote-actions-using-rust-1"><a class="header" href="#library-to-create-remote-actions-using-rust-1">Library to create Remote Actions using Rust</a></h1>
 <p>The Forester provides an http library that alleviates writing the remote http actions.</p>

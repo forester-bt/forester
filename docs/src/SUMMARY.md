@@ -25,6 +25,7 @@
   - [Blackboard](./bb.md)
   - [Actions](./r_actions.md)
   - [Trimming](./trimming.md)
+  - [Daemons](./daemons.md)
 - [Analysis](./analysis.md)
   - [Visualization](./viz.md)
   - [Tracing](./trace.md)

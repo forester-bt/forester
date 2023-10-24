@@ -51,8 +51,11 @@ impl TreeContextRef {
     pub fn from_ctx(ctx: &TreeContext, trimmer: Arc<Mutex<TrimmingQueue>>) -> Self {
         TreeContextRef::new(ctx.bb.clone(), ctx.tracer.clone(), ctx.curr_ts, trimmer, ctx.rt_env.clone())
     }
-
     /// A pointer to tracer struct.
+    pub fn tracer(&self) -> TracerRef {
+        self.tracer.clone()
+    }
+    /// create a trace message
     pub fn trace(&self, ev: String) -> RtOk {
         self.tracer.lock()?.trace(self.curr_ts, Event::Custom(ev))
     }

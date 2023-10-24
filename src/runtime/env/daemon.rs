@@ -5,7 +5,7 @@ use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicBool, Ordering};
 use tokio::task::JoinHandle;
 use crate::runtime::blackboard::{BBRef, BlackBoard};
-use crate::runtime::context::{TracerRef, TreeContext};
+use crate::runtime::context::{TracerRef, TreeContext, TreeContextRef};
 
 /// the name of the daemon
 pub type DaemonName = String;
@@ -109,6 +109,14 @@ impl DaemonContext {
 
 impl From<TreeContext> for DaemonContext {
     fn from(mut value: TreeContext) -> Self {
+        DaemonContext {
+            bb: value.bb(),
+            tracer: value.tracer(),
+
+        }
+    }
+}impl From<TreeContextRef> for DaemonContext {
+    fn from(mut value: TreeContextRef) -> Self {
         DaemonContext {
             bb: value.bb(),
             tracer: value.tracer(),
