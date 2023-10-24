@@ -1,0 +1,10 @@
+import "std::actions"
+impl test();
+
+root main sequence {
+    daemon_alive("daemon")
+    test()
+    stop_daemon("daemon")
+    test()
+    inverter daemon_alive("daemon")
+}

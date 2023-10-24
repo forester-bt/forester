@@ -14,6 +14,8 @@ use std::collections::{HashMap, HashSet, VecDeque};
 use std::fmt::{Debug, Formatter};
 use std::sync::{Arc, Mutex};
 
+pub type TrimmingQueueRef = Arc<Mutex<TrimmingQueue>>;
+
 /// The queue to deliver the modifications for the current state.
 /// The major intention is to be able to modify the runtime tree although, it can be used to add some extra information
 /// to bb(but it is not a good way to do it since it is hard to control)

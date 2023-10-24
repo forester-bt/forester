@@ -5,6 +5,7 @@ use crate::runtime::action::builtin::http::HttpGet;
 use crate::runtime::action::builtin::ReturnResult;
 use crate::runtime::action::{Action, ActionName, ros};
 use crate::runtime::{RtResult, RuntimeError};
+use crate::runtime::action::builtin::daemon::{CheckDaemonAction, StopDaemonAction};
 use crate::runtime::builder::ros_nav;
 use crate::tree::project::FileName;
 
@@ -36,6 +37,8 @@ fn action_impl(action: &ActionName) -> RtResult<Action> {
         "lock" => Ok(Action::sync(LockUnlockBBKey::Lock)),
         "unlock" => Ok(Action::sync(LockUnlockBBKey::Unlock)),
         "locked" => Ok(Action::sync(Locked)),
+        "stop_daemon" => Ok(Action::sync(StopDaemonAction)),
+        "daemon_alive" => Ok(Action::sync(CheckDaemonAction)),
         _ => Err(RuntimeError::UnImplementedAction(format!("std::actions::{}", action))),
     }
 }
@@ -95,6 +98,15 @@ impl unlock(key:string);
 
 // Validate the key if it is locked in bb
 impl locked(key:string);
+
+// Stop the daemon by name
+// if there is no daemon the action returns Result::Success
+// otherwise the result of the action(likely success)
+impl stop_daemon(name:string);
+
+// Check if the daemon is running
+// if there is no daemon the action returns Result::Failure otherwise Result::Success
+impl daemon_alive(name:string);
 
 "#
         .to_string()

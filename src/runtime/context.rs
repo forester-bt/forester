@@ -1,10 +1,10 @@
 use crate::runtime::action::Tick;
 use crate::runtime::args::{RtArgs, RtValue};
-use crate::runtime::blackboard::BlackBoard;
-use crate::runtime::env::RtEnv;
+use crate::runtime::blackboard::{BBRef, BlackBoard};
+use crate::runtime::env::{RtEnv, RtEnvRef};
 use crate::runtime::forester::flow::REASON;
 use crate::runtime::rtree::rnode::RNodeId;
-use crate::runtime::trimmer::TrimmingQueue;
+use crate::runtime::trimmer::{TrimmingQueue, TrimmingQueueRef};
 use crate::runtime::{RtOk, RtResult, RuntimeError, TickResult};
 use crate::tracer::Event::NewState;
 use crate::tracer::{Event, Tracer};
@@ -14,6 +14,7 @@ use std::sync::Arc;
 use std::sync::Mutex;
 
 pub type Timestamp = usize;
+pub type TracerRef = Arc<Mutex<Tracer>>;
 
 /// The remote context ref for the remote actions.
 /// Since, the context is supposed to help to send
@@ -25,11 +26,11 @@ pub type Timestamp = usize;
 pub struct TreeRemoteContextRef {
     pub curr_ts: Timestamp,
     pub port: u16,
-    pub env: Arc<Mutex<RtEnv>>,
+    pub env: RtEnvRef,
 }
 
 impl TreeRemoteContextRef {
-    pub fn new(curr_ts: Timestamp, port: u16, env: Arc<Mutex<RtEnv>>) -> Self {
+    pub fn new(curr_ts: Timestamp, port: u16, env: RtEnvRef) -> Self {
         Self { curr_ts, port, env }
     }
 }
@@ -39,24 +40,32 @@ impl TreeRemoteContextRef {
 /// to get the information about the current state of the tree.
 #[derive(Clone)]
 pub struct TreeContextRef {
-    bb: Arc<Mutex<BlackBoard>>,
-    tracer: Arc<Mutex<Tracer>>,
+    bb: BBRef,
+    tracer: TracerRef,
     curr_ts: Timestamp,
-    trimmer: Arc<Mutex<TrimmingQueue>>,
+    trimmer: TrimmingQueueRef,
+    env: RtEnvRef,
 }
 
 impl TreeContextRef {
     pub fn from_ctx(ctx: &TreeContext, trimmer: Arc<Mutex<TrimmingQueue>>) -> Self {
-        TreeContextRef::new(ctx.bb.clone(), ctx.tracer.clone(), ctx.curr_ts, trimmer)
+        TreeContextRef::new(ctx.bb.clone(), ctx.tracer.clone(), ctx.curr_ts, trimmer, ctx.rt_env.clone())
     }
 
     /// A pointer to tracer struct.
     pub fn trace(&self, ev: String) -> RtOk {
         self.tracer.lock()?.trace(self.curr_ts, Event::Custom(ev))
     }
+    pub fn trace_ev(&self, ev: Event) -> RtOk {
+        self.tracer.lock()?.trace(self.curr_ts, ev)
+    }
     /// A pointer to bb struct.
-    pub fn bb(&self) -> Arc<Mutex<BlackBoard>> {
+    pub fn bb(&self) -> BBRef {
         self.bb.clone()
+    }
+
+    pub fn env(&self) -> RtEnvRef {
+        self.env.clone()
     }
     /// A current tick.
     pub fn current_tick(&self) -> Timestamp {
@@ -67,12 +76,14 @@ impl TreeContextRef {
         tracer: Arc<Mutex<Tracer>>,
         curr_ts: Timestamp,
         trimmer: Arc<Mutex<TrimmingQueue>>,
+        env: RtEnvRef,
     ) -> Self {
         Self {
             bb,
             tracer,
             curr_ts,
             trimmer,
+            env
         }
     }
 }
@@ -81,9 +92,9 @@ impl TreeContextRef {
 /// It is used to store the information about the current state of the tree.
 pub struct TreeContext {
     /// Storage
-    bb: Arc<Mutex<BlackBoard>>,
+    bb: BBRef,
     /// Tracer to save the tracing information.
-    tracer: Arc<Mutex<Tracer>>,
+    tracer: TracerRef,
 
     /// The call stack
     stack: VecDeque<RNodeId>,
@@ -101,7 +112,7 @@ pub struct TreeContext {
     tick_limit: Timestamp,
 
     /// The runtime environment
-    rt_env: Arc<Mutex<RtEnv>>,
+    rt_env: RtEnvRef,
 }
 
 impl TreeContext {
@@ -116,12 +127,7 @@ impl TreeContext {
     pub fn tracer(&mut self) -> Arc<Mutex<Tracer>> {
         self.tracer.clone()
     }
-    pub fn new(
-        bb: Arc<Mutex<BlackBoard>>,
-        tracer: Arc<Mutex<Tracer>>,
-        tick_limit: Timestamp,
-        rt_env: Arc<Mutex<RtEnv>>,
-    ) -> Self {
+    pub fn new(bb: BBRef, tracer: TracerRef, tick_limit: Timestamp, rt_env: RtEnvRef) -> Self {
         Self {
             bb,
             tracer,
@@ -130,7 +136,7 @@ impl TreeContext {
             ts_map: Default::default(),
             curr_ts: 1,
             tick_limit,
-            rt_env
+            rt_env,
         }
     }
 }

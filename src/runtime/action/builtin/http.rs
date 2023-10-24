@@ -97,6 +97,7 @@ mod tests {
                 Arc::new(Mutex::new(Tracer::Noop)),
                 1,
                 Arc::new(Mutex::new(TrimmingQueue::default())),
+                Arc::new(Mutex::new(RtEnv::try_new().unwrap()))
             ),
         );
 

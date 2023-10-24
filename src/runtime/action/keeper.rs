@@ -113,7 +113,7 @@ impl ActionKeeper {
                 match env.task_state(name)? {
                     // just to start it in the separate thread(supposedly)
                     TaskState::Absent => {
-                        let action = action.clone();
+                        let action = action.to_owned();
                         let tick_handle = env.runtime.spawn_blocking(move || action.tick(args, ctx));
                         env.tasks.insert(
                             name.to_string(),

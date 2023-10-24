@@ -212,6 +212,7 @@ mod tests {
     use log::Level::Trace;
     use std::collections::HashMap;
     use std::sync::{Arc, Mutex};
+    use crate::runtime::env::RtEnv;
 
     #[test]
     fn lock_unlock() {
@@ -227,6 +228,7 @@ mod tests {
                 Arc::new(Mutex::new(Tracer::Noop)),
                 1,
                 Arc::new(Mutex::new(TrimmingQueue::default())),
+                Arc::new(Mutex::new(RtEnv::try_new().unwrap()))
             ),
         );
         assert_eq!(
@@ -250,6 +252,7 @@ mod tests {
                 Arc::new(Mutex::new(Tracer::Noop)),
                 1,
                 Arc::new(Mutex::new(TrimmingQueue::default())),
+                Arc::new(Mutex::new(RtEnv::try_new().unwrap()))
             ),
         );
         assert_eq!(r, Ok(TickResult::success()));
@@ -272,6 +275,7 @@ mod tests {
                 Arc::new(Mutex::new(Tracer::Noop)),
                 1,
                 Arc::new(Mutex::new(TrimmingQueue::default())),
+                Arc::new(Mutex::new(RtEnv::try_new().unwrap()))
             ),
         );
         assert_eq!(r, Ok(TickResult::success()));

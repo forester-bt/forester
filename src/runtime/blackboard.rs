@@ -1,3 +1,5 @@
+pub mod utils;
+
 use crate::read_file;
 use crate::runtime::args::RtValue;
 use crate::runtime::blackboard::BBValue::{Locked, Taken, Unlocked};
@@ -9,7 +11,7 @@ use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
 pub type BBKey = String;
-
+pub type BBRef = Arc<Mutex<BlackBoard>>;
 /// Representation of the value in the cell.
 /// It can be locked or unlocked.
 ///
@@ -176,30 +178,6 @@ impl BlackBoard {
         let src = read_file(file)?;
         let bb: BlackBoard = serde_json::from_str(src.as_str())?;
         Ok(bb)
-    }
-}
-
-pub struct BBHelper;
-
-impl BBHelper {
-    pub fn push_to_arr(bb:Arc<Mutex<BlackBoard>>, key: BBKey, value: RtValue) -> RtOk {
-        let mut bb = bb.lock()?;
-        let value = match  bb.get(key.clone())? {
-            None => {
-                RtValue::Array(vec![value])
-            }
-            Some(RtValue::Array(elems)) => {
-                let mut elems = elems.clone();
-                elems.push(value);
-                RtValue::Array(elems)
-            }
-            Some(v) => {
-                RtValue::Array(vec![v.clone(), value])
-            }
-        };
-
-
-        bb.put(key, value)
     }
 }
 

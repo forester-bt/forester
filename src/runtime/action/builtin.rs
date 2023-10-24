@@ -3,6 +3,7 @@
 pub mod data;
 pub mod http;
 pub mod remote;
+pub mod daemon;
 
 use crate::runtime::action::{Impl, Tick};
 use crate::runtime::args::RtArgs;
