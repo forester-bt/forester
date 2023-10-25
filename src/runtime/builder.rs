@@ -26,7 +26,8 @@ use serde::Serialize;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
-use crate::runtime::env::daemon::{Daemon, DaemonContext, DaemonName};
+use crate::runtime::env::daemon::{DaemonFn, DaemonName, Daemon};
+use crate::runtime::env::daemon::context::DaemonContext;
 
 /// The builder to create a Forester instance
 ///
@@ -183,17 +184,13 @@ impl ForesterBuilder {
 
 
     /// Add a daemon
-    pub fn register_daemon<D>(&mut self, daemon: D)
-        where D: Daemon + 'static
-    {
+    pub fn register_daemon(&mut self, daemon: Daemon) {
         self.cfb().register_daemon(daemon);
     }
 
     /// Add a daemon with a name
     /// The name is used to stop the daemon
-    pub fn register_named_daemon<D>(&mut self, name: DaemonName, daemon: D)
-        where D: Daemon + 'static
-    {
+    pub fn register_named_daemon(&mut self, name: DaemonName, daemon: Daemon) {
         self.cfb().register_named_daemon(name, daemon);
     }
 
@@ -414,20 +411,15 @@ impl CommonForesterBuilder {
     }
 
     /// Add a daemon
-    pub fn register_daemon<D>(&mut self, daemon: D)
-        where D: Daemon + 'static
-    {
-        self.daemons.push(DaemonTaskCfg::Unnamed(Box::new(daemon)));
+    pub fn register_daemon(&mut self, daemon: Daemon) {
+        self.daemons.push(DaemonTaskCfg::Unnamed(daemon));
     }
 
     /// Add a daemon with a name
     /// The name is used to stop the daemon
-    pub fn register_named_daemon<D>(&mut self, name: DaemonName, daemon: D)
-        where D: Daemon + 'static
+    pub fn register_named_daemon(&mut self, name: DaemonName, daemon: Daemon)
     {
-        self.daemons.push(
-            DaemonTaskCfg::Named(name,
-                                 Box::new(daemon)));
+        self.daemons.push(DaemonTaskCfg::Named(name, daemon));
     }
 
 
@@ -505,6 +497,6 @@ impl ServerPort {
 }
 
 pub enum DaemonTaskCfg {
-    Unnamed(Box<dyn Daemon>),
-    Named(DaemonName, Box<dyn Daemon>),
+    Unnamed(Daemon),
+    Named(DaemonName, Daemon),
 }
