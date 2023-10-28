@@ -1,6 +1,4 @@
-use crate::runtime::action::builtin::data::{
-    CheckEq, LockUnlockBBKey, Locked, StoreData, StoreTick, TestBool,
-};
+use crate::runtime::action::builtin::data::{CheckEq, LockUnlockBBKey, Locked, StoreData, StoreTick, TestBool, Less};
 use crate::runtime::action::builtin::http::HttpGet;
 use crate::runtime::action::builtin::ReturnResult;
 use crate::runtime::action::{Action, ActionName, ros};
@@ -30,6 +28,7 @@ fn action_impl(action: &ActionName) -> RtResult<Action> {
         "running" => Ok(Action::sync(ReturnResult::running())),
         "store" => Ok(Action::sync(StoreData)),
         "equal" => Ok(Action::sync(CheckEq)),
+        "less" => Ok(Action::sync(Less)),
         "test" => Ok(Action::sync(TestBool)),
         "store_tick" => Ok(Action::sync(StoreTick)),
         "http_get" => Ok(Action::sync(HttpGet)),
@@ -74,6 +73,12 @@ impl store(key:string, value:any);
 // - Returns Fail(reason)if they are not equal
 // - Returns Fail(reason) if there is no cell in bbe with the given key.
 impl equal(key:string, expected:any);
+
+// Compares a given value with what is in the cell:
+// - Returns Result::Success if lhs is less then rhs
+// - Returns Fail(reason)if otherwise
+// - Returns Fail(reason) if there is no cell in bbe with the given key.
+impl less(lhs:num, rhs:num);
 
 // Compares given bool value with true:
 // - Returns Result::Success if they are equal

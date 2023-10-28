@@ -173,7 +173,7 @@ impl BlackBoard {
     }
 
     /// Loads the snapshot from the file.
-    pub fn load(&self, file: &PathBuf) -> RtResult<BlackBoard> {
+    pub fn load(file: &PathBuf) -> RtResult<BlackBoard> {
         debug!(target:"bb", "load snapshot from the file {:?}",file);
         let src = read_file(file)?;
         let bb: BlackBoard = serde_json::from_str(src.as_str())?;

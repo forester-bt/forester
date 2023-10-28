@@ -29,3 +29,10 @@ fn builtin_http_get() {
     let mut f = fb.build().unwrap();
     assert_eq!(f.run(), Ok(TickResult::success()));
 }
+#[test]
+fn builtin_test() {
+    let mut fb = fb("actions/builtin_test");
+    let mut f = fb.build().unwrap();
+    assert_eq!(f.run(), Ok(TickResult::success()));
+}
+

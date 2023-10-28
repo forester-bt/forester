@@ -328,13 +328,10 @@ impl ForesterBuilder {
             }
         };
 
-        let bb = BlackBoard::default();
-        if let Some(bb_load_dump) = bb_load {
-            let file = PathBuf::from(bb_load_dump);
-
-            let file = get_pb(&file, &root)?;
-            bb.load(&file)?;
-        };
+        let bb =
+            if let Some(bb_load_dump) = bb_load {
+                BlackBoard::load(&get_pb(&PathBuf::from(bb_load_dump), &root)?)?
+            } else { BlackBoard::default() };
 
         let mut env = if let Some(e) = env {
             e

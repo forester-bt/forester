@@ -96,7 +96,7 @@ pub trait DaemonFn: Send + Sync {
 ///
 ///                     bb.put("test_daemon".to_string(), v).unwrap();
 ///                 }
-///             }
+///               }
 ///             }
 ///         })
 ///     }

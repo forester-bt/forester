@@ -30,6 +30,7 @@ impl Impl for Locked {
         })
     }
 }
+
 fn get_name(args: RtArgs, ctx: &TreeContextRef) -> Result<String, RuntimeError> {
     args.first()
         .ok_or(RuntimeError::fail(
@@ -50,6 +51,7 @@ pub enum LockUnlockBBKey {
     Lock,
     Unlock,
 }
+
 impl Impl for LockUnlockBBKey {
     fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
         let key = get_name(args, &ctx)?;
@@ -61,6 +63,7 @@ impl Impl for LockUnlockBBKey {
         Ok(TickResult::Success)
     }
 }
+
 /// Save current tick to bb
 pub struct StoreTick;
 
@@ -73,7 +76,7 @@ impl Impl for StoreTick {
 
         let k = v.clone().cast(ctx.clone()).str()?;
         match k {
-            None => Ok(TickResult::failure(format!("the {v} is not a string",))),
+            None => Ok(TickResult::failure(format!("the {v} is not a string", ))),
             Some(key) => ctx
                 .bb()
                 .lock()?
@@ -105,20 +108,18 @@ impl Impl for CheckEq {
         }
     }
 }
+
 /// Compare a value in the cell with the true
 pub struct TestBool;
+
 impl Impl for TestBool {
     fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
-        let key = args
-            .find_or_ith("key".to_string(), 0)
-            .and_then(|v| v.as_string())
-            .ok_or(RuntimeError::fail("the key is expected ".to_string()))?;
 
-        let actual = ctx
-            .bb()
-            .lock()?
-            .get(key)
-            .map(|v| v.and_then(|b| b.clone().as_bool()).unwrap_or_default())?;
+        let actual = args
+            .find_or_ith("key".to_string(), 0)
+            .ok_or(RuntimeError::fail("the key is expected ".to_string()))?
+            .cast(ctx.clone()).bool()?
+            .ok_or(RuntimeError::fail("the key is expected to be a bool".to_string()))?;
 
         if actual {
             Ok(TickResult::success())
@@ -134,15 +135,15 @@ impl Impl for TestBool {
 /// ## Note:
 /// The action accepts a default parameter that will be used initially.
 pub struct GenerateData<T>
-where
-    T: Fn(RtValue) -> RtValue,
+    where
+        T: Fn(RtValue) -> RtValue,
 {
     generator: T,
 }
 
 impl<T> GenerateData<T>
-where
-    T: Fn(RtValue) -> RtValue,
+    where
+        T: Fn(RtValue) -> RtValue,
 {
     pub fn new(generator: T) -> Self {
         Self { generator }
@@ -150,8 +151,8 @@ where
 }
 
 impl<T> Impl for GenerateData<T>
-where
-    T: Fn(RtValue) -> RtValue + Send + Sync,
+    where
+        T: Fn(RtValue) -> RtValue + Send + Sync,
 {
     fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
         let key = args
@@ -175,6 +176,38 @@ where
         Ok(TickResult::Success)
     }
 }
+
+
+pub struct Less;
+
+impl Impl for Less {
+    fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
+        let err = |v:&str|
+            RuntimeError::fail(v.to_string());
+
+        let lhs =
+            args
+                .find_or_ith("lhs".to_string(), 0)
+                .ok_or(err("lhs should be presented"))?
+                .cast(ctx.clone())
+                .int()?
+                .ok_or(err("the type of lhs is expected as int"))?;
+        let rhs =
+            args
+                .find_or_ith("rhs".to_string(), 1)
+                .ok_or(err("rhs should be presented"))?
+                .cast(ctx.clone())
+                .int()?
+                .ok_or(err("the type of rhs is expected as int"))?;
+
+        if lhs < rhs {
+            Ok(TickResult::success())
+        } else {
+            Ok(TickResult::failure_empty())
+        }
+    }
+}
+
 /// Just stores the data to the given cell in bb
 pub struct StoreData;
 
@@ -228,7 +261,7 @@ mod tests {
                 Arc::new(Mutex::new(Tracer::Noop)),
                 1,
                 Arc::new(Mutex::new(TrimmingQueue::default())),
-                Arc::new(Mutex::new(RtEnv::try_new().unwrap()))
+                Arc::new(Mutex::new(RtEnv::try_new().unwrap())),
             ),
         );
         assert_eq!(
@@ -252,7 +285,7 @@ mod tests {
                 Arc::new(Mutex::new(Tracer::Noop)),
                 1,
                 Arc::new(Mutex::new(TrimmingQueue::default())),
-                Arc::new(Mutex::new(RtEnv::try_new().unwrap()))
+                Arc::new(Mutex::new(RtEnv::try_new().unwrap())),
             ),
         );
         assert_eq!(r, Ok(TickResult::success()));
@@ -275,7 +308,7 @@ mod tests {
                 Arc::new(Mutex::new(Tracer::Noop)),
                 1,
                 Arc::new(Mutex::new(TrimmingQueue::default())),
-                Arc::new(Mutex::new(RtEnv::try_new().unwrap()))
+                Arc::new(Mutex::new(RtEnv::try_new().unwrap())),
             ),
         );
         assert_eq!(r, Ok(TickResult::success()));

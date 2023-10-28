@@ -1,1 +1,26 @@
-{"storage":{"b":{"Unlocked":{"String":"2"}},"a":{"Unlocked":{"String":"1"}},"c":{"Unlocked":{"String":"3"}},"tick":{"Unlocked":{"Number":{"Int":1}}}}}
+{
+  "storage": {
+    "b": {
+      "Unlocked": {
+        "String": "2"
+      }
+    },
+    "a": {
+      "Unlocked": {
+        "String": "1"
+      }
+    },
+    "c": {
+      "Unlocked": {
+        "String": "3"
+      }
+    },
+    "tick": {
+      "Unlocked": {
+        "Number": {
+          "Int": 1
+        }
+      }
+    }
+  }
+}

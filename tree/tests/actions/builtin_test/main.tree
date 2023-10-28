@@ -1,0 +1,6 @@
+import "std::actions"
+
+root main sequence {
+    store("t", true)
+    test(t)
+}
