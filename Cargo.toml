@@ -13,7 +13,7 @@ parsit = "0.2.0"
 graphviz-rust = "0.6.2"
 logos = "0.13.0"
 itertools = "0.11.0"
-strum = "0.25.0"
+strum = { version = "0.25.0", features = [] }
 strum_macros = "0.25.1"
 log = "0.4"
 env_logger = "0.10.0"
@@ -30,6 +30,7 @@ chrono = "0.4.26"
 quick-xml = "0.31.0"
 
 tungstenite = "0.20.1"
+url = "2.4.1"
 
 [dev-dependencies]
 wiremock = "0.5.19"

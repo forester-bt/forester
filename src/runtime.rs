@@ -16,7 +16,6 @@ use std::str::ParseBoolError;
 use std::string::FromUtf8Error;
 use std::sync::{MutexGuard, PoisonError};
 use quick_xml::events::attributes::AttrError;
-use rustdds::dds::CreateError;
 
 /// The major type of every result in Forester.
 pub type RtResult<T> = Result<T, RuntimeError>;

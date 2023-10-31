@@ -13,6 +13,6 @@ pub fn ros_actions_file() -> String {
 // The actions are accessible using the import 'import "ros::core"'
 
 // Publish message to the topic
-impl publish(topic:string, type:string, value:any, qos_policy:object);
+impl publish(topic:string, value:any, url:string);
 "#)
 }
