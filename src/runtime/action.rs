@@ -15,6 +15,7 @@ pub fn recover(tick: Tick) -> Tick {
     match tick {
         Err(RuntimeError::RecoveryToFailure(r)) => Ok(TickResult::Failure(r)),
         Err(RuntimeError::BlackBoardError(r)) => Ok(TickResult::Failure(r)),
+        Err(RuntimeError::DDSError(r)) => Ok(TickResult::Failure(r)),
         other => other,
     }
 }

@@ -27,9 +27,9 @@ tokio = { version = "1.29.1", features = ["full"] }
 tokio-util = "0.7.9"
 hyper = "0.14.27"
 chrono = "0.4.26"
-quick-xml = "0.30.0"
+quick-xml = "0.31.0"
 
-#rustdds = "0.8.5"
+tungstenite = "0.20.1"
 
 [dev-dependencies]
 wiremock = "0.5.19"

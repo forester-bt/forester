@@ -16,6 +16,7 @@ use std::str::ParseBoolError;
 use std::string::FromUtf8Error;
 use std::sync::{MutexGuard, PoisonError};
 use quick_xml::events::attributes::AttrError;
+use rustdds::dds::CreateError;
 
 /// The major type of every result in Forester.
 pub type RtResult<T> = Result<T, RuntimeError>;
@@ -68,6 +69,7 @@ pub enum RuntimeError {
     MultiThreadError(String),
     TrimmingError(String),
     ExportError(String),
+    DDSError(String),
 }
 
 impl Debug for RuntimeError {
@@ -116,16 +118,22 @@ impl Debug for RuntimeError {
                 let _ = f.write_str("export error: ");
                 let _ = f.write_str(e.as_str());
             }
+            RuntimeError::DDSError(e) => {
+                let _ = f.write_str("dds error: ");
+                let _ = f.write_str(e.as_str());
+            }
         }
         Ok(())
     }
 }
+
 pub fn to_fail<V, E: Debug>(r: Result<V, E>) -> RtResult<V> {
     match r {
         Ok(v) => Ok(v),
         Err(e) => Err(RuntimeError::fail(format!("{:?}", e))),
     }
 }
+
 impl RuntimeError {
     /// Create a new runtime error
     /// The error is not expected to be recovered
@@ -147,26 +155,31 @@ impl From<TreeError> for RuntimeError {
         RuntimeError::CompileError(value)
     }
 }
+
 impl From<serde_yaml::Error> for RuntimeError {
     fn from(value: serde_yaml::Error) -> Self {
         RuntimeError::IOError(format!("{value}"))
     }
 }
+
 impl From<serde_json::Error> for RuntimeError {
     fn from(value: serde_json::Error) -> Self {
         RuntimeError::IOError(format!("{value}"))
     }
 }
+
 impl From<std::io::Error> for RuntimeError {
     fn from(value: std::io::Error) -> Self {
         RuntimeError::IOError(format!("{value}"))
     }
 }
+
 impl From<reqwest::Error> for RuntimeError {
     fn from(value: reqwest::Error) -> Self {
         RuntimeError::fail(format!("{value}"))
     }
 }
+
 impl<T> From<PoisonError<MutexGuard<'_, T>>> for RuntimeError {
     fn from(value: PoisonError<MutexGuard<'_, T>>) -> Self {
         RuntimeError::MultiThreadError(value.to_string())
@@ -175,24 +188,26 @@ impl<T> From<PoisonError<MutexGuard<'_, T>>> for RuntimeError {
 
 impl From<quick_xml::Error> for RuntimeError {
     fn from(value: quick_xml::Error) -> Self {
-        RuntimeError::IOError(format!("export to xml error: {}",value.to_string()))
+        RuntimeError::IOError(format!("export to xml error: {}", value.to_string()))
     }
 }
+
 impl From<AttrError> for RuntimeError {
     fn from(value: AttrError) -> Self {
-        RuntimeError::IOError(format!("export attributes from xml,  error: {}",value.to_string()))
+        RuntimeError::IOError(format!("export attributes from xml,  error: {}", value.to_string()))
     }
 }
+
 impl From<FromUtf8Error> for RuntimeError {
     fn from(value: FromUtf8Error) -> Self {
-        RuntimeError::IOError(format!("export attributes,  error: {}",value.to_string()))
+        RuntimeError::IOError(format!("export attributes,  error: {}", value.to_string()))
     }
 }
 
 
 impl From<ParseBoolError> for RuntimeError {
     fn from(value: ParseBoolError) -> Self {
-        RuntimeError::IOError(format!("export attributes,  error: {}",value.to_string()))
+        RuntimeError::IOError(format!("export attributes,  error: {}", value.to_string()))
     }
 }
 

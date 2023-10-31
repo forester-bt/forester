@@ -37,14 +37,12 @@ pub struct CheckDaemonAction;
 impl Impl for CheckDaemonAction {
     fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
         let daemon_name = daemon_name(args, &ctx)?;
-        recover(
-            ctx
-                .env()
-                .lock()?
-                .daemon_is_running(&daemon_name)
-                .map(|r| {
-                    if r { TickResult::success() } else { TickResult::failure_empty() }
-                })
-        )
+        ctx
+            .env()
+            .lock()?
+            .daemon_is_running(&daemon_name)
+            .map(|r| {
+                if r { TickResult::success() } else { TickResult::failure_empty() }
+            })
     }
 }

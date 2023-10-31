@@ -12,18 +12,6 @@ pub(crate) fn action_impl(action: &ActionName) -> RtResult<Action> {
     Ok(Action::sync(ReturnResult::success()))
 }
 
-pub struct SinglePublisher;
 
-impl Impl for SinglePublisher {
-    fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
-        Ok(TickResult::success())
-    }
-}
-
-#[derive(Clone, Debug, Default)]
-pub struct ForesterRosMessage {
-    tp: String,
-    msg: String,
-}
 
 

@@ -9,7 +9,7 @@ use crate::tree::project::file::File;
 use crate::tree::{cerr, TreeError};
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
-use crate::runtime::builder::{builtin, ros_nav};
+use crate::runtime::builder::{builtin, ros_core, ros_nav};
 
 pub type FileName = String;
 pub type TreeName = String;
@@ -185,6 +185,7 @@ fn file_to_str(root: PathBuf, file: FileName) -> Result<String, TreeError> {
             match parts.as_slice() {
                 ["std","actions"] => Ok(builtin::builtin_actions_file()),
                 ["ros","nav2"] => Ok(ros_nav::ros_actions_file()),
+                ["ros","core"] => Ok(ros_core::ros_actions_file()),
                 _ => Err(TreeError::IOError(format!("invalid file name: {}", file)))
             }
         }
