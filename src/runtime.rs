@@ -7,7 +7,7 @@ pub mod env;
 pub mod forester;
 pub mod rtree;
 pub mod trimmer;
-pub mod dds;
+pub mod ros;
 
 use crate::tree::TreeError;
 use serde::{Deserialize, Serialize};
@@ -63,12 +63,11 @@ pub enum RuntimeError {
     Unexpected(String),
     WrongArgument(String),
     Stopped(String),
-    RecoveryToFailure(String),
+    RecoveryToFailure(Box<RuntimeError>),
     BlackBoardError(String),
     MultiThreadError(String),
     TrimmingError(String),
     ExportError(String),
-    DDSError(String),
 }
 
 impl Debug for RuntimeError {
@@ -99,7 +98,7 @@ impl Debug for RuntimeError {
             }
             RuntimeError::RecoveryToFailure(e) => {
                 let _ = f.write_str("recovery: ");
-                let _ = f.write_str(e.as_str());
+                let _ = f.write_str(format!("{:?}",e).as_str());
             }
             RuntimeError::BlackBoardError(e) => {
                 let _ = f.write_str("bb: ");
@@ -115,10 +114,6 @@ impl Debug for RuntimeError {
             }
             RuntimeError::ExportError(e) => {
                 let _ = f.write_str("export error: ");
-                let _ = f.write_str(e.as_str());
-            }
-            RuntimeError::DDSError(e) => {
-                let _ = f.write_str("dds error: ");
                 let _ = f.write_str(e.as_str());
             }
         }
@@ -138,7 +133,7 @@ impl RuntimeError {
     /// The error is not expected to be recovered
     /// Therefore, the runtime will not stop and the result will be converted to failure
     pub fn fail(reason: String) -> Self {
-        Self::RecoveryToFailure(reason)
+        Self::RecoveryToFailure(Box::new(RuntimeError::IOError(reason)))
     }
 
     pub fn uex(s: String) -> Self {
@@ -207,6 +202,11 @@ impl From<FromUtf8Error> for RuntimeError {
 impl From<ParseBoolError> for RuntimeError {
     fn from(value: ParseBoolError) -> Self {
         RuntimeError::IOError(format!("export attributes,  error: {}", value.to_string()))
+    }
+}
+impl From<tungstenite::Error> for RuntimeError {
+    fn from(value: tungstenite::Error) -> Self {
+        RuntimeError::IOError(format!("web socket connection,  error: {}", value.to_string()))
     }
 }
 

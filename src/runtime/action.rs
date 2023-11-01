@@ -13,9 +13,8 @@ pub type Tick = RtResult<TickResult>;
 /// Recovers the tick depending on the result.
 pub fn recover(tick: Tick) -> Tick {
     match tick {
-        Err(RuntimeError::RecoveryToFailure(r)) => Ok(TickResult::Failure(r)),
+        Err(RuntimeError::RecoveryToFailure(r)) => Ok(TickResult::Failure(format!("{:?}",r))),
         Err(RuntimeError::BlackBoardError(r)) => Ok(TickResult::Failure(r)),
-        Err(RuntimeError::DDSError(r)) => Ok(TickResult::Failure(r)),
         other => other,
     }
 }

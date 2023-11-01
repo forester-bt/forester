@@ -2,6 +2,8 @@
 // ros2 launch rosbridge_server rosbridge_websocket_launch.xml
 pub mod ws_client;
 
+use tungstenite::{connect, Message};
+use url::Url;
 use crate::runtime::action::{Impl, Tick};
 use crate::runtime::args::{RtArgs, RtValue};
 use crate::runtime::context::TreeContextRef;
@@ -12,14 +14,10 @@ use crate::runtime::TickResult;
 /// - publish to topics
 /// - pass some params to services
 /// - call services and nodes
-pub enum OneTimePublisher{
-    DefaultQOS,
-    CustomQOS,
-}
+pub struct OneTimePublisher;
 
 impl Impl for OneTimePublisher {
     fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
-
 
         Ok(TickResult::success())
     }

@@ -133,7 +133,7 @@ impl RtEnv {
         self.daemons.iter()
             .find(|d| d.name().filter(|n| *n == name).is_some())
             .map(|t| !t.jh().is_finished())
-            .ok_or(RuntimeError::RecoveryToFailure(format!("the daemon {} is not found", name)))
+            .ok_or(RuntimeError::fail(format!("the daemon {} is not found", name)))
     }
 
     /// stop all daemons
