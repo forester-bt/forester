@@ -1,6 +1,5 @@
 pub mod builtin;
 pub mod keeper;
-pub mod ros;
 
 use crate::runtime::args::RtArgs;
 use crate::runtime::context::{TreeContextRef, TreeRemoteContextRef};

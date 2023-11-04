@@ -209,6 +209,11 @@ impl From<tungstenite::Error> for RuntimeError {
         RuntimeError::IOError(format!("web socket connection,  error: {}", value.to_string()))
     }
 }
+impl From<url::ParseError> for RuntimeError {
+    fn from(value: url::ParseError) -> Self {
+        RuntimeError::IOError(format!("web socket url parse error,  error: {}", value.to_string()))
+    }
+}
 
 
 

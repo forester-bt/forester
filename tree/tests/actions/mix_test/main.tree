@@ -1,0 +1,8 @@
+import "std::actions"
+import "ros::core"
+
+root main sequence {
+    store("t", true)
+    test(t)
+    advertise("test", "std_msgs/String","ws://localhost:9090")
+}

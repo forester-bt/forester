@@ -36,3 +36,9 @@ fn builtin_test() {
     assert_eq!(f.run(), Ok(TickResult::success()));
 }
 
+#[test]
+fn mix_test() {
+    let mut fb = fb("actions/mix_test");
+    let mut f = fb.build().unwrap();
+    assert_eq!(f.run(), Ok(TickResult::success()));
+}
