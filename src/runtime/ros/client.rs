@@ -1,19 +1,66 @@
+use std::net::TcpStream;
 use serde::{Deserialize, Serialize, Serializer};
 use serde::ser::SerializeStruct;
-use tungstenite::{connect, Message};
+use tungstenite::{connect, Message, WebSocket};
+use tungstenite::stream::MaybeTlsStream;
 use url::Url;
 use crate::runtime::action::Tick;
 use crate::runtime::args::RtValue;
-use crate::runtime::TickResult;
+use crate::runtime::{RtResult, TickResult};
 
 type Topic = String;
 type Type = String;
+
+pub type WS = WebSocket<MaybeTlsStream<TcpStream>>;
+
+#[derive(Debug, Default, Clone,Deserialize)]
+pub struct SubscribeCfg {
+    tp: Option<String>,
+    throttle_rate: Option<i32>,
+    queue_length: Option<i32>,
+    fragment_size: Option<i32>,
+    compression: Option<String>,
+}
+
+
+impl SubscribeCfg {
+    pub fn from(v: RtValue) -> Self {
+        Self::default()
+    }
+    pub fn count(&self) -> usize {
+        let mut count = 0;
+
+        if self.tp.is_some() {
+            count += 1;
+        }
+        if self.throttle_rate.is_some() {
+            count += 1;
+        }
+        if self.queue_length.is_some() {
+            count += 1;
+        }
+        if self.fragment_size.is_some() {
+            count += 1;
+        }
+        if self.compression.is_some() {
+            count += 1;
+        }
+
+
+        count
+    }
+    pub fn new(tp: Option<String>, throttle_rate: Option<i32>, queue_length: Option<i32>, fragment_size: Option<i32>, compression: Option<String>) -> Self {
+        Self { tp, throttle_rate, queue_length, fragment_size, compression }
+    }
+}
 
 #[derive(Deserialize)]
 pub enum RosCommand
 {
     Publish(Topic, RtValue),
     Advertise(Topic, Type),
+    Unsubscribe(Topic),
+    Subscribe(Topic, SubscribeCfg),
 
 }
 
@@ -34,6 +81,35 @@ impl Serialize for RosCommand {
                 cmd.serialize_field("type", tp)?;
                 cmd.end()
             }
+            RosCommand::Unsubscribe(t) => {
+                let mut cmd = serializer.serialize_struct("Command", 2)?;
+                cmd.serialize_field("op", "unsubscribe")?;
+                cmd.serialize_field("topic", t)?;
+                cmd.end()
+            }
+            RosCommand::Subscribe(t, cfg) => {
+                let mut cfg_count = cfg.count();
+                let mut cmd = serializer.serialize_struct("Command", cfg_count + 1)?;
+                cmd.serialize_field("op", "subscribe")?;
+
+                if let Some(tp) = &cfg.tp {
+                    cmd.serialize_field("type", tp)?;
+                }
+                if let Some(throttle_rate) = &cfg.throttle_rate {
+                    cmd.serialize_field("throttle_rate", throttle_rate)?;
+                }
+                if let Some(queue_length) = &cfg.queue_length {
+                    cmd.serialize_field("queue_length", queue_length)?;
+                }
+                if let Some(fragment_size) = &cfg.fragment_size {
+                    cmd.serialize_field("fragment_size", fragment_size)?;
+                }
+                if let Some(compression) = &cfg.compression {
+                    cmd.serialize_field("compression", compression)?;
+                }
+
+                cmd.end()
+            }
         }
     }
 }
@@ -44,6 +120,12 @@ impl RosCommand {
     }
     pub fn advertise(topic: Topic, tp: Type) -> RosCommand {
         RosCommand::Advertise(topic, tp)
+    }
+    pub fn unsubscribe(topic: Topic) -> RosCommand {
+        RosCommand::Unsubscribe(topic)
+    }
+    pub fn subscribe(topic: Topic, cfg: SubscribeCfg) -> RosCommand {
+        RosCommand::Subscribe(topic, cfg)
     }
 }
 
@@ -72,12 +154,38 @@ pub fn advertise(topic: Topic, tp: Type, url: String) -> Tick {
     Ok(TickResult::success())
 }
 
+pub fn unsubscribe(topic: Topic, url: String) -> Tick {
+    debug!(target: "ws-unsubscribe" ,"params: topic: {topic}, url: {url}");
+
+    // send the response to unsubscribe
+    let (mut socket, response) =
+        connect(Url::parse(url.as_str()).unwrap())?;
+    debug!(target: "ws" ,"Connected to the server {url}");
+    debug!(target: "ws" ,"Response HTTP code: {}", response.status());
+    let js = serde_json::to_string_pretty(&RosCommand::unsubscribe(topic))?;
+    socket.send(Message::text(js))?;
+
+    Ok(TickResult::success())
+}
+
+pub fn subscribe(topic: Topic, cfg: SubscribeCfg, url: String) -> RtResult<WS> {
+    debug!(target: "ws-subscribe" ,"params: topic: {topic}, cfg:{:?} url: {url}",cfg);
+    let (mut socket, response) =
+        connect(Url::parse(url.as_str()).unwrap())?;
+    debug!(target: "ws" ,"Connected to the server {url}");
+    debug!(target: "ws" ,"Response HTTP code: {}", response.status());
+    let js = serde_json::to_string_pretty(&RosCommand::subscribe(topic, cfg))?;
+    socket.send(Message::text(js))?;
+
+    Ok(socket)
+}
+
 
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
     use crate::runtime::args::RtValue;
-    use crate::runtime::ros::client::{publish, RosCommand};
+    use crate::runtime::ros::client::{publish};
 
     #[test]
     fn smoke() {
