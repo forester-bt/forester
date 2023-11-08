@@ -6,14 +6,14 @@ use tungstenite::stream::MaybeTlsStream;
 use url::Url;
 use crate::runtime::action::Tick;
 use crate::runtime::args::RtValue;
-use crate::runtime::{RtResult, TickResult};
+use crate::runtime::{RtResult, RuntimeError, TickResult};
 
 type Topic = String;
 type Type = String;
 
 pub type WS = WebSocket<MaybeTlsStream<TcpStream>>;
 
-#[derive(Debug, Default, Clone,Deserialize)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct SubscribeCfg {
     tp: Option<String>,
     throttle_rate: Option<i32>,
@@ -24,8 +24,40 @@ pub struct SubscribeCfg {
 
 
 impl SubscribeCfg {
-    pub fn from(v: RtValue) -> Self {
-        Self::default()
+    pub fn from(v: RtValue) -> RtResult<SubscribeCfg> {
+        let mut cfg = SubscribeCfg::default();
+        if let RtValue::Object(map) = v {
+            for (k, v) in map {
+                match k.as_str() {
+                    "tp" => {
+                        cfg.tp = Some(v.as_string().ok_or(RuntimeError::fail("the type is not string".to_string()))?);
+                    }
+                    "throttle_rate" => {
+                        cfg.throttle_rate = Some(v.as_int().map(|v| v as i32)
+                            .ok_or(RuntimeError::fail("the throttle_rate is not int".to_string()))?);
+                    }
+                    "queue_length" => {
+                        cfg.queue_length = Some(v.as_int().map(|v| v as i32)
+                            .ok_or(RuntimeError::fail("the queue_length is not int".to_string()))?);
+                    }
+                    "fragment_size" => {
+                        cfg.fragment_size = Some(v.as_int().map(|v| v as i32)
+                            .ok_or(RuntimeError::fail("the fragment_size is not int".to_string()))?);
+                    }
+                    "compression" => {
+                        cfg.compression = Some(v.as_string()
+                            .ok_or(RuntimeError::fail("the compression is not string".to_string()))?);
+                    }
+                    _ => {
+                        return Err(RuntimeError::fail((format!("the key {} is not supported", k))));
+                    }
+                }
+            }
+        } else {
+            return Err(RuntimeError::fail("the source_cfg is not object".to_owned()));
+        }
+
+        Ok(cfg)
     }
     pub fn count(&self) -> usize {
         let mut count = 0;

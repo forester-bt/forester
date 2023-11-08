@@ -4,12 +4,16 @@ pub mod client;
 
 use std::fmt::format;
 use std::sync::atomic::Ordering;
+use serde::Deserialize;
+use serde_json::Deserializer;
 use tungstenite::{connect, Message};
 use url::Url;
+use blackboard::utils::push_to_arr;
 use crate::runtime::action::{Impl, Tick};
 use crate::runtime::args::{RtArgs, RtValue};
 use crate::runtime::context::TreeContextRef;
-use crate::runtime::{ros, RtResult, RuntimeError, TickResult};
+use crate::runtime::{blackboard, ros, RtResult, RuntimeError, TickResult};
+use crate::runtime::blackboard::BBKey;
 use crate::runtime::env::daemon::context::DaemonContext;
 use crate::runtime::env::daemon::{Daemon, DaemonFn, StopFlag};
 use crate::runtime::ros::client::{SubscribeCfg, WS};
@@ -74,14 +78,24 @@ impl Impl for OneTimeSender {
     }
 }
 
-pub struct SubscriberDaemon {
-    cfg: TargetCfg,
-    ws: WS,
+pub enum SubscriberDaemon {
+    Last(WS, BBKey),
+    All(WS, BBKey),
 }
+
 
 impl SubscriberDaemon {
     pub fn new(cfg: TargetCfg, ws: WS) -> Self {
-        Self { cfg, ws }
+        match cfg.tp.as_str() {
+            "last" => SubscriberDaemon::Last(ws, cfg.dst),
+            _ => SubscriberDaemon::All(ws, cfg.dst),
+        }
+    }
+    pub fn ws(&self) -> &WS {
+        match self {
+            SubscriberDaemon::Last(ws, _) => ws,
+            SubscriberDaemon::All(ws, _) => ws,
+        }
     }
 }
 
@@ -91,8 +105,30 @@ impl DaemonFn for SubscriberDaemon {
             if signal.load(Ordering::Relaxed) {
                 break;
             }
-            // let msg = self.ws.read()?;
-            // let msg = msg.into_text()?;
+            let msg = self.ws().read()?;
+
+            match self {
+                SubscriberDaemon::Last(_, key) => {
+                    if msg.is_text() {
+                        let string = msg.into_text().expect("text");
+                        let value = RtValue::deserialize(string).unwrap();
+                        ctx.bb.lock().unwrap().put(key.clone(), value).unwrap();
+                    } else {
+                        debug!(target: "ws-subscriber" ,"Subscriber Daemon: Received not text: {:#?}", msg);
+                    }
+                }
+                SubscriberDaemon::All(_, key) => {
+                    if msg.is_text() {
+                        let string = msg.into_text().expect("text");
+                        let value = RtValue::deserialize(string).unwrap();
+                        push_to_arr(ctx.bb.clone(), key.clone(), value).unwrap();
+                    } else {
+                        debug!(target: "ws-subscriber" ,"Subscriber Daemon: Received not text: {:#?}", msg);
+                    }
+                }
+            }
+
+
             // let msg = serde_json::from_str::<ros::RosMessage>(&msg)?;
             // let mut bb = ctx.bb.lock()?;
             // bb.insert(topic.clone(), RtValue::from(msg));
@@ -108,8 +144,20 @@ pub struct TargetCfg {
 }
 
 impl TargetCfg {
-    pub fn from(v: RtValue) -> Self {
-        Self::default()
+    pub fn from(v: RtValue) -> RtResult<TargetCfg> {
+        let elems = v.as_map(|(k, v)| (k, v))
+            .ok_or(RuntimeError::fail(format!("the target_cfg should be an object")))?;
+
+        let tp = elems.get("tp").and_then(|v| v.clone().as_string())
+            .ok_or(RuntimeError::fail(format!("the tp is not found")))?;
+
+        let buf_size = elems.get("buf_size")
+            .and_then(|v| v.clone().as_int().map(|v| v as usize));
+
+        let dst = elems.get("dst").and_then(|v| v.clone().as_string())
+            .ok_or(RuntimeError::fail(format!("the dst should be a string")))?;
+
+        Ok(TargetCfg { tp, buf_size, dst })
     }
 }
 
@@ -129,10 +177,10 @@ fn param_as_str(key: &str, i: usize, args: &RtArgs, ctx: TreeContextRef) -> RtRe
 }
 
 fn param_as<T, V>(key: &str, i: usize, args: &RtArgs, m: T) -> RtResult<V>
-    where T: Fn(RtValue) -> V
+    where T: Fn(RtValue) -> RtResult<V>
 {
     args
         .find_or_ith(key.to_string(), i)
         .ok_or(RuntimeError::fail(format!("the {key} is not found")))
-        .map(|v| m(v))
+        .and_then(|v| m(v))
 }
