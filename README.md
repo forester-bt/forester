@@ -92,7 +92,7 @@ Articles that introduce into the basics of the behavior trees
  
 ## Documentation
 
-The common documentation is available as a [mini-book](https://besok.github.io/forester/), describing all aspects of working with the framework
+The common documentation is available as a [mini-book](https://forester-bt.github.io/forester/), describing all aspects of working with the framework
 
 ## Publications
  - [Part I. The orchestration with behavior trees. Simulation.](https://medium.com/@zhguchev/forester-the-orchestration-with-behaviour-trees-part-i-simulation-b10867aab8db)
