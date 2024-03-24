@@ -225,7 +225,8 @@ impl Impl for StoreData {
 
         let value = args
             .find_or_ith("value".to_string(), 1)
-            .ok_or(RuntimeError::fail("the value is expected".to_string()))?;
+            .ok_or(RuntimeError::fail("the value is expected".to_string()))
+            .and_then(|v|v.with_ptr(ctx.clone()))?;
 
         ctx.bb().lock()?.put(key, value)?;
         Ok(TickResult::Success)

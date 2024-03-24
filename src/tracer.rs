@@ -341,7 +341,6 @@ mod tests {
             r#"[1]next tick
 [2]1 : Success()
 "#
-            .replace("\n", "\r\n")
         )
     }
 }

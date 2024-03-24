@@ -1,5 +1,5 @@
 use crate::runtime::args::{RtArgs, RtArgument, RtValue, RtValueNumber};
-use crate::runtime::context::{RNodeState, TreeContext};
+use crate::runtime::context::{RNodeState, TreeContext, TreeContextRef};
 use crate::runtime::forester::flow::{run_with, LEN, REASON};
 use crate::runtime::rtree::rnode::DecoratorType;
 use crate::runtime::{RtResult, RuntimeError, TickResult};
@@ -28,6 +28,7 @@ pub(crate) fn prepare(
         _ => Ok(RNodeState::Running(tick_args.with(LEN, RtValue::int(1)))),
     }
 }
+
 // This runs when the child returns running.
 // It works for timeout and other controlling decorators
 pub(crate) fn monitor(
@@ -81,14 +82,18 @@ pub(crate) fn finalize(
             }
             _ => Ok(RNodeState::Success(run_with(tick_args, 0, 1))),
         },
-        DecoratorType::ForceSuccess => Ok(RNodeState::Success(run_with(tick_args, 0, 1))) ,
+        DecoratorType::ForceSuccess => Ok(RNodeState::Success(run_with(tick_args, 0, 1))),
         DecoratorType::ForceFail => Ok(RNodeState::Failure(run_with(tick_args, 0, 1).with(
             REASON,
             RtValue::str("decorator force fail.".to_string()),
         ))),
         DecoratorType::Repeat => match child_res {
             TickResult::Success => {
-                let count = init_args.first_as(RtValue::as_int).unwrap_or(1);
+                let count = init_args
+                    .first()
+                    .and_then(|v| v.cast(ctx.into()).int().ok())
+                    .flatten()
+                    .unwrap_or(1);
                 let attempt = tick_args.first_as(RtValue::as_int).unwrap_or(1);
                 if attempt >= count {
                     Ok(RNodeState::Success(run_with(tick_args, 0, 1)))
@@ -111,8 +116,14 @@ pub(crate) fn finalize(
         DecoratorType::Delay => Ok(RNodeState::from(run_with(tick_args, 0, 1), child_res)),
         DecoratorType::Retry => match child_res {
             TickResult::Failure(v) => {
-                let count = init_args.first_as(RtValue::as_int).unwrap_or(0);
+                let count = init_args
+                    .first()
+                    .and_then(|v| v.cast(ctx.into()).int().ok())
+                    .flatten()
+                    .unwrap_or(0);
+
                 let attempts = tick_args.first_as(RtValue::as_int).unwrap_or(0);
+
 
                 if attempts >= count {
                     let args = run_with(tick_args, 0, 1).with(REASON, RtValue::str(v));
@@ -122,6 +133,7 @@ pub(crate) fn finalize(
                     Ok(RNodeState::Running(run_with(args, 0, 1)))
                 }
             }
+            TickResult::Success => Ok(RNodeState::Success(tick_args)),
             _ => Ok(RNodeState::Running(run_with(tick_args, 0, 1))),
         },
     }
@@ -133,11 +145,13 @@ fn get_ts() -> i64 {
         .expect("")
         .as_secs() as i64
 }
+
 fn start_args() -> RtArgs {
     RtArgs(vec![RtArgument::new_noname(RtValue::Number(
         RtValueNumber::Int(get_ts()),
     ))])
 }
+
 fn get_delay(args: RtArgs) -> RtResult<i64> {
     let err = "the decorator delay accepts one integer param, denoting duration of delay in millis"
         .to_string();

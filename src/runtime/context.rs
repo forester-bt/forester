@@ -47,6 +47,12 @@ pub struct TreeContextRef {
     env: RtEnvRef,
 }
 
+impl From<&mut TreeContext> for TreeContextRef {
+    fn from(value: &mut TreeContext) -> Self {
+        TreeContextRef::from_ctx(value, Default::default())
+    }
+}
+
 impl TreeContextRef {
     pub fn from_ctx(ctx: &TreeContext, trimmer: Arc<Mutex<TrimmingQueue>>) -> Self {
         TreeContextRef::new(ctx.bb.clone(), ctx.tracer.clone(), ctx.curr_ts, trimmer, ctx.rt_env.clone())
@@ -86,7 +92,7 @@ impl TreeContextRef {
             tracer,
             curr_ts,
             trimmer,
-            env
+            env,
         }
     }
 }
@@ -117,6 +123,7 @@ pub struct TreeContext {
     /// The runtime environment
     rt_env: RtEnvRef,
 }
+
 
 impl TreeContext {
     pub fn state(&self) -> &HashMap<RNodeId, RNodeState> {

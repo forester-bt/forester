@@ -363,15 +363,15 @@ impl RtArgument {
         p: Param,
         parent_args: Arguments,
         parent_params: Params,
-    ) -> Result<(RtArgument,ArgumentRhs), TreeError> {
+    ) -> Result<(RtArgument, ArgumentRhs), TreeError> {
         RtArgument::validate_type(a.clone(), p.clone().tpe)?;
         match &a {
             ArgumentRhs::Id(id) => match find_arg_value(id, &parent_params, &parent_args).ok() {
-                None => Ok((RtArgument::new(p.name, RtValue::Pointer(id.clone())),a)),
+                None => Ok((RtArgument::new(p.name, RtValue::Pointer(id.clone())), a)),
                 Some(v) => RtArgument::try_from(v, p, Arguments::default(), Params::default()),
             },
-            ArgumentRhs::Mes(m) => Ok((RtArgument::new(p.name, m.clone().into()),a)),
-            ArgumentRhs::Call(c) => Ok((RtArgument::new(p.name, RtValue::Call(c.clone())),a)),
+            ArgumentRhs::Mes(m) => Ok((RtArgument::new(p.name, m.clone().into()), a)),
+            ArgumentRhs::Call(c) => Ok((RtArgument::new(p.name, RtValue::Call(c.clone())), a)),
         }
     }
     /// validates the type of the argument in accordance with the type of the parameter

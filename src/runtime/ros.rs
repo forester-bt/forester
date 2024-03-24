@@ -101,38 +101,38 @@ impl SubscriberDaemon {
 
 impl DaemonFn for SubscriberDaemon {
     fn perform(&mut self, ctx: DaemonContext, signal: StopFlag) {
-        loop {
-            if signal.load(Ordering::Relaxed) {
-                break;
-            }
-            let msg = self.ws().read()?;
-
-            match self {
-                SubscriberDaemon::Last(_, key) => {
-                    if msg.is_text() {
-                        let string = msg.into_text().expect("text");
-                        let value = RtValue::deserialize(string).unwrap();
-                        ctx.bb.lock().unwrap().put(key.clone(), value).unwrap();
-                    } else {
-                        debug!(target: "ws-subscriber" ,"Subscriber Daemon: Received not text: {:#?}", msg);
-                    }
-                }
-                SubscriberDaemon::All(_, key) => {
-                    if msg.is_text() {
-                        let string = msg.into_text().expect("text");
-                        let value = RtValue::deserialize(string).unwrap();
-                        push_to_arr(ctx.bb.clone(), key.clone(), value).unwrap();
-                    } else {
-                        debug!(target: "ws-subscriber" ,"Subscriber Daemon: Received not text: {:#?}", msg);
-                    }
-                }
-            }
-
-
-            // let msg = serde_json::from_str::<ros::RosMessage>(&msg)?;
-            // let mut bb = ctx.bb.lock()?;
-            // bb.insert(topic.clone(), RtValue::from(msg));
-        }
+        // loop {
+        //     if signal.load(Ordering::Relaxed) {
+        //         break;
+        //     }
+        //     let msg = self.ws().read().unwrap();
+        //
+        //     match self {
+        //         SubscriberDaemon::Last(_, key) => {
+        //             if msg.is_text() {
+        //                 let string = msg.into_text().expect("text");
+        //                 let value = RtValue::deserialize(string).unwrap();
+        //                 ctx.bb.lock().unwrap().put(key.clone(), value).unwrap();
+        //             } else {
+        //                 debug!(target: "ws-subscriber" ,"Subscriber Daemon: Received not text: {:#?}", msg);
+        //             }
+        //         }
+        //         SubscriberDaemon::All(_, key) => {
+        //             if msg.is_text() {
+        //                 let string = msg.into_text().expect("text");
+        //                 let value = RtValue::deserialize(string).unwrap();
+        //                 push_to_arr(ctx.bb.clone(), key.clone(), value).unwrap();
+        //             } else {
+        //                 debug!(target: "ws-subscriber" ,"Subscriber Daemon: Received not text: {:#?}", msg);
+        //             }
+        //         }
+        //     }
+        //
+        //
+        //     // let msg = serde_json::from_str::<ros::RosMessage>(&msg)?;
+        //     // let mut bb = ctx.bb.lock()?;
+        //     // bb.insert(topic.clone(), RtValue::from(msg));
+        // }
     }
 }
 

@@ -33,6 +33,12 @@ pub struct RtEnv {
     pub daemons: Vec<DaemonTask>,
 }
 
+impl Default for RtEnv {
+    fn default() -> Self {
+        RtEnv::try_new().unwrap()
+    }
+}
+
 impl From<JoinError> for RuntimeError {
     fn from(value: JoinError) -> Self {
         RuntimeError::fail(value.to_string())
