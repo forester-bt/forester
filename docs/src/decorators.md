@@ -35,9 +35,10 @@ The keyword is `repeat`
 It repeats the child so the number of times according to the passing parameter
 
 - count: the number of repetitions. 0 by default
+- if the count is 0 the repeat becomes an infinite loop
 
 ```f-tree
-// the job will be performed 0 times, therefore will not be invoked at all
+// the job will be performed INF times
 root main_idle repeat {
     job()
 }
@@ -54,10 +55,11 @@ The keyword is `retry`
 If the child returns `failure`, the decorator tries to run it again.
 The number of attempts is restricted by the given argument
 
-- attempts: the number of attempts to retry. 0 by default
+- attempt: the number of repetitions. 0 by default
+- if the attempt is 0 the Retry becomes an infinite loop
 
 ```f-tree
-// 0 by default. will be failed as soon as at least one of the child gets failed
+// 0 by default. will be never failed.
 root main retry {
     sequence { 
         job1() 

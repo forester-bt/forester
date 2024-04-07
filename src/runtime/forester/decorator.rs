@@ -94,8 +94,9 @@ pub(crate) fn finalize(
                     .and_then(|v| v.cast(ctx.into()).int().ok())
                     .flatten()
                     .unwrap_or(1);
+
                 let attempt = tick_args.first_as(RtValue::as_int).unwrap_or(1);
-                if attempt >= count {
+                if count > 0 && attempt >= count {
                     Ok(RNodeState::Success(run_with(tick_args, 0, 1)))
                 } else {
                     let args = RtArgs(vec![RtArgument::new_noname(RtValue::int(attempt + 1))]);
@@ -125,7 +126,7 @@ pub(crate) fn finalize(
                 let attempts = tick_args.first_as(RtValue::as_int).unwrap_or(0);
 
 
-                if attempts >= count {
+                if count > 0 && attempts >= count {
                     let args = run_with(tick_args, 0, 1).with(REASON, RtValue::str(v));
                     Ok(RNodeState::Failure(args))
                 } else {
