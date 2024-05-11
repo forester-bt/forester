@@ -8,7 +8,7 @@ pub mod transform;
 use crate::runtime::action::ActionName;
 use crate::runtime::args::transform::{to_dec_rt_args, to_rt_args};
 
-use crate::runtime::rtree::rnode::{DecoratorType, RNode, RNodeId};
+use crate::runtime::rtree::rnode::{DecoratorType, FlowType, RNode, RNodeId};
 use crate::runtime::rtree::transform::{StackItem, Transformer};
 use crate::runtime::{RtOk, RtResult, RuntimeError};
 use crate::tree::parser::ast::call::Call;
@@ -22,6 +22,7 @@ use std::collections::{HashMap, HashSet, VecDeque};
 use std::path::PathBuf;
 use crate::converter::Converter;
 use crate::converter::to_nav::ToRosNavConverter;
+use log::debug;
 
 /// The auxiliary structure that encapsulates the runtime tree
 /// and some additional information about actions
@@ -79,10 +80,10 @@ impl RuntimeTree {
     ///
     ///         let analyzer = tree.analyze();
     ///
-    ///         let a1 = analyzer.find_by(|n| n.is_name("action1")).unwrap();
-    ///         let a2 = analyzer.find_by(|n| n.is_name("action2")).unwrap();
-    ///         let root = analyzer.find_by(|n| n.is_name("root")).unwrap();
-    ///         let seq = analyzer.find_by(|n| n.is_name("seq")).unwrap();
+    ///         let a1 = analyzer.find_id_by(|n| n.is_name("action1")).unwrap();
+    ///         let a2 = analyzer.find_id_by(|n| n.is_name("action2")).unwrap();
+    ///         let root = analyzer.find_id_by(|n| n.is_name("root")).unwrap();
+    ///         let seq = analyzer.find_id_by(|n| n.is_name("seq")).unwrap();
     ///
     ///         assert_eq!(analyzer.parent(&a1), Some(&seq));
     ///         assert_eq!(analyzer.parent(&a2), Some(&root));
@@ -122,6 +123,7 @@ impl RuntimeTree {
             match call {
                 // for lambda there is not many actions since it does not have arguments so just grab a type and children
                 Call::Lambda(tpe, calls) => {
+                    debug!(target:"tree[construct]", "found lambda {tpe}: id {id} and parent {parent_id}");
                     let children = builder.push_vec(calls, id, file_name.clone());
                     builder.add_chain_lambda(id, parent_id);
                     r_tree
@@ -134,6 +136,7 @@ impl RuntimeTree {
                 // - since we found it we transform it into a simple invocation call and process it at the next step.
                 // - if it is lambda we already found it
                 Call::HoInvocation(key) => {
+                    debug!(target:"tree[construct]", "found ho invocation with id {id} in parent {parent_id}");
                     let (p_id, parent_args, parent_params) =
                         builder.get_chain_skip_lambda(&parent_id)?.get_tree();
                     let call = builder.find_ho_call(&parent_id, &key)?;
@@ -154,6 +157,7 @@ impl RuntimeTree {
                 }
                 // just take the arguments and transform them into runtime args and push further
                 Call::Decorator(tpe, decor_args, call) => {
+                    debug!(target:"tree[construct]", "found decorator {tpe}, id {id} in parent {parent_id}");
                     let (_, parent_args, parent_params) =
                         builder.get_chain_skip_lambda(&parent_id)?.get_tree();
                     builder.add_chain(id, parent_id, parent_args.clone(), parent_params.clone());
@@ -167,13 +171,14 @@ impl RuntimeTree {
                 // firstly we need to find the definition either in the file or in the imports
                 // with a consideration of a possible alias and transform the args
                 Call::Invocation(name, args) => {
+                    debug!(target:"tree[construct]", "found invocation , id {id} in parent {parent_id}");
                     let (_, parent_args, parent_params) = builder
                         .get_chain_skip_lambda(&parent_id)
                         .map(|e| e.get_tree())
                         .unwrap_or_default();
                     match curr_file.definitions.get(&name) {
                         Some(tree) => {
-                            let (rt_args,upd_args) = to_rt_args(
+                            let (rt_args, upd_args) = to_rt_args(
                                 name.as_str(),
                                 args.clone(),
                                 tree.params.clone(),
@@ -194,11 +199,12 @@ impl RuntimeTree {
                             }
                         }
                         None => {
+                            debug!(target:"tree[construct]", "found import from another file,  id {id} in parent {parent_id}");
                             let (tree, file) = import_map.find(&name, &project)?;
                             if file.contains("::") {
                                 std_actions.insert((tree.name.clone(), file.clone()));
                             }
-                            let (rt_args,upd_args)  = to_rt_args(
+                            let (rt_args, upd_args) = to_rt_args(
                                 name.as_str(),
                                 args.clone(),
                                 tree.params.clone(),
@@ -280,6 +286,7 @@ mod tests {
     use crate::tree::project::Project;
     use std::collections::{HashMap, HashSet};
     use itertools::Itertools;
+    use crate::tests::turn_on_logs;
 
 
     #[test]
@@ -436,13 +443,14 @@ mod tests {
 
         let st_tree = RuntimeTree::build(project).unwrap().tree;
 
-        let item  = st_tree.nodes.iter().find(|(id,_)|**id == 4).unwrap().1.args();
+        let item = st_tree.nodes.iter().find(|(id, _)| **id == 4).unwrap().1.args();
         assert_eq!(
             item,
             RtArgs(vec![
-                RtArgument::new("arg0".to_string(), RtValue::int(1) ),
-                RtArgument::new("arg".to_string(), RtValue::str("-b-".to_string()))
+                RtArgument::new("arg0".to_string(), RtValue::int(1)),
+                RtArgument::new("arg".to_string(), RtValue::str("-b-".to_string())),
             ])
         );
     }
+
 }
