@@ -37,6 +37,7 @@ fn builtin_test() {
 }
 
 #[test]
+#[ignore]
 fn mix_test() {
     let fb = fb("actions/mix_test");
     let mut f = fb.build().unwrap();

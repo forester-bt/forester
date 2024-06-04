@@ -27,14 +27,32 @@ impl<'a> RtTreeAnalyzer<'a> {
         self.parents.get(id)
     }
 
-    /// Returns the parent of the node with the given id
-    pub fn find_by<F>(&self, filter: F) -> Option<RNodeId>
-    where
-        F: Fn(&RNode) -> bool,
+    /// Returns the node_id by filter
+    pub fn find_id_by<F>(&self, filter: F) -> Option<RNodeId>
+        where
+            F: Fn(&RNode) -> bool,
     {
         self.tree
             .iter()
             .find_map(|(id, node)| if filter(node) { Some(id) } else { None })
+    }
+    /// Returns the node by filter
+    pub fn find_node_by<F>(&self, filter: F) -> Option<(RNodeId, &RNode)>
+        where
+            F: Fn(&RNode) -> bool,
+    {
+        self.tree
+            .iter()
+            .find(|(id, node)| filter(node))
+    }
+    /// Returns the node by filter
+    pub fn find_map_by<F, T>(&self, filter_map: F) -> Option<(RNodeId, T)>
+        where
+            F: Fn(&RNode) -> Option<T>,
+    {
+        self.tree
+            .iter()
+            .find_map(|(id, node)| filter_map(node).map(|v| (id, v)))
     }
 }
 
@@ -62,10 +80,10 @@ mod tests {
         let tree = rtb.build().unwrap().0;
 
         let analyzer = tree.analyze();
-        let a1 = analyzer.find_by(|n| n.is_name("action1")).unwrap();
-        let a2 = analyzer.find_by(|n| n.is_name("action2")).unwrap();
-        let root = analyzer.find_by(|n| n.is_name("root")).unwrap();
-        let seq = analyzer.find_by(|n| n.is_name("seq")).unwrap();
+        let a1 = analyzer.find_id_by(|n| n.is_name("action1")).unwrap();
+        let a2 = analyzer.find_id_by(|n| n.is_name("action2")).unwrap();
+        let root = analyzer.find_id_by(|n| n.is_name("root")).unwrap();
+        let seq = analyzer.find_id_by(|n| n.is_name("seq")).unwrap();
 
         assert_eq!(analyzer.parent(&a1), Some(&seq));
         assert_eq!(analyzer.parent(&a2), Some(&root));

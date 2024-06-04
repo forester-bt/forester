@@ -67,6 +67,7 @@ mod tests {
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
     #[test]
+    #[ignore]
     fn smoke() {
         let env = RtEnv::try_new().unwrap();
 

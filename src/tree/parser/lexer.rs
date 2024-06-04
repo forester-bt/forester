@@ -81,7 +81,7 @@ pub enum Token {
     #[token("import")]
     Import,
 
-    #[regex(r"(?s)/\*.*\*/", logos::skip)]
+    #[regex(r"(?s)/\*[^*/]*\*/", logos::skip)]
     #[regex(r"//[^\r\n]*", logos::skip)]
     Comment,
 

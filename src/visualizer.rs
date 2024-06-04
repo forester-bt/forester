@@ -64,7 +64,7 @@ impl Visualizer {
         tree: Option<&String>,
         output: Option<&String>,
     ) -> Result<String, TreeError> {
-        let (rts, output_pb) = runtime_tree_default(root, file, tree, output,"svg".to_string())?;
+        let (rts, output_pb) = runtime_tree_default(root, file, tree, output, "svg".to_string())?;
         debug!(target:"visualizer","visualize a given project to a file {:?}", &output_pb);
         Visualizer::rt_tree_svg_to_file(&rts.tree, output_pb)
     }
@@ -84,6 +84,7 @@ impl Visualizer {
             vec![Format::Svg.into(), CommandArg::Output(p.to_string())],
         )
             .map_err(|e| TreeError::VisualizationError(e.to_string()))
+            .map(|r| String::from_utf8_lossy(&r).to_string())
     }
 }
 
@@ -120,19 +121,19 @@ mod tests {
         assert_eq!(
             result,
             r#"strict digraph  {
-    1[label="(1) root
+  1[label="(1) root
 main ",shape=rect,color=black]
-    1 -> 2 
-    2[label="(2) sequence",shape=rect,color=darkred]
-    2 -> 3 
-    2 -> 4 
-    3[label="(3) fallback
+  1 -> 2
+  2[label="(2) sequence",shape=rect,color=darkred]
+  2 -> 3
+  2 -> 4
+  3[label="(3) fallback
 one (a=a1(<>))",shape=rect,color=blue]
-    3 -> 5 
-    3 -> 6 
-    4[label="(4) a1 ",shape=component,color=green]
-    5[label="(5) a1 ",shape=component,color=green]
-    6[label="(6) a1 ",shape=component,color=green]
+  3 -> 5
+  3 -> 6
+  4[label="(4) a1 ",shape=component,color=green]
+  5[label="(5) a1 ",shape=component,color=green]
+  6[label="(6) a1 ",shape=component,color=green]
 }"#
         );
     }

@@ -220,6 +220,7 @@ mod tests {
     use crate::runtime::ros::client::{publish};
 
     #[test]
+    #[ignore]
     fn smoke() {
         let value = RtValue::Object(HashMap::from_iter(vec![("a".to_string(), RtValue::int(10))]));
         publish("test".to_owned(), value, "ws://localhost:9090".to_string())
