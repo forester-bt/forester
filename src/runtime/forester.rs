@@ -2,14 +2,13 @@ pub mod decorator;
 pub mod flow;
 pub mod serv;
 
-
 use crate::runtime::action::keeper::ActionKeeper;
 use crate::runtime::action::{recover, Tick};
 use crate::runtime::args::RtArgs;
 use crate::runtime::blackboard::BlackBoard;
 use crate::runtime::context::{RNodeState, TreeContext, TreeContextRef};
 use crate::runtime::env::RtEnv;
-use crate::runtime::forester::flow::{FlowDecision, read_cursor, run_with, run_with_par};
+use crate::runtime::forester::flow::{read_cursor, run_with, run_with_par, FlowDecision};
 use crate::runtime::forester::serv::ServInfo;
 use crate::runtime::rtree::rnode::RNode;
 use crate::runtime::rtree::RuntimeTree;
@@ -20,7 +19,6 @@ use crate::runtime::{trimmer, RtOk, RtResult, RuntimeError};
 use crate::tracer::{Event, Tracer};
 use log::debug;
 use std::sync::{Arc, Mutex};
-
 use tokio::task::JoinHandle;
 
 /// The entry point to process execution.
@@ -32,7 +30,7 @@ use tokio::task::JoinHandle;
 /// - Optimizer holds tasks to modify the tree or other components on the fly
 ///
 ///# Note:
-/// Better to use `ForesterBuilder` to create a Forester.  
+/// Better to use `ForesterBuilder` to create a Forester.
 pub struct Forester {
     pub tree: RuntimeTree,
     pub bb: Arc<Mutex<BlackBoard>>,
@@ -177,12 +175,11 @@ impl Forester {
                     RNodeState::Ready(tick_args) => {
                         let len = children.len() as i64;
                         debug!(target:"flow[ready]", "tick:{}, {tpe}. Start node",ctx.curr_ts());
-                        let new_state =
-                            if tpe.is_par() {
-                                RNodeState::Running(run_with_par(tick_args, len))
-                            } else {
-                                RNodeState::Running(run_with(tick_args, 0, len))
-                            };
+                        let new_state = if tpe.is_par() {
+                            RNodeState::Running(run_with_par(tick_args, len))
+                        } else {
+                            RNodeState::Running(run_with(tick_args, 0, len))
+                        };
 
                         debug!(target:"flow[ready]", "tick:{}, {tpe}. Switch to the new_state:{}",ctx.curr_ts(),&new_state);
                         ctx.new_state(id, new_state)?;
@@ -270,9 +267,15 @@ impl Forester {
                     // since it is ready we need to prepare decorator to start
                     // But then we do nothing but switch the state to running in the current tick.
                     RNodeState::Ready(tick_args) => {
-                        debug!(target:"decorator[ready]", "tick:{}, {tpe}. Start decorator({init_args}) and child args({tick_args})",ctx.curr_ts());
-                        let new_state =
-                            decorator::prepare(tpe, init_args.clone(), tick_args, &mut ctx)?;
+                        let prev_state = ctx.state_last_set(&id);
+                        debug!(target:"decorator[ready]", "tick:{}, {tpe}. Start decorator({init_args}), child args({tick_args}) and prev state({prev_state})",ctx.curr_ts());
+                        // Decorators only prepare themselves if they didn't return Running in the previous tick
+                        let new_state = match prev_state {
+                            RNodeState::Running(_) => {
+                                RNodeState::Running(run_with(tick_args, 0, 1))
+                            }
+                            _ => decorator::prepare(tpe, init_args.clone(), tick_args, &mut ctx)?,
+                        };
                         debug!(target:"decorator[ready]", "tick:{}, the new_state: {}",ctx.curr_ts(),&new_state);
                         ctx.new_state(id, new_state)?;
                     }
@@ -347,7 +350,6 @@ impl Forester {
         // clean up the tree
         self.stop_http();
         self.env.lock().map(|mut e| e.stop_all_daemons())?;
-
 
         ctx.root_state(self.tree.root)
     }

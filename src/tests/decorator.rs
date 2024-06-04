@@ -61,6 +61,35 @@ fn simple_repeat() {
     assert_eq!(x.as_str(), "111111")
 }
 #[test]
+fn simple_retry() {
+    let mut fb = fb("decorators/simple_retry");
+
+    fb.register_sync_action(
+        "incr",
+        GenerateData::new(|v| RtValue::int(v.as_int().unwrap_or(0) + 1)),
+    );
+
+    let mut f = fb.build().unwrap();
+    assert_eq!(
+        f.run(),
+        Ok(TickResult::failure(
+            "decorator inverts the result.".to_string()
+        ))
+    );
+
+    let x =
+        f.bb.lock()
+            .unwrap()
+            .get("tick".to_string())
+            .ok()
+            .flatten()
+            .unwrap()
+            .clone()
+            .as_int()
+            .unwrap();
+    assert_eq!(x, 5)
+}
+#[test]
 fn simple_delay() {
     let mut fb = fb("decorators/simple_delay");
 
@@ -91,9 +120,10 @@ fn repeat_reactive() {
     turn_on_logs();
     let mut fb = fb("decorators/repeat_reactive");
 
-    fb.register_sync_action("incr", GenerateData::new(|v|{
-        RtValue::int(v.as_int().unwrap_or(0) + 1)
-    }));
+    fb.register_sync_action(
+        "incr",
+        GenerateData::new(|v| RtValue::int(v.as_int().unwrap_or(0) + 1)),
+    );
 
     let mut f = fb.build().unwrap();
     assert_eq!(f.run(), Ok(TickResult::success()));
@@ -117,7 +147,6 @@ fn repeat_failure() {
     let mut f = fb.build().unwrap();
     assert_eq!(f.run(), Ok(TickResult::failure("test".to_string())));
 
-
     let x =
         f.bb.lock()
             .unwrap()
@@ -129,4 +158,57 @@ fn repeat_failure() {
             .as_int()
             .unwrap();
     assert_eq!(x, 1)
+}
+#[test]
+fn repeat_repeat() {
+    let mut fb = fb("decorators/repeat_repeat");
+
+    fb.register_sync_action(
+        "incr",
+        GenerateData::new(|v| RtValue::int(v.as_int().unwrap_or(0) + 1)),
+    );
+
+    let mut f = fb.build().unwrap();
+    assert_eq!(f.run(), Ok(TickResult::success()));
+
+    let x =
+        f.bb.lock()
+            .unwrap()
+            .get("tick".to_string())
+            .ok()
+            .flatten()
+            .unwrap()
+            .clone()
+            .as_int()
+            .unwrap();
+    assert_eq!(x, 12)
+}
+#[test]
+fn retry_retry() {
+    let mut fb = fb("decorators/retry_retry");
+
+    fb.register_sync_action(
+        "incr",
+        GenerateData::new(|v| RtValue::int(v.as_int().unwrap_or(0) + 1)),
+    );
+
+    let mut f = fb.build().unwrap();
+    assert_eq!(
+        f.run(),
+        Ok(TickResult::failure(
+            "decorator inverts the result.".to_string()
+        ))
+    );
+
+    let x =
+        f.bb.lock()
+            .unwrap()
+            .get("tick".to_string())
+            .ok()
+            .flatten()
+            .unwrap()
+            .clone()
+            .as_int()
+            .unwrap();
+    assert_eq!(x, 15)
 }

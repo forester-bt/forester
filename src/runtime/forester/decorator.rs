@@ -7,6 +7,7 @@ use std::thread::sleep;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 pub const ATTEMPT: &str = "attempt";
+pub const TIMESTAMP: &str = "timestamp";
 
 // It runs on the preparation stage when the child is ready but not running.
 // It is useful to save some information before(counters, timeout etc)
@@ -16,7 +17,7 @@ pub(crate) fn prepare(
     tick_args: RtArgs,
     ctx: &mut TreeContext,
 ) -> RtResult<RNodeState> {
-    debug!(target:"> decorator::prepare", "tick:{}, type:{} where decorator args({init_args}) and child args({tick_args})",ctx.curr_ts(), tpe);
+    debug!(target:"decorator[prepare]", "tick:{}, type:{} where decorator args({init_args}) and child args({tick_args})",ctx.curr_ts(), tpe);
     match tpe {
         DecoratorType::Delay => {
             sleep(Duration::from_millis(
@@ -24,7 +25,17 @@ pub(crate) fn prepare(
             ));
             Ok(RNodeState::Running(run_with(tick_args, 0, 1)))
         }
-        DecoratorType::Timeout => Ok(RNodeState::Running(start_args().with(LEN, RtValue::int(1)))),
+        DecoratorType::Timeout => {
+            let args = tick_args.with(
+                TIMESTAMP,
+                RtValue::Number(RtValueNumber::Int(get_system_timestamp())),
+            );
+            Ok(RNodeState::Running(run_with(args, 0, 1)))
+        }
+        DecoratorType::Repeat | DecoratorType::Retry => {
+            let args = tick_args.with(ATTEMPT, RtValue::Number(RtValueNumber::Int(1)));
+            Ok(RNodeState::Running(run_with(args, 0, 1)))
+        }
         _ => Ok(RNodeState::Running(tick_args.with(LEN, RtValue::int(1)))),
     }
 }
@@ -37,23 +48,27 @@ pub(crate) fn monitor(
     tick_args: RtArgs,
     ctx: &mut TreeContext,
 ) -> RtResult<RNodeState> {
-    debug!(target:"> decorator::monitor", "tick:{}, type:{}",ctx.curr_ts(), tpe);
+    debug!(target:"decorator[monitor]", "tick:{}, type:{}",ctx.curr_ts(), tpe);
     match tpe {
         DecoratorType::Timeout => {
-            let timeout = init_args.first_as(RtValue::as_int).unwrap_or(0);
+            let timeout_period = init_args.first_as(RtValue::as_int).unwrap_or(0);
+
             let err = "the decorator timeout does not have a start time".to_string();
             let args = tick_args.clone();
-            let start = args
-                .first_as(RtValue::as_int)
+            let start_timestamp = args
+                .find_as(TIMESTAMP.to_string(), RtValue::as_int)
                 .ok_or(RuntimeError::fail(err))?;
-            let curr = get_ts();
-            if curr - start >= timeout {
-                let args = run_with(tick_args, 0, 1).with(
+
+            let current_timestamp = get_system_timestamp();
+            if current_timestamp - start_timestamp >= timeout_period {
+                let args = tick_args.with(
                     REASON,
-                    RtValue::str(format!("the timeout {timeout} exceeded")),
+                    RtValue::str(format!(
+                        "the timeout of {timeout_period} milliseconds exceeded"
+                    )),
                 );
 
-                Ok(RNodeState::Failure(args))
+                Ok(RNodeState::Failure(run_with(args, 0, 1)))
             } else {
                 Ok(RNodeState::Running(tick_args.with(LEN, RtValue::int(1))))
             }
@@ -70,7 +85,7 @@ pub(crate) fn finalize(
     child_res: TickResult,
     ctx: &mut TreeContext,
 ) -> RtResult<RNodeState> {
-    debug!(target:"> decorator::fin", "tick:{}, type:{}",ctx.curr_ts(), tpe);
+    debug!(target:"decorator[fin]", "tick:{}, type:{}",ctx.curr_ts(), tpe);
     match tpe {
         DecoratorType::Inverter => match child_res {
             TickResult::Success => {
@@ -83,74 +98,66 @@ pub(crate) fn finalize(
             _ => Ok(RNodeState::Success(run_with(tick_args, 0, 1))),
         },
         DecoratorType::ForceSuccess => Ok(RNodeState::Success(run_with(tick_args, 0, 1))),
-        DecoratorType::ForceFail => Ok(RNodeState::Failure(run_with(tick_args, 0, 1).with(
-            REASON,
-            RtValue::str("decorator force fail.".to_string()),
-        ))),
+        DecoratorType::ForceFail => Ok(RNodeState::Failure(
+            run_with(tick_args, 0, 1)
+                .with(REASON, RtValue::str("decorator force fail.".to_string())),
+        )),
         DecoratorType::Repeat => match child_res {
             TickResult::Success => {
-                let count = init_args
-                    .first()
-                    .and_then(|v| v.cast(ctx.into()).int().ok())
-                    .flatten()
-                    .unwrap_or(1);
+                let max_attempts = init_args.first_as(RtValue::as_int).unwrap_or(0);
 
-                let attempt = tick_args.first_as(RtValue::as_int).unwrap_or(1);
-                if count > 0 && attempt >= count {
+                let err = "the decorator repeat does not have an attempt count".to_string();
+                let args = tick_args.clone();
+                let attempt = args
+                    .find_as(ATTEMPT.to_string(), RtValue::as_int)
+                    .ok_or(RuntimeError::fail(err))?;
+
+                if max_attempts > 0 && attempt >= max_attempts {
                     Ok(RNodeState::Success(run_with(tick_args, 0, 1)))
                 } else {
-                    let args = RtArgs(vec![RtArgument::new_noname(RtValue::int(attempt + 1))]);
+                    let args =
+                        tick_args.with(ATTEMPT, RtValue::Number(RtValueNumber::Int(attempt + 1)));
                     Ok(RNodeState::Running(run_with(args, 0, 1)))
                 }
             }
             TickResult::Failure(v) => {
-                let args = run_with(tick_args, 0, 1)
-                    .with(REASON, RtValue::str(v));
-                Ok(RNodeState::Failure(args))
+                let args = tick_args.with(REASON, RtValue::str(v));
+                Ok(RNodeState::Failure(run_with(args, 0, 1)))
             }
-            TickResult::Running => {
-                let args = run_with(tick_args, 0, 1);
-                Ok(RNodeState::Running(args))
-            }
-        }
+            TickResult::Running => Ok(RNodeState::Running(run_with(tick_args, 0, 1))),
+        },
         DecoratorType::Timeout => Ok(RNodeState::from(run_with(tick_args, 1, 1), child_res)),
         DecoratorType::Delay => Ok(RNodeState::from(run_with(tick_args, 0, 1), child_res)),
         DecoratorType::Retry => match child_res {
             TickResult::Failure(v) => {
-                let count = init_args
-                    .first()
-                    .and_then(|v| v.cast(ctx.into()).int().ok())
-                    .flatten()
-                    .unwrap_or(0);
+                let max_attempts = init_args.first_as(RtValue::as_int).unwrap_or(0);
 
-                let attempts = tick_args.first_as(RtValue::as_int).unwrap_or(0);
+                let err = "the decorator retry does not have an attempt count".to_string();
+                let args = tick_args.clone();
+                let attempt = args
+                    .find_as(ATTEMPT.to_string(), RtValue::as_int)
+                    .ok_or(RuntimeError::fail(err))?;
 
-
-                if count > 0 && attempts >= count {
-                    let args = run_with(tick_args, 0, 1).with(REASON, RtValue::str(v));
-                    Ok(RNodeState::Failure(args))
+                if max_attempts > 0 && attempt >= max_attempts {
+                    let args = tick_args.with(REASON, RtValue::str(v));
+                    Ok(RNodeState::Failure(run_with(args, 0, 1)))
                 } else {
-                    let args = RtArgs(vec![RtArgument::new_noname(RtValue::int(attempts + 1))]);
+                    let args =
+                        tick_args.with(ATTEMPT, RtValue::Number(RtValueNumber::Int(attempt + 1)));
                     Ok(RNodeState::Running(run_with(args, 0, 1)))
                 }
             }
-            TickResult::Success => Ok(RNodeState::Success(tick_args)),
+            TickResult::Success => Ok(RNodeState::Success(run_with(tick_args, 0, 1))),
             _ => Ok(RNodeState::Running(run_with(tick_args, 0, 1))),
         },
     }
 }
 
-fn get_ts() -> i64 {
+fn get_system_timestamp() -> i64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .expect("")
-        .as_secs() as i64
-}
-
-fn start_args() -> RtArgs {
-    RtArgs(vec![RtArgument::new_noname(RtValue::Number(
-        RtValueNumber::Int(get_ts()),
-    ))])
+        .expect("should be able to get the system time since UNIX_EPOCH")
+        .as_millis() as i64
 }
 
 fn get_delay(args: RtArgs) -> RtResult<i64> {

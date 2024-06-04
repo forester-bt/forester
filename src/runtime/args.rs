@@ -14,7 +14,7 @@ use itertools::Itertools;
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::fmt::{Display, Formatter};
+use std::fmt::{format, Display, Formatter};
 
 /// Just a Key class for the arguments that represents the key in BB
 pub type RtAKey = String;
@@ -108,16 +108,16 @@ impl RtValueCast {
     }
     /// tries to convert to vec and map each element
     pub fn map_vec<Map, To>(self, map: Map) -> RtResult<Option<Vec<To>>>
-        where
-            Map: Fn(RtValue) -> To,
+    where
+        Map: Fn(RtValue) -> To,
     {
         self.with_ptr().map(|v| v.as_vec(map))
     }
 
     /// tries to convert obj to map
     pub fn map_obj<Map, To>(self, map: Map) -> RtResult<Option<HashMap<String, To>>>
-        where
-            Map: Fn((String, RtValue)) -> (String, To),
+    where
+        Map: Fn((String, RtValue)) -> (String, To),
     {
         self.with_ptr().map(|v| v.as_map(map))
     }
@@ -151,8 +151,8 @@ impl RtValue {
         }
     }
     pub fn as_vec<Map, To>(self, map: Map) -> Option<Vec<To>>
-        where
-            Map: Fn(RtValue) -> To,
+    where
+        Map: Fn(RtValue) -> To,
     {
         match self {
             RtValue::Array(elems) => Some(elems.into_iter().map(map).collect()),
@@ -160,8 +160,8 @@ impl RtValue {
         }
     }
     pub fn as_map<Map, To>(self, map: Map) -> Option<HashMap<String, To>>
-        where
-            Map: Fn((String, RtValue)) -> (String, To),
+    where
+        Map: Fn((String, RtValue)) -> (String, To),
     {
         match self {
             RtValue::Object(elems) => Some(HashMap::from_iter(
@@ -232,8 +232,8 @@ impl RtArgs {
     }
     /// takes the first one and transform
     pub fn first_as<M, To>(&self, map: M) -> Option<To>
-        where
-            M: Fn(RtValue) -> Option<To>,
+    where
+        M: Fn(RtValue) -> Option<To>,
     {
         self.0.first().and_then(|v| map(v.value.clone()))
     }
@@ -245,6 +245,14 @@ impl RtArgs {
             .find(|a| a.name == key)
             .map(|a| a.clone().value)
     }
+    /// finds by name and transform
+    pub fn find_as<M, To>(&self, key: RtAKey, map: M) -> Option<To>
+    where
+        M: Fn(RtValue) -> Option<To>,
+    {
+        self.find(key).and_then(|v| map(v.clone()))
+    }
+
     /// finds by name or takes by index
     pub fn find_or_ith(&self, key: RtAKey, ith: usize) -> Option<RtValue> {
         self.0

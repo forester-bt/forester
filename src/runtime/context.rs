@@ -43,7 +43,7 @@ pub struct TreeContextRef {
     bb: BBRef,
     tracer: TracerRef,
     curr_ts: Timestamp,
-    trimmer: TrimmingQueueRef,
+    _trimmer: TrimmingQueueRef,
     env: RtEnvRef,
 }
 
@@ -55,7 +55,13 @@ impl From<&mut TreeContext> for TreeContextRef {
 
 impl TreeContextRef {
     pub fn from_ctx(ctx: &TreeContext, trimmer: Arc<Mutex<TrimmingQueue>>) -> Self {
-        TreeContextRef::new(ctx.bb.clone(), ctx.tracer.clone(), ctx.curr_ts, trimmer, ctx.rt_env.clone())
+        TreeContextRef::new(
+            ctx.bb.clone(),
+            ctx.tracer.clone(),
+            ctx.curr_ts,
+            trimmer,
+            ctx.rt_env.clone(),
+        )
     }
     /// A pointer to tracer struct.
     pub fn tracer(&self) -> TracerRef {
@@ -84,14 +90,14 @@ impl TreeContextRef {
         bb: Arc<Mutex<BlackBoard>>,
         tracer: Arc<Mutex<Tracer>>,
         curr_ts: Timestamp,
-        trimmer: Arc<Mutex<TrimmingQueue>>,
+        _trimmer: Arc<Mutex<TrimmingQueue>>,
         env: RtEnvRef,
     ) -> Self {
         Self {
             bb,
             tracer,
             curr_ts,
-            trimmer,
+            _trimmer,
             env,
         }
     }
@@ -123,7 +129,6 @@ pub struct TreeContext {
     /// The runtime environment
     rt_env: RtEnvRef,
 }
-
 
 impl TreeContext {
     pub fn state(&self) -> &HashMap<RNodeId, RNodeState> {
@@ -216,12 +221,14 @@ impl TreeContext {
         self.trace(NewState(id, state.clone()))?;
         Ok(self.state.insert(id, state))
     }
-    pub(crate) fn state_in_ts(&self, id: &RNodeId) -> RNodeState {
-        let actual_state = self
-            .state
+    pub(crate) fn state_last_set(&self, id: &RNodeId) -> RNodeState {
+        self.state
             .get(id)
             .cloned()
-            .unwrap_or(RNodeState::Ready(RtArgs::default()));
+            .unwrap_or(RNodeState::Ready(RtArgs::default()))
+    }
+    pub(crate) fn state_in_ts(&self, id: &RNodeId) -> RNodeState {
+        let actual_state = self.state_last_set(id);
         if self.is_curr_ts(&id) {
             actual_state
         } else {

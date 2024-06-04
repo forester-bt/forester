@@ -1,0 +1,16 @@
+impl incr(key:string,default:num);
+
+// We're testing that fallback will restart from Tick 1 after the retry decorator on Tick 3 returns failure.
+// This covers a previous bug where fallback would forever repeat from the last child to return RUNNING.
+// "after_running_failure" in the test name means after something returns running, then later returns failure.
+root main {
+    retry(2) fallback {
+        // Tick 1
+        inverter incr("tick",0)
+        // Tick 2
+        inverter incr("tick",0)
+        // Tick 3
+        // Retry is used to force incr to return RUNNING the first time.
+        retry(2) inverter incr("tick",0)
+    }
+}
