@@ -61,14 +61,14 @@ pub(crate) fn monitor(
 
             let current_timestamp = get_system_timestamp();
             if current_timestamp - start_timestamp >= timeout_period {
-                let args = run_with(tick_args, 0, 1).with(
+                let args = tick_args.with(
                     REASON,
                     RtValue::str(format!(
                         "the timeout of {timeout_period} milliseconds exceeded"
                     )),
                 );
 
-                Ok(RNodeState::Failure(args))
+                Ok(RNodeState::Failure(run_with(args, 0, 1)))
             } else {
                 Ok(RNodeState::Running(tick_args.with(LEN, RtValue::int(1))))
             }
@@ -115,20 +115,16 @@ pub(crate) fn finalize(
                 if max_attempts > 0 && attempt >= max_attempts {
                     Ok(RNodeState::Success(run_with(tick_args, 0, 1)))
                 } else {
-                    let args = tick_args
-                        .clone()
-                        .with(ATTEMPT, RtValue::Number(RtValueNumber::Int(attempt + 1)));
+                    let args =
+                        tick_args.with(ATTEMPT, RtValue::Number(RtValueNumber::Int(attempt + 1)));
                     Ok(RNodeState::Running(run_with(args, 0, 1)))
                 }
             }
             TickResult::Failure(v) => {
-                let args = run_with(tick_args, 0, 1).with(REASON, RtValue::str(v));
-                Ok(RNodeState::Failure(args))
+                let args = tick_args.with(REASON, RtValue::str(v));
+                Ok(RNodeState::Failure(run_with(args, 0, 1)))
             }
-            TickResult::Running => {
-                let args = run_with(tick_args, 0, 1);
-                Ok(RNodeState::Running(args))
-            }
+            TickResult::Running => Ok(RNodeState::Running(run_with(tick_args, 0, 1))),
         },
         DecoratorType::Timeout => Ok(RNodeState::from(run_with(tick_args, 1, 1), child_res)),
         DecoratorType::Delay => Ok(RNodeState::from(run_with(tick_args, 0, 1), child_res)),
@@ -143,16 +139,15 @@ pub(crate) fn finalize(
                     .ok_or(RuntimeError::fail(err))?;
 
                 if max_attempts > 0 && attempt >= max_attempts {
-                    let args = tick_args.clone().with(REASON, RtValue::str(v));
+                    let args = tick_args.with(REASON, RtValue::str(v));
                     Ok(RNodeState::Failure(run_with(args, 0, 1)))
                 } else {
-                    let args = tick_args
-                        .clone()
-                        .with(ATTEMPT, RtValue::Number(RtValueNumber::Int(attempt + 1)));
+                    let args =
+                        tick_args.with(ATTEMPT, RtValue::Number(RtValueNumber::Int(attempt + 1)));
                     Ok(RNodeState::Running(run_with(args, 0, 1)))
                 }
             }
-            TickResult::Success => Ok(RNodeState::Success(tick_args)),
+            TickResult::Success => Ok(RNodeState::Success(run_with(tick_args, 0, 1))),
             _ => Ok(RNodeState::Running(run_with(tick_args, 0, 1))),
         },
     }
