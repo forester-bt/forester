@@ -6,14 +6,14 @@ use crate::simulator::builder::SimulatorBuilder;
 use crate::simulator::config::{
     Action, BbConfig, HttpServ, SimProfile, SimProfileConfig, TracerSimConfig,
 };
-use crate::simulator::Simulator;
+
 use crate::tests::{test_folder, turn_on_logs};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::routing::{get, post};
 use axum::{Json, Router, ServiceExt};
 use forester_http::client::ForesterHttpClient;
-use graphviz_rust::attributes::quadtree::fast;
+
 use serde_json::json;
 use std::collections::HashMap;
 use std::io::Write;

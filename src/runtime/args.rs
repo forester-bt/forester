@@ -11,8 +11,8 @@ use crate::tree::parser::ast::call::Call;
 use crate::tree::parser::ast::message::{Message, Number};
 use crate::tree::{cerr, TreeError};
 use itertools::Itertools;
-use serde::de::{Error, MapAccess, SeqAccess, Visitor};
-use serde::{Deserialize, Deserializer, Serialize};
+
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::{format, Display, Formatter};
 

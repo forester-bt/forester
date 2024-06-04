@@ -1,10 +1,10 @@
 config:
   tracer:
-    file: gen/main.log
+    file: gen\main.log
     dt_fmt: "%M:%S%.3f"
-  graph: gen/main.svg
+  graph: gen\main.svg
   bb:
-    dump: gen/bb.json
+    dump: gen\bb.json
   max_ticks: 10
 
 actions:

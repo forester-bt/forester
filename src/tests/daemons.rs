@@ -7,7 +7,7 @@ use crate::runtime::args::{RtArgs, RtValue};
 use crate::runtime::context::TreeContextRef;
 use crate::runtime::env::daemon::{AsyncDaemonFn, Daemon, DaemonFn, StopFlag};
 use crate::runtime::env::daemon::context::DaemonContext;
-use crate::runtime::{blackboard, RtOk, TickResult};
+use crate::runtime::{blackboard, TickResult};
 use crate::tests::{fb, turn_on_logs};
 
 struct Test;
@@ -22,7 +22,7 @@ impl DaemonFn for Test {
 }
 
 impl Impl for Test {
-    fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
+    fn tick(&self, _args: RtArgs, ctx: TreeContextRef) -> Tick {
         std::thread::sleep(std::time::Duration::from_millis(500));
         if ctx.current_tick() < 4 {
             Ok(TickResult::running())
@@ -53,7 +53,7 @@ fn smoke() {
 struct TestAction;
 
 impl Impl for TestAction {
-    fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
+    fn tick(&self, _args: RtArgs, ctx: TreeContextRef) -> Tick {
         std::thread::sleep(std::time::Duration::from_millis(100));
         let arc = ctx.bb();
         let mut bb = arc.lock()?;

@@ -3,9 +3,9 @@ pub mod task;
 
 use std::future::Future;
 use std::pin::Pin;
-use std::sync::{Arc, Mutex};
-use std::sync::atomic::{AtomicBool, Ordering};
-use tokio::sync::oneshot::Receiver;
+use std::sync::{Arc};
+use std::sync::atomic::{AtomicBool};
+
 use tokio_util::sync::CancellationToken;
 use crate::runtime::env::daemon::context::DaemonContext;
 

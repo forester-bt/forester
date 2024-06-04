@@ -2,10 +2,10 @@ use crate::tree::parser::ast::arg::{Argument, Arguments, MesType, Param, Params}
 use crate::tree::parser::ast::call::{Call, Calls};
 use crate::tree::parser::ast::*;
 use crate::tree::parser::Parser;
-use crate::tree::project::file::File;
-use parsit::error::ParseError;
+
+
 use parsit::test::parser_test::*;
-use std::collections::HashMap;
+
 
 #[test]
 fn file() {

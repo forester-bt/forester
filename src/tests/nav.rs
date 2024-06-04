@@ -2,7 +2,7 @@ use crate::converter::Converter;
 use crate::converter::from_nav::FromNav2;
 use crate::read_file;
 use crate::runtime::rtree::RuntimeTree;
-use crate::tests::{fb, test_folder};
+use crate::tests::{test_folder};
 use crate::tree::project::Project;
 
 #[test]

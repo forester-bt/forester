@@ -10,28 +10,29 @@ license-file = "LICENSE"
 
 [dependencies]
 parsit = "0.2.0"
-graphviz-rust = "0.6.2"
+graphviz-rust = "0.9.0"
 logos = "0.13.0"
-itertools = "0.11.0"
-strum = { version = "0.25.0", features = [] }
-strum_macros = "0.25.1"
+itertools = "0.12.1"
+strum = { version = "0.26.2", features = [] }
+strum_macros = "0.26.2"
 log = "0.4"
-env_logger = "0.10.0"
+env_logger = "0.11.3"
 serde = { version = "1.0.166", features = ["derive"] }
 serde_json = { version = "1.0.99" }
 serde_yaml = "0.9.22"
-reqwest = { version = "0.11", features = ["blocking", "json"] }
+reqwest = { version = "0.12.4", features = ["blocking", "json"] }
 tracing = "0.1"
 axum = "0.6.16"
-tokio = { version = "1.29.1", features = ["full"] }
-tokio-util = "0.7.9"
+tokio = { version = "1.37.0", features = ["full"] }
+tokio-util = "0.7.11"
 hyper = "0.14.27"
 chrono = "0.4.26"
 quick-xml = "0.31.0"
 
-tungstenite = "0.20.1"
+tungstenite = "0.21.0"
 url = "2.4.1"
 
 [dev-dependencies]
-wiremock = "0.5.19"
+wiremock = "0.6.0"
 forester-http = "0.1.0"
+

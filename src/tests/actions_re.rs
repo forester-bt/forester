@@ -3,7 +3,7 @@ use crate::runtime::action::{Impl, ImplRemote};
 use crate::runtime::args::{RtArgs, RtArgument, RtValue};
 use crate::runtime::blackboard::BlackBoard;
 use crate::runtime::builder::ServerPort;
-use crate::runtime::context::{TreeContextRef, TreeRemoteContextRef};
+use crate::runtime::context::{TreeRemoteContextRef};
 use crate::runtime::env::RtEnv;
 use crate::runtime::forester::serv::start;
 use crate::runtime::TickResult;
@@ -40,12 +40,12 @@ fn smoke_serv() {
 #[test]
 fn remote_smoke() {
     turn_on_logs();
-    let mut env = RtEnv::try_new().unwrap();
+    let env = RtEnv::try_new().unwrap();
 
     let port = env.runtime.block_on(async {
         let mock_server = MockServer::start().await;
 
-        let mut resp = ResponseTemplate::new(200);
+        let resp = ResponseTemplate::new(200);
         let resp = resp.set_body_json(json!("Success"));
 
         Mock::given(method("POST"))
@@ -76,11 +76,11 @@ fn remote_smoke() {
 #[test]
 fn remote_in_tree() {
     turn_on_logs();
-    let mut env = RtEnv::try_new().unwrap();
+    let env = RtEnv::try_new().unwrap();
     let port = env.runtime.block_on(async {
         let mock_server = MockServer::start().await;
 
-        let mut resp = ResponseTemplate::new(200);
+        let resp = ResponseTemplate::new(200);
         let resp = resp.set_body_json(json!("Success"));
 
         Mock::given(method("POST"))

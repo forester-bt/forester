@@ -178,7 +178,7 @@ impl<'a> Project {
 fn file_to_str(root: PathBuf, file: FileName) -> Result<String, TreeError> {
 
     if file.contains("::"){
-        let mut parts:Vec<_> = file.split("::").collect();
+        let parts:Vec<_> = file.split("::").collect();
         if parts.len() != 2{
             return Err(TreeError::IOError(format!("invalid file name: {}", file)))
         }else {

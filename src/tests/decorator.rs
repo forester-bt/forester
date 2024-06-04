@@ -1,6 +1,6 @@
 use crate::runtime::action::builtin::data::{GenerateData, StoreData};
-use crate::runtime::action::builtin::ReturnResult;
-use crate::runtime::action::Action;
+
+
 use crate::runtime::args::RtValue;
 use crate::runtime::TickResult;
 use crate::tests::{fb, turn_on_logs};
@@ -142,7 +142,7 @@ fn repeat_reactive() {
 }
 #[test]
 fn repeat_failure() {
-    let mut fb = fb("decorators/repeat_failure");
+    let fb = fb("decorators/repeat_failure");
 
     let mut f = fb.build().unwrap();
     assert_eq!(f.run(), Ok(TickResult::failure("test".to_string())));

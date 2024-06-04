@@ -1,9 +1,9 @@
 use std::sync::atomic::Ordering::Relaxed;
-use tokio::sync::oneshot::Sender;
+
 use tokio::task::JoinHandle;
 use tokio_util::sync::CancellationToken;
 use crate::runtime::env::daemon::{DaemonName, StopFlag};
-use crate::runtime::{RtOk, RuntimeError};
+use crate::runtime::{RtOk};
 
 pub enum DaemonTask {
     Unnamed(JoinHandle<()>, DaemonStopSignal),

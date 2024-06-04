@@ -1,8 +1,8 @@
 use crate::runtime::action::{Impl, ImplRemote, Tick};
 use crate::runtime::args::{RtArgs, RtArgument};
-use crate::runtime::context::{TreeContextRef, TreeRemoteContextRef};
-use crate::runtime::{to_fail, RuntimeError, RuntimeError::*, TickResult};
-use hyper::body::HttpBody;
+use crate::runtime::context::{TreeRemoteContextRef};
+use crate::runtime::{to_fail, TickResult};
+
 use hyper::client::HttpConnector;
 use hyper::{body, Body, Client, Method, Request};
 use serde::{Deserialize, Serialize};
@@ -136,12 +136,12 @@ mod tests {
 
     #[test]
     fn smoke() {
-        let mut env = RtEnv::try_new().unwrap();
+        let env = RtEnv::try_new().unwrap();
 
         let port = env.runtime.block_on(async {
             let mock_server = MockServer::start().await;
 
-            let mut resp = ResponseTemplate::new(200);
+            let resp = ResponseTemplate::new(200);
             let resp = resp.set_body_json(json!("Success"));
 
             Mock::given(method("POST"))
@@ -152,9 +152,9 @@ mod tests {
             mock_server.address().port()
         });
 
-        let mut action = RemoteHttpAction::new(format!("http://localhost:{}/action", port));
+        let action = RemoteHttpAction::new(format!("http://localhost:{}/action", port));
 
-        let bb = Arc::new(Mutex::new(BlackBoard::default()));
+        let _bb = Arc::new(Mutex::new(BlackBoard::default()));
         let r = action.tick(RtArgs(vec![]), TreeRemoteContextRef::new(1, port, Arc::new(Mutex::new(env))));
 
         assert_eq!(r, Ok(TickResult::success()));

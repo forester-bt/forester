@@ -1,14 +1,14 @@
-use std::collections::{HashMap, HashSet};
+
 use std::fs::File;
-use std::io::{Cursor, LineWriter, Write};
-use std::path::{Path, PathBuf};
+use std::io::{LineWriter};
+use std::path::{PathBuf};
 use quick_xml::events::{BytesEnd, BytesStart, Event};
 use quick_xml::Writer;
 use crate::converter::{Converter};
 use crate::runtime::rtree::RuntimeTree;
 use crate::runtime::{RtOk, RtResult, RuntimeError};
 use crate::runtime::args::{RtArgument, RtValue};
-use crate::runtime::builder::ros_nav::{find_ros_action, RosAction};
+use crate::runtime::builder::ros_nav::{find_ros_action};
 use crate::runtime::rtree::rnode::{DecoratorType, FlowType, RNode, RNodeId};
 
 enum State {
@@ -57,7 +57,7 @@ impl<'a> ToRosNavConverter<'a> {
         Self { tree, xml }
     }
     /// Write the terminal node into the specific format. The terminal node is the node that has no children by contract (actions)
-    fn write_terminal(&self, w: &mut  Writer<LineWriter<File>>, id: RNodeId, node: &RNode) -> RtOk {
+    fn write_terminal(&self, w: &mut  Writer<LineWriter<File>>, _id: RNodeId, node: &RNode) -> RtOk {
         let action = node.name()
             .and_then(|n| n.name().ok())
             .and_then(|name| find_ros_action(name))
@@ -71,7 +71,7 @@ impl<'a> ToRosNavConverter<'a> {
     }
     // Write the opening for an interior node into the specific format.
     /// The interior node is the node that has children by contract (flows)
-    fn write_interior_start(&self, w: &mut  Writer<LineWriter<File>>, id: RNodeId, node: &RNode) -> RtOk {
+    fn write_interior_start(&self, w: &mut  Writer<LineWriter<File>>, _id: RNodeId, node: &RNode) -> RtOk {
         match node {
             RNode::Flow(FlowType::Root, n, _, _) => {
                 let mut root = BytesStart::new("root");
@@ -130,7 +130,7 @@ impl<'a> ToRosNavConverter<'a> {
         Ok(())
     }
     /// Write the closing for an interior node into the specific format.
-    fn write_interior_end(&self, w: &mut  Writer<LineWriter<File>>, id: RNodeId, node: &RNode) -> RtOk {
+    fn write_interior_end(&self, w: &mut  Writer<LineWriter<File>>, _id: RNodeId, node: &RNode) -> RtOk {
         match node {
             RNode::Flow(FlowType::Root, _, _, _) => {
                 w.write_event(Event::End(BytesEnd::new("BehaviorTree")))?;

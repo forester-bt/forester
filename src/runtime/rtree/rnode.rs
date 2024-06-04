@@ -1,5 +1,5 @@
 use crate::runtime::args::RtArgs;
-use crate::runtime::{RtResult, RuntimeError, TickResult};
+use crate::runtime::{RtResult, RuntimeError};
 use crate::tree::parser::ast::TreeType;
 
 use crate::tree::{cerr, TreeError};

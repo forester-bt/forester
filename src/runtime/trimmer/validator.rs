@@ -1,4 +1,4 @@
-use crate::runtime::trimmer::{RequestBody, TreeSnapshot, TrimRequest};
+use crate::runtime::trimmer::{RequestBody, TreeSnapshot};
 
 /// Validation function. Takes all validators and go through them.
 /// The validators are typically works on the following tasks:

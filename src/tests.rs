@@ -14,7 +14,7 @@ mod import;
 mod params;
 mod daemons;
 
-use crate::runtime::builder::file_builder::FileForesterBuilder;
+
 use crate::runtime::builder::ForesterBuilder;
 use log::LevelFilter;
 use std::path::PathBuf;
@@ -36,7 +36,7 @@ pub fn test_folder(path_in: &str) -> PathBuf {
 }
 
 pub fn fb(folder: &str) -> ForesterBuilder {
-    let mut root = test_folder(folder);
+    let root = test_folder(folder);
 
     let mut fb = ForesterBuilder::from_fs();
     fb.main_file("main.tree".to_string());
