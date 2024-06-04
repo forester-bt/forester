@@ -1,5 +1,5 @@
 use crate::tree::parser::ast::arg::{MesType, Param, Params};
-use crate::tree::parser::ast::*;
+
 use crate::tree::parser::Parser;
 use parsit::test::parser_test::expect;
 

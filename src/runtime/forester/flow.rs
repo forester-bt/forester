@@ -248,7 +248,7 @@ pub fn monitor(
             )))
         }
         FlowType::Parallel => {
-            let mut cursor = read_cursor(tick_args.clone())?;
+            let cursor = read_cursor(tick_args.clone())?;
             let new_args = replace_child_state(
                 tick_args.with(P_CURSOR, RtValue::int(cursor)),
                 cursor as usize,
@@ -277,7 +277,7 @@ pub enum FlowDecision {
 }
 
 fn replace_child_state(args: RtArgs, idx: usize, v: i64) -> RtArgs {
-    let mut args = args;
+    let args = args;
     let mut elems = read_children_state(args.clone());
     debug!(target:"params in child", "prev : [{args}], idx:{idx}, new state: {v}");
     elems[idx] = v;

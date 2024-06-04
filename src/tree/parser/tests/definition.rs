@@ -3,9 +3,9 @@ use crate::tree::parser::ast::call::{Call, Calls};
 use crate::tree::parser::ast::message::{Message, Number};
 use crate::tree::parser::ast::*;
 use crate::tree::parser::Parser;
-use parsit::error::ParseError;
+
 use parsit::test::parser_test::*;
-use std::collections::HashMap;
+
 
 #[test]
 fn definition() {

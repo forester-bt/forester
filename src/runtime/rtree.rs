@@ -138,7 +138,7 @@ impl RuntimeTree {
                 Call::HoInvocation(key) => {
                     debug!(target:"tree[construct]", "found ho invocation with id {id} in parent {parent_id}");
                     let (p_id, parent_args, parent_params) =
-                        builder.get_chain_skip_lambda(&parent_id)?.get_tree();
+                    builder.get_chain_skip_lambda(&parent_id)?.get_tree();
                     let call = builder.find_ho_call(&parent_id, &key)?;
                     if call.is_lambda() || call.is_decorator() {
                         builder.push_front(id, call, p_id, file_name.clone());
@@ -284,7 +284,7 @@ mod tests {
     use crate::runtime::rtree::rnode::RNodeName::{Lambda, Name};
     use crate::runtime::rtree::RuntimeTree;
     use crate::tree::project::Project;
-    use std::collections::{HashMap, HashSet};
+    use std::collections::{HashSet};
     use itertools::Itertools;
     use crate::tests::turn_on_logs;
 

@@ -20,7 +20,7 @@ use crate::runtime::{trimmer, RtOk, RtResult, RuntimeError};
 use crate::tracer::{Event, Tracer};
 use log::debug;
 use std::sync::{Arc, Mutex};
-use tokio::sync::oneshot::Sender;
+
 use tokio::task::JoinHandle;
 
 /// The entry point to process execution.

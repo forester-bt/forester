@@ -2,9 +2,9 @@ mod routes;
 
 use crate::runtime::blackboard::BlackBoard;
 use crate::runtime::builder::ServerPort;
-use crate::tracer::{Event, Tracer};
+use crate::tracer::{Tracer};
 use axum::routing::{get, post};
-use axum::{Json, Router};
+use axum::{Router};
 
 use crate::runtime::forester::serv::routes::*;
 use crate::runtime::{RtOk, RtResult, RuntimeError};
@@ -17,7 +17,7 @@ use hyper::{Body, Client};
 use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
-use tokio::runtime::Runtime;
+
 use tokio::sync::oneshot::Sender;
 use tokio::task::JoinHandle;
 use crate::runtime::env::RtEnv;
@@ -46,7 +46,7 @@ pub struct ServInfo {
 }
 
 impl ServInfo {
-    pub fn stop(mut self) -> Result<(), ()> {
+    pub fn stop(self) -> Result<(), ()> {
         self.stop_cmd.send(())
     }
 }
