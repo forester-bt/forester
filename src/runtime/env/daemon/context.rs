@@ -23,7 +23,7 @@ impl From<TreeContext> for DaemonContext {
         }
     }
 }impl From<TreeContextRef> for DaemonContext {
-    fn from(mut value: TreeContextRef) -> Self {
+    fn from(value: TreeContextRef) -> Self {
         DaemonContext {
             bb: value.bb(),
             tracer: value.tracer(),

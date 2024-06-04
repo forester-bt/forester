@@ -61,7 +61,7 @@ mod tests {
     use crate::runtime::trimmer::TrimmingQueue;
     use crate::runtime::TickResult;
     use crate::tracer::Tracer;
-    use itertools::Itertools;
+    
     use std::sync::{Arc, Mutex};
     use wiremock::matchers::{method, path};
     use wiremock::{Mock, MockServer, ResponseTemplate};
@@ -73,7 +73,7 @@ mod tests {
         let port = env.runtime.block_on(async {
             let mock_server = MockServer::start().await;
 
-            let mut resp = ResponseTemplate::new(200);
+            let resp = ResponseTemplate::new(200);
             let resp = resp.set_body_string("OK");
 
             Mock::given(method("GET"))
@@ -84,7 +84,7 @@ mod tests {
             mock_server.address().port()
         });
 
-        let mut action = HttpGet;
+        let action = HttpGet;
 
         let bb = Arc::new(Mutex::new(BlackBoard::default()));
         let r = action.tick(

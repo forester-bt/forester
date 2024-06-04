@@ -239,18 +239,18 @@ mod tests {
     use crate::runtime::action::Impl;
     use crate::runtime::args::{RtArgs, RtArgument, RtValue};
     use crate::runtime::blackboard::{BBValue, BlackBoard};
-    use crate::runtime::context::{TreeContext, TreeContextRef};
+    use crate::runtime::context::{TreeContextRef};
     use crate::runtime::trimmer::TrimmingQueue;
     use crate::runtime::{RuntimeError, TickResult};
     use crate::tracer::Tracer;
-    use log::Level::Trace;
-    use std::collections::HashMap;
+    
+    
     use std::sync::{Arc, Mutex};
     use crate::runtime::env::RtEnv;
 
     #[test]
     fn lock_unlock() {
-        let mut lock_action = LockUnlockBBKey::Lock;
+        let lock_action = LockUnlockBBKey::Lock;
 
         let r = lock_action.tick(
             RtArgs(vec![RtArgument::new(
@@ -298,7 +298,7 @@ mod tests {
 
     #[test]
     fn store_tick() {
-        let mut store_tick = super::StoreTick;
+        let store_tick = super::StoreTick;
 
         let bb = Arc::new(Mutex::new(BlackBoard::default()));
 

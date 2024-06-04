@@ -1,7 +1,7 @@
 use crate::tree::parser::ast::arg::Arguments;
 use crate::tree::parser::ast::{Key, TreeType};
 use serde::{Deserialize, Serialize};
-use std::fmt::{Debug, Display, Formatter};
+use std::fmt::{Debug, Formatter};
 
 /// A call to a tree
 #[derive(Clone, PartialEq, Deserialize, Serialize)]

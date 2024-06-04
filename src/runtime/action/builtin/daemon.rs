@@ -1,8 +1,8 @@
-use crate::runtime::action::{Impl, recover, Tick};
+use crate::runtime::action::{Impl, Tick};
 use crate::runtime::args::RtArgs;
 use crate::runtime::context::TreeContextRef;
 use crate::runtime::{RuntimeError, TickResult};
-use crate::runtime::RuntimeError::RecoveryToFailure;
+
 use crate::tracer::Event;
 
 

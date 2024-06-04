@@ -179,10 +179,10 @@ mod tests {
     use crate::runtime::args::*;
     use crate::runtime::rtree::builder::*;
     use crate::runtime::rtree::rnode::RNodeName;
-    use crate::tree::project::Project;
-    use crate::visualizer::Visualizer;
-    use crate::{action, arg, args, decorator, flow, node_name, rt_num, rt_str};
-    use std::path::PathBuf;
+    
+    
+    use crate::{action, arg, args, decorator, flow, node_name, rt_num};
+    
 
     #[test]
     fn smoke() {
@@ -202,11 +202,11 @@ mod tests {
             .iter()
             .map(|(id, node)| {
                 let node = match node {
-                    RNode::Leaf(n, args) => "action".to_string(),
-                    RNode::Flow(t, n, args, children) => {
+                    RNode::Leaf(_n, _args) => "action".to_string(),
+                    RNode::Flow(t, _n, _args, _children) => {
                         format!("{t}")
                     }
-                    RNode::Decorator(t, args, child) => {
+                    RNode::Decorator(t, _args, _child) => {
                         format!("{t}")
                     }
                 };

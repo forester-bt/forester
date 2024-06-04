@@ -1,14 +1,14 @@
-use crate::runtime::action::builtin::data::{GenerateData, StoreTick};
-use crate::runtime::action::{Action, Impl, Tick};
+use crate::runtime::action::builtin::data::{GenerateData};
+use crate::runtime::action::{Impl, Tick};
 use crate::runtime::args::{RtArgs, RtValue};
-use crate::runtime::context::{TreeContext, TreeContextRef};
+use crate::runtime::context::{TreeContextRef};
 use crate::runtime::TickResult;
 use crate::tests::{fb, test_folder};
 use crate::tracer;
-use crate::tracer::{Event, Tracer, TracerConfig};
-use std::alloc::System;
+use crate::tracer::{Tracer, TracerConfig};
+
 use std::fs;
-use std::time::SystemTime;
+
 
 #[test]
 fn smoke() {
@@ -191,7 +191,7 @@ fn custom_state() {
     struct CT;
 
     impl Impl for CT {
-        fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
+        fn tick(&self, _args: RtArgs, ctx: TreeContextRef) -> Tick {
             let i = ctx
                 .bb()
                 .lock()
@@ -249,7 +249,7 @@ fn file() {
     struct CT;
 
     impl Impl for CT {
-        fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
+        fn tick(&self, _args: RtArgs, ctx: TreeContextRef) -> Tick {
             let i = ctx
                 .bb()
                 .lock()

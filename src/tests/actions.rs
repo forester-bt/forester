@@ -4,7 +4,7 @@ use crate::tests::fb;
 
 #[test]
 fn builtin_actions() {
-    let mut fb = fb("actions/builtin");
+    let fb = fb("actions/builtin");
 
     let mut f = fb.build().unwrap();
     let result = f.run();
@@ -13,7 +13,7 @@ fn builtin_actions() {
 
 #[test]
 fn lock_unlock() {
-    let mut fb = fb("actions/lock_unlock");
+    let fb = fb("actions/lock_unlock");
 
     let mut f = fb.build().unwrap();
     let result = f.run();
@@ -25,20 +25,20 @@ fn lock_unlock() {
 
 #[test]
 fn builtin_http_get() {
-    let mut fb = fb("actions/simple_http");
+    let fb = fb("actions/simple_http");
     let mut f = fb.build().unwrap();
     assert_eq!(f.run(), Ok(TickResult::success()));
 }
 #[test]
 fn builtin_test() {
-    let mut fb = fb("actions/builtin_test");
+    let fb = fb("actions/builtin_test");
     let mut f = fb.build().unwrap();
     assert_eq!(f.run(), Ok(TickResult::success()));
 }
 
 #[test]
 fn mix_test() {
-    let mut fb = fb("actions/mix_test");
+    let fb = fb("actions/mix_test");
     let mut f = fb.build().unwrap();
     assert_eq!(f.run(), Ok(TickResult::success()));
 }

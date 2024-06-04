@@ -1,17 +1,17 @@
-use std::net::Incoming;
+
 use crate::runtime::action::builtin::data::GenerateData;
-use crate::runtime::action::builtin::ReturnResult;
-use crate::runtime::action::{Action, Impl, Tick};
+
+use crate::runtime::action::{Impl, Tick};
 use crate::runtime::args::{RtArgs, RtValue};
-use crate::runtime::context::{TreeContext, TreeContextRef};
+use crate::runtime::context::{TreeContextRef};
 use crate::runtime::TickResult;
 use crate::tests::{fb, test_folder, turn_on_logs};
-use crate::visualizer::Visualizer;
+
 
 struct StoreTick;
 
 impl Impl for StoreTick {
-    fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
+    fn tick(&self, _args: RtArgs, ctx: TreeContextRef) -> Tick {
         let ts = ctx.current_tick();
         ctx.bb()
             .lock()
@@ -73,7 +73,7 @@ fn simple_sequence() {
             .unwrap();
     assert_eq!(x, 1);
 
-    let buf = test_folder("flow/sequence/bb_dump.json");
+    let _buf = test_folder("flow/sequence/bb_dump.json");
 }
 
 #[test]

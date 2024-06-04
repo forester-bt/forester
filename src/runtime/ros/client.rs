@@ -49,7 +49,7 @@ impl SubscribeCfg {
                             .ok_or(RuntimeError::fail("the compression is not string".to_string()))?);
                     }
                     _ => {
-                        return Err(RuntimeError::fail((format!("the key {} is not supported", k))));
+                        return Err(RuntimeError::fail(format!("the key {} is not supported", k)));
                     }
                 }
             }
@@ -119,8 +119,8 @@ impl Serialize for RosCommand {
                 cmd.serialize_field("topic", t)?;
                 cmd.end()
             }
-            RosCommand::Subscribe(t, cfg) => {
-                let mut cfg_count = cfg.count();
+            RosCommand::Subscribe(_t, cfg) => {
+                let cfg_count = cfg.count();
                 let mut cmd = serializer.serialize_struct("Command", cfg_count + 1)?;
                 cmd.serialize_field("op", "subscribe")?;
 

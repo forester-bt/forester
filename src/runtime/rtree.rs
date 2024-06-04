@@ -134,7 +134,7 @@ impl RuntimeTree {
                 // - since we found it we transform it into a simple invocation call and process it at the next step.
                 // - if it is lambda we already found it
                 Call::HoInvocation(key) => {
-                    let (p_id, parent_args, parent_params) =
+                    let (p_id, _parent_args, _parent_params) =
                         builder.get_chain_skip_lambda(&parent_id)?.get_tree();
                     let call = builder.find_ho_call(&parent_id, &key)?;
                     if call.is_lambda() || call.is_decorator() {
@@ -278,7 +278,7 @@ mod tests {
     use crate::runtime::rtree::rnode::RNodeName::{Lambda, Name};
     use crate::runtime::rtree::RuntimeTree;
     use crate::tree::project::Project;
-    use std::collections::{HashMap, HashSet};
+    use std::collections::{HashSet};
     use itertools::Itertools;
 
 
