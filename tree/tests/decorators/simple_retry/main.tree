@@ -1,0 +1,3 @@
+impl incr(key:string,default:num);
+
+root main retry(5) inverter incr("tick",0)

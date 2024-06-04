@@ -1,4 +1,4 @@
-use crate::runtime::args::{RtArgs, RtArgument, RtValue, RtValueNumber};
+use crate::runtime::args::{RtArgs, RtValue, RtValueNumber};
 use crate::runtime::context::{RNodeState, TreeContext};
 use crate::runtime::forester::flow::{run_with, LEN, REASON};
 use crate::runtime::rtree::rnode::DecoratorType;
@@ -32,7 +32,10 @@ pub(crate) fn prepare(
             );
             Ok(RNodeState::Running(run_with(args, 0, 1)))
         }
-
+        DecoratorType::Repeat | DecoratorType::Retry => {
+            let args = tick_args.with(ATTEMPT, RtValue::Number(RtValueNumber::Int(1)));
+            Ok(RNodeState::Running(run_with(args, 0, 1)))
+        }
         _ => Ok(RNodeState::Running(tick_args.with(LEN, RtValue::int(1)))),
     }
 }
@@ -53,8 +56,7 @@ pub(crate) fn monitor(
             let err = "the decorator timeout does not have a start time".to_string();
             let args = tick_args.clone();
             let start_timestamp = args
-                .find(TIMESTAMP.to_string())
-                .and_then(|v| RtValue::as_int(v))
+                .find_as(TIMESTAMP.to_string(), RtValue::as_int)
                 .ok_or(RuntimeError::fail(err))?;
 
             let current_timestamp = get_system_timestamp();
@@ -102,17 +104,20 @@ pub(crate) fn finalize(
         )),
         DecoratorType::Repeat => match child_res {
             TickResult::Success => {
-                let count = init_args
-                    .first()
-                    .and_then(|v| v.cast(ctx.into()).int().ok())
-                    .flatten()
-                    .unwrap_or(1);
+                let max_attempts = init_args.first_as(RtValue::as_int).unwrap_or(0);
 
-                let attempt = tick_args.first_as(RtValue::as_int).unwrap_or(1);
-                if count > 0 && attempt >= count {
+                let err = "the decorator repeat does not have an attempt count".to_string();
+                let args = tick_args.clone();
+                let attempt = args
+                    .find_as(ATTEMPT.to_string(), RtValue::as_int)
+                    .ok_or(RuntimeError::fail(err))?;
+
+                if max_attempts > 0 && attempt >= max_attempts {
                     Ok(RNodeState::Success(run_with(tick_args, 0, 1)))
                 } else {
-                    let args = RtArgs(vec![RtArgument::new_noname(RtValue::int(attempt + 1))]);
+                    let args = tick_args
+                        .clone()
+                        .with(ATTEMPT, RtValue::Number(RtValueNumber::Int(attempt + 1)));
                     Ok(RNodeState::Running(run_with(args, 0, 1)))
                 }
             }
@@ -129,19 +134,21 @@ pub(crate) fn finalize(
         DecoratorType::Delay => Ok(RNodeState::from(run_with(tick_args, 0, 1), child_res)),
         DecoratorType::Retry => match child_res {
             TickResult::Failure(v) => {
-                let count = init_args
-                    .first()
-                    .and_then(|v| v.cast(ctx.into()).int().ok())
-                    .flatten()
-                    .unwrap_or(0);
+                let max_attempts = init_args.first_as(RtValue::as_int).unwrap_or(0);
 
-                let attempts = tick_args.first_as(RtValue::as_int).unwrap_or(0);
+                let err = "the decorator retry does not have an attempt count".to_string();
+                let args = tick_args.clone();
+                let attempt = args
+                    .find_as(ATTEMPT.to_string(), RtValue::as_int)
+                    .ok_or(RuntimeError::fail(err))?;
 
-                if count > 0 && attempts >= count {
-                    let args = run_with(tick_args, 0, 1).with(REASON, RtValue::str(v));
-                    Ok(RNodeState::Failure(args))
+                if max_attempts > 0 && attempt >= max_attempts {
+                    let args = tick_args.clone().with(REASON, RtValue::str(v));
+                    Ok(RNodeState::Failure(run_with(args, 0, 1)))
                 } else {
-                    let args = RtArgs(vec![RtArgument::new_noname(RtValue::int(attempts + 1))]);
+                    let args = tick_args
+                        .clone()
+                        .with(ATTEMPT, RtValue::Number(RtValueNumber::Int(attempt + 1)));
                     Ok(RNodeState::Running(run_with(args, 0, 1)))
                 }
             }

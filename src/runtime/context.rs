@@ -1,7 +1,7 @@
 use crate::runtime::action::Tick;
 use crate::runtime::args::{RtArgs, RtValue};
 use crate::runtime::blackboard::{BBRef, BlackBoard};
-use crate::runtime::env::{RtEnv, RtEnvRef};
+use crate::runtime::env::RtEnvRef;
 use crate::runtime::forester::flow::REASON;
 use crate::runtime::rtree::rnode::RNodeId;
 use crate::runtime::trimmer::{TrimmingQueue, TrimmingQueueRef};
@@ -43,7 +43,7 @@ pub struct TreeContextRef {
     bb: BBRef,
     tracer: TracerRef,
     curr_ts: Timestamp,
-    trimmer: TrimmingQueueRef,
+    _trimmer: TrimmingQueueRef,
     env: RtEnvRef,
 }
 
@@ -90,14 +90,14 @@ impl TreeContextRef {
         bb: Arc<Mutex<BlackBoard>>,
         tracer: Arc<Mutex<Tracer>>,
         curr_ts: Timestamp,
-        trimmer: Arc<Mutex<TrimmingQueue>>,
+        _trimmer: Arc<Mutex<TrimmingQueue>>,
         env: RtEnvRef,
     ) -> Self {
         Self {
             bb,
             tracer,
             curr_ts,
-            trimmer,
+            _trimmer,
             env,
         }
     }
