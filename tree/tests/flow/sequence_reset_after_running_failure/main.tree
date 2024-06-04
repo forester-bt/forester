@@ -1,0 +1,18 @@
+impl incr(key:string,default:num);
+
+// We're testing that sequence will restart from Tick 1 after the last incr returns failure.
+// This covers a previous bug where sequence would forever repeat from the last child to return RUNNING.
+// "after_running_failure" in the test name means after something returns running, then later returns failure.
+root main {
+    retry(2) sequence {
+        // Tick 1
+        incr("tick",0)
+        // Tick 2
+        incr("tick",0)
+        // Tick 3
+        // Repeat is used to force incr to return RUNNING the first time.
+        repeat(2) incr("tick",0)
+        // Tick 4
+        inverter incr("tick",0)
+    }
+}

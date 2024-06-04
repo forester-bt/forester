@@ -1,4 +1,3 @@
-use std::net::Incoming;
 use crate::runtime::action::builtin::data::GenerateData;
 use crate::runtime::action::builtin::ReturnResult;
 use crate::runtime::action::{Action, Impl, Tick};
@@ -7,6 +6,7 @@ use crate::runtime::context::{TreeContext, TreeContextRef};
 use crate::runtime::TickResult;
 use crate::tests::{fb, test_folder, turn_on_logs};
 use crate::visualizer::Visualizer;
+use std::net::Incoming;
 
 struct StoreTick;
 
@@ -77,7 +77,7 @@ fn simple_sequence() {
 }
 
 #[test]
-fn seq_restart_all_children() {
+fn sequence_restart_all_children() {
     let mut fb = fb("flow/sequence_restart_children");
 
     fb.register_sync_action(
@@ -203,6 +203,63 @@ fn sequence_running() {
 }
 
 #[test]
+fn sequence_reset_after_running_success() {
+    // See comment in the tree file for what this is testing.
+    let mut fb = fb("flow/sequence_reset_after_running_success");
+
+    fb.register_sync_action(
+        "incr",
+        GenerateData::new(|v| RtValue::int(v.as_int().unwrap_or(0) + 1)),
+    );
+
+    let mut f = fb.build().unwrap();
+    assert_eq!(f.run(), Ok(TickResult::success()));
+
+    let x =
+        f.bb.lock()
+            .unwrap()
+            .get("tick".to_string())
+            .ok()
+            .flatten()
+            .unwrap()
+            .clone()
+            .as_int()
+            .unwrap();
+    assert_eq!(x, 8)
+}
+
+#[test]
+fn sequence_reset_after_running_failure() {
+    // See comment in the tree file for what this is testing.
+    let mut fb = fb("flow/sequence_reset_after_running_failure");
+
+    fb.register_sync_action(
+        "incr",
+        GenerateData::new(|v| RtValue::int(v.as_int().unwrap_or(0) + 1)),
+    );
+
+    let mut f = fb.build().unwrap();
+    assert_eq!(
+        f.run(),
+        Ok(TickResult::failure(
+            "decorator inverts the result.".to_string()
+        ))
+    );
+
+    let x =
+        f.bb.lock()
+            .unwrap()
+            .get("tick".to_string())
+            .ok()
+            .flatten()
+            .unwrap()
+            .clone()
+            .as_int()
+            .unwrap();
+    assert_eq!(x, 10)
+}
+
+#[test]
 fn fallback() {
     let mut fb = fb("flow/fallback");
 
@@ -237,6 +294,63 @@ fn fallback_retry() {
 }
 
 #[test]
+fn fallback_reset_after_running_failure() {
+    // See comment in the tree file for what this is testing.
+    let mut fb = fb("flow/fallback_reset_after_running_failure");
+
+    fb.register_sync_action(
+        "incr",
+        GenerateData::new(|v| RtValue::int(v.as_int().unwrap_or(0) + 1)),
+    );
+
+    let mut f = fb.build().unwrap();
+    assert_eq!(
+        f.run(),
+        Ok(TickResult::failure(
+            "decorator inverts the result.".to_string()
+        ))
+    );
+
+    let x =
+        f.bb.lock()
+            .unwrap()
+            .get("tick".to_string())
+            .ok()
+            .flatten()
+            .unwrap()
+            .clone()
+            .as_int()
+            .unwrap();
+    assert_eq!(x, 8)
+}
+
+#[test]
+fn fallback_reset_after_running_success() {
+    // See comment in the tree file for what this is testing.
+    let mut fb = fb("flow/fallback_reset_after_running_success");
+
+    fb.register_sync_action(
+        "incr",
+        GenerateData::new(|v| RtValue::int(v.as_int().unwrap_or(0) + 1)),
+    );
+
+    let mut f = fb.build().unwrap();
+    assert_eq!(f.run(), Ok(TickResult::Success));
+
+    let x =
+        f.bb.lock()
+            .unwrap()
+            .get("tick".to_string())
+            .ok()
+            .flatten()
+            .unwrap()
+            .clone()
+            .as_int()
+            .unwrap();
+    assert_eq!(x, 10)
+}
+
+#[test]
 fn parallel_simple() {
     turn_on_logs();
 
@@ -260,9 +374,21 @@ fn parallel_simple() {
     let bb = f.bb.lock().unwrap();
     assert_eq!(result, Ok(TickResult::success()));
 
-    let t1 = bb.get("tick1".to_string()).ok().flatten().unwrap().clone().as_int();
+    let t1 = bb
+        .get("tick1".to_string())
+        .ok()
+        .flatten()
+        .unwrap()
+        .clone()
+        .as_int();
     assert_eq!(t1, Some(3));
-    let t2 = bb.get("tick2".to_string()).ok().flatten().unwrap().clone().as_int();
+    let t2 = bb
+        .get("tick2".to_string())
+        .ok()
+        .flatten()
+        .unwrap()
+        .clone()
+        .as_int();
     assert_eq!(t2, Some(1));
 }
 #[test]
@@ -283,9 +409,10 @@ fn parallel_simple_w_retry() {
     let mut fb = fb("flow/parallel/simple_w_retry");
 
     fb.register_sync_action("fail_before_tick", Condition);
-    fb.register_sync_action("incr", GenerateData::new(|v|{
-        RtValue::int(v.as_int().unwrap_or(0) + 1)
-    }));
+    fb.register_sync_action(
+        "incr",
+        GenerateData::new(|v| RtValue::int(v.as_int().unwrap_or(0) + 1)),
+    );
 
     let mut f = fb.build().unwrap();
     let result = f.run_until(Some(20));
@@ -293,8 +420,20 @@ fn parallel_simple_w_retry() {
     let bb = f.bb.lock().unwrap();
     assert_eq!(result, Ok(TickResult::success()));
 
-    let t1 = bb.get("t1".to_string()).ok().flatten().unwrap().clone().as_int();
+    let t1 = bb
+        .get("t1".to_string())
+        .ok()
+        .flatten()
+        .unwrap()
+        .clone()
+        .as_int();
     assert_eq!(t1, Some(3));
-    let t2 = bb.get("t2".to_string()).ok().flatten().unwrap().clone().as_int();
+    let t2 = bb
+        .get("t2".to_string())
+        .ok()
+        .flatten()
+        .unwrap()
+        .clone()
+        .as_int();
     assert_eq!(t2, Some(3));
 }

@@ -1,0 +1,17 @@
+impl incr(key:string,default:num);
+
+// We're testing that fallback will restart from Tick 1 after the last incr returns success.
+// This covers a previous bug where fallback would forever repeat from the last child to return RUNNING.
+root main {
+    repeat(2) fallback {
+        // Tick 1
+        inverter incr("tick",0)
+        // Tick 2
+        inverter incr("tick",0)
+        // Tick 3
+        // Retry is used to force incr to return RUNNING the first time.
+        retry(2) inverter incr("tick",0)
+        // Tick 4
+        incr("tick",0)
+    }
+}

@@ -3,7 +3,6 @@ use crate::runtime::context::{RNodeState, TreeContext};
 use crate::runtime::rtree::rnode::FlowType;
 use crate::runtime::{RtResult, RuntimeError, TickResult};
 use std::cmp::max;
-use itertools::Itertools;
 use FlowDecision::{PopNode, Stay};
 
 // current child
@@ -41,14 +40,13 @@ pub fn run_with_par(tick_args: RtArgs, len: i64) -> RtArgs {
         run_with(
             tick_args.with(
                 CHILDREN,
-                RtValue::Array(vec![RtValue::int(0); len as usize])),
-            0, len)
-    } else {
-        run_with(
-            tick_args.clone(),
-            read_cursor(tick_args).unwrap_or(0),
+                RtValue::Array(vec![RtValue::int(0); len as usize]),
+            ),
+            0,
             len,
         )
+    } else {
+        run_with(tick_args.clone(), read_cursor(tick_args).unwrap_or(0), len)
     }
 }
 
@@ -117,22 +115,33 @@ pub fn finalize(
     _ctx: &mut TreeContext,
 ) -> RtResult<FlowDecision> {
     match tpe {
-        FlowType::Root => Ok(Stay(RNodeState::from(run_with(tick_args, 0, 1), res.into()))),
+        FlowType::Root => Ok(Stay(RNodeState::from(
+            run_with(tick_args, 0, 1),
+            res.into(),
+        ))),
         FlowType::Sequence | FlowType::RSequence => {
             let cursor = read_cursor(tick_args.clone())?;
             let len = read_len_or_zero(tick_args.clone());
 
             match res {
                 TickResultFin::Failure(v) => {
-                    let args = run_with(tick_args, cursor, len).with(REASON, RtValue::str(v));
-
-                    Ok(Stay(RNodeState::Failure(args)))
+                    // Reset P_CURSOR so that the next tick will start from the beginning
+                    let args = tick_args
+                        .with(REASON, RtValue::str(v))
+                        .with(P_CURSOR, RtValue::int(0));
+                    Ok(Stay(RNodeState::Failure(run_with(args, cursor, len))))
                 }
                 TickResultFin::Success => {
                     if cursor == len - 1 {
-                        Ok(Stay(RNodeState::Success(run_with(tick_args, cursor, len))))
+                        // Reset P_CURSOR so that the next tick will start from the beginning
+                        let args = tick_args.with(P_CURSOR, RtValue::int(0));
+                        Ok(Stay(RNodeState::Success(run_with(args, cursor, len))))
                     } else {
-                        Ok(Stay(RNodeState::Running(run_with(tick_args, cursor + 1, len))))
+                        Ok(Stay(RNodeState::Running(run_with(
+                            tick_args,
+                            cursor + 1,
+                            len,
+                        ))))
                     }
                 }
             }
@@ -151,9 +160,15 @@ pub fn finalize(
                 }
                 TickResultFin::Success => {
                     if cursor == len - 1 {
-                        Ok(Stay(RNodeState::Success(run_with(tick_args, cursor, len))))
+                        // Reset P_CURSOR so that the next tick will start from the beginning
+                        let args = tick_args.with(P_CURSOR, RtValue::int(0));
+                        Ok(Stay(RNodeState::Success(run_with(args, cursor, len))))
                     } else {
-                        Ok(Stay(RNodeState::Running(run_with(tick_args, cursor + 1, len))))
+                        Ok(Stay(RNodeState::Running(run_with(
+                            tick_args,
+                            cursor + 1,
+                            len,
+                        ))))
                     }
                 }
             }
@@ -166,13 +181,24 @@ pub fn finalize(
             match res {
                 TickResultFin::Failure(v) => {
                     if cursor == len - 1 {
-                        Ok(Stay(RNodeState::Failure(run_with(tick_args, cursor, len)
-                            .with(REASON, RtValue::str(v)))))
+                        // Reset P_CURSOR so that the next tick will start from the beginning
+                        let args = tick_args
+                            .with(P_CURSOR, RtValue::int(0))
+                            .with(REASON, RtValue::str(v));
+                        Ok(Stay(RNodeState::Failure(run_with(args, cursor, len))))
                     } else {
-                        Ok(Stay(RNodeState::Running(run_with(tick_args, cursor + 1, len))))
+                        Ok(Stay(RNodeState::Running(run_with(
+                            tick_args,
+                            cursor + 1,
+                            len,
+                        ))))
                     }
                 }
-                TickResultFin::Success => Ok(Stay(RNodeState::Success(run_with(tick_args, cursor, len)))),
+                TickResultFin::Success => {
+                    // Reset P_CURSOR so that the next tick will start from the beginning
+                    let args = tick_args.with(P_CURSOR, RtValue::int(0));
+                    Ok(Stay(RNodeState::Success(run_with(args, cursor, len))))
+                }
             }
         }
         FlowType::Parallel => {
@@ -180,7 +206,7 @@ pub fn finalize(
             let len = read_len_or_zero(tick_args.clone());
             let st = match res {
                 TickResultFin::Failure(_) => 2,
-                TickResultFin::Success => 3
+                TickResultFin::Success => 3,
             };
             let tick_args = replace_child_state(tick_args, cursor as usize, st);
             let children = read_children_state(tick_args.clone());
@@ -193,11 +219,9 @@ pub fn finalize(
                 if children.contains(&1) || children.contains(&0) {
                     let next_cursor = find_first_idx(&children, cursor).unwrap_or(0);
                     let next_state = RNodeState::Running(
-                        run_with(
-                            tick_args,
-                            next_cursor as i64, len)
+                        run_with(tick_args, next_cursor as i64, len)
                             // reset the prev cursor otherwise it weill be greater then the current cursor and the prev one will be taken
-                            .with(P_CURSOR, RtValue::int(0i64))
+                            .with(P_CURSOR, RtValue::int(0i64)),
                     );
                     // we know there are some nodes needs to be run but they are behind so we can touch them in the next tick only.
                     // And we pop up the node to allow the next tick to run the children
@@ -211,12 +235,12 @@ pub fn finalize(
                     Ok(Stay(RNodeState::Failure(args)))
                 } else {
                     // we stay allowing to remove us on the next iteration of the loop
-                    Ok(Stay(RNodeState::Success(run_with(tick_args, cursor, len).remove(CHILDREN))))
+                    Ok(Stay(RNodeState::Success(
+                        run_with(tick_args, cursor, len).remove(CHILDREN),
+                    )))
                 }
             }
         }
-
-        _ => Err(RuntimeError::UnImplementedAction("flow".to_string())),
     }
 }
 
@@ -248,7 +272,7 @@ pub fn monitor(
             )))
         }
         FlowType::Parallel => {
-            let mut cursor = read_cursor(tick_args.clone())?;
+            let cursor = read_cursor(tick_args.clone())?;
             let new_args = replace_child_state(
                 tick_args.with(P_CURSOR, RtValue::int(cursor)),
                 cursor as usize,
@@ -257,7 +281,8 @@ pub fn monitor(
             let children = read_children_state(new_args.clone());
             if let Some(idx) = find_next_idx(&children, cursor) {
                 Ok(Stay(RNodeState::Running(
-                    new_args.with(CURSOR, RtValue::int(idx as i64)))))
+                    new_args.with(CURSOR, RtValue::int(idx as i64)),
+                )))
             } else {
                 Ok(PopNode(RNodeState::Running(new_args)))
             }
@@ -277,11 +302,14 @@ pub enum FlowDecision {
 }
 
 fn replace_child_state(args: RtArgs, idx: usize, v: i64) -> RtArgs {
-    let mut args = args;
+    let args = args;
     let mut elems = read_children_state(args.clone());
     debug!(target:"params in child", "prev : [{args}], idx:{idx}, new state: {v}");
     elems[idx] = v;
-    args.with(CHILDREN, RtValue::Array(elems.into_iter().map(RtValue::int).collect()))
+    args.with(
+        CHILDREN,
+        RtValue::Array(elems.into_iter().map(RtValue::int).collect()),
+    )
 }
 
 fn read_children_state(args: RtArgs) -> Vec<i64> {

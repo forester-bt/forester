@@ -6,13 +6,13 @@ Otherwise, (when a child returns `failure` a sequence aborted)
 In the language, the tree definitions and lambda invocations of this element are marked with the key word `sequence`.
 
 ```f-tree
-impl store(key:string, value:string); // store a string value to a key in blackboard 
+impl store(key:string, value:string); // store a string value to a key in blackboard
 
 root main {
     sequence {
-        store("a","1") // first tick and proceed if succeded 
-        store("b","2") // sec tick and proceed if succeded 
-        store("c","3") // thrd tick and finish if succeded 
+        store("a","1") // first tick and proceed if succeded
+        store("b","2") // sec tick and proceed if succeded
+        store("c","3") // thrd tick and finish if succeded
     }
 }
 ```
@@ -23,11 +23,11 @@ with a graph representation
 strict digraph  {
     1[label="root
 main ",shape=rect,color=black]
-    1 -> 2 
+    1 -> 2
     2[label="sequence",shape=rect,color=darkred]
-    2 -> 3 
-    2 -> 4 
-    2 -> 5 
+    2 -> 3
+    2 -> 4
+    2 -> 5
     3[label="store (key=a,default=1)",shape=component,color=green]
     4[label="store (key=b,default=2)",shape=component,color=green]
     5[label="store (key=c,default=3)",shape=component,color=green]
@@ -45,12 +45,12 @@ main ",shape=rect,color=black]
 ## Intention
 Often, it is used as a straight chain of instructions
 ```f-tree
-// if the definition has only one child 
+// if the definition has only one child
 // (root has only one child) '{''}' can be omitted
 root main sequence {
-        validate_env() 
-        perform_action() 
-        finish_and_save()  
+        validate_env()
+        perform_action()
+        finish_and_save()
 }
 
 ```
@@ -69,13 +69,16 @@ root main {
     retry(5) m_sequence {
         store("key",1)    // returns success
         perform_action()  // returns failure
-        finish_and_save()  
+        finish_and_save()
     }
 }
 ```
 
 The node `perform_action` returns `failure` and the decorator `retry` restarts `sequence`.
-The main difference with a sequence is an execution starts from the node `perform_action` skipping the  node`store`.   
+The main difference with a sequence is an execution starts from the node `perform_action` skipping the node `store`.
+
+The memory will be reset once the final action has returned `success`.
+That is, if `finish_and_save` returns `success`, the next iteration will start with `store` again.
 
 ## Reactive Sequence
 
@@ -87,10 +90,10 @@ root main {
     m_sequence {
         store("key",1)    // returns success
         perform_action()  // returns running
-        finish_and_save()  
+        finish_and_save()
     }
 }
 ```
 
-The node `perform_action` returns `running` and the whole sequence returns `running` 
-but on the next tick it starts from the node `store` again.      
+The node `perform_action` returns `running` and the whole sequence returns `running`
+but on the next tick it starts from the node `store` again.
