@@ -337,7 +337,7 @@ mod tests {
 
         let res = tracer.to_string();
         assert_eq!(
-            res,
+            res.replace("\r\n", "\n"),
             r#"[1]next tick
 [2]1 : Success()
 "#

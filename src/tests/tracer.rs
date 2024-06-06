@@ -174,9 +174,9 @@ fn smoke() {
 [10]      5 : Running(cursor=0,len=2,prev_cursor=1)
 [10]        7 : Running(cursor=0,len=2)
 [10]          8 : Success(key=&tick,expected=10)
-[10]        7 : Success(cursor=0,len=2)
-[10]      5 : Success(cursor=1,len=2,prev_cursor=1)
-[10]    2 : Success(cursor=2,len=3)
+[10]        7 : Success(cursor=0,len=2,prev_cursor=0)
+[10]      5 : Success(cursor=1,len=2,prev_cursor=0)
+[10]    2 : Success(cursor=2,len=3,prev_cursor=0)
 [10]  1 : Running(cursor=0,len=1)
 [10]  1 : Success(cursor=0,len=1)
 "#
@@ -221,25 +221,24 @@ fn custom_state() {
     assert_eq!(
         trace,
         r#"[1]  1 : Running(cursor=0,len=1)
-[1]    2 : Running(len=1)
+[1]    2 : Running(attempt=1,cursor=0,len=1)
 [1]      custom: i = 0
 [1]      3 : Success()
-[1]    2 : Running(arg=2,cursor=0,len=1)
+[1]    2 : Running(attempt=2,cursor=0,len=1)
 [2]  next tick
-[2]    2 : Running(arg=2,cursor=0,len=1)
+[2]    2 : Running(attempt=2,cursor=0,len=1)
 [2]      custom: i = 1
 [2]      3 : Success()
-[2]    2 : Running(arg=3,cursor=0,len=1)
+[2]    2 : Running(attempt=3,cursor=0,len=1)
 [2]  1 : Running(cursor=0,len=1)
 [3]  next tick
-[3]    2 : Running(arg=3,cursor=0,len=1)
+[3]    2 : Running(attempt=3,cursor=0,len=1)
 [3]      custom: i = 2
 [3]      3 : Success()
-[3]    2 : Success(arg=3,cursor=0,len=1)
+[3]    2 : Success(attempt=3,cursor=0,len=1)
 [3]  1 : Running(cursor=0,len=1)
 [3]  1 : Success(cursor=0,len=1)
-"#
-        .replace("\n", tracer::LINE_ENDING)
+"#.replace("\n", tracer::LINE_ENDING)
     )
 }
 
@@ -292,24 +291,23 @@ fn file() {
     assert_eq!(
         file_trace,
         r#"[1]  1 : Running(cursor=0,len=1)
-[1]    2 : Running(len=1)
+[1]    2 : Running(attempt=1,cursor=0,len=1)
 [1]      custom: i = 0
 [1]      3 : Success()
-[1]    2 : Running(arg=2,cursor=0,len=1)
+[1]    2 : Running(attempt=2,cursor=0,len=1)
 [2]  next tick
-[2]    2 : Running(arg=2,cursor=0,len=1)
+[2]    2 : Running(attempt=2,cursor=0,len=1)
 [2]      custom: i = 1
 [2]      3 : Success()
-[2]    2 : Running(arg=3,cursor=0,len=1)
+[2]    2 : Running(attempt=3,cursor=0,len=1)
 [2]  1 : Running(cursor=0,len=1)
 [3]  next tick
-[3]    2 : Running(arg=3,cursor=0,len=1)
+[3]    2 : Running(attempt=3,cursor=0,len=1)
 [3]      custom: i = 2
 [3]      3 : Success()
-[3]    2 : Success(arg=3,cursor=0,len=1)
+[3]    2 : Success(attempt=3,cursor=0,len=1)
 [3]  1 : Running(cursor=0,len=1)
 [3]  1 : Success(cursor=0,len=1)
-"#
-        .replace("\n", tracer::LINE_ENDING)
+"#       .replace("\n", tracer::LINE_ENDING)
     );
 }
