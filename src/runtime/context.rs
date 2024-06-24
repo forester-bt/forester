@@ -245,6 +245,7 @@ pub enum RNodeState {
     Running(RtArgs),
     Success(RtArgs),
     Failure(RtArgs),
+    Halting(RtArgs),
 }
 
 impl Display for RNodeState {
@@ -261,6 +262,9 @@ impl Display for RNodeState {
             }
             RNodeState::Failure(args) => {
                 f.write_str(format!("Failure({})", args).as_str())?;
+            }
+            RNodeState::Halting(args) => {
+                f.write_str(format!("Halting({})", args).as_str())?;
             }
         }
         Ok(())
@@ -280,7 +284,7 @@ impl RNodeState {
             RNodeState::Ready(_) => Err(RuntimeError::uex(
                 "the ready is the unexpected state for ".to_string(),
             )),
-            RNodeState::Running(_) => Ok(TickResult::running()),
+            RNodeState::Running(_) | RNodeState::Halting(_) => Ok(TickResult::running()),
             RNodeState::Success(_) => Ok(TickResult::success()),
             RNodeState::Failure(args) => {
                 let reason = args
@@ -308,7 +312,8 @@ impl RNodeState {
             RNodeState::Ready(tick_args)
             | RNodeState::Running(tick_args)
             | RNodeState::Failure(tick_args)
-            | RNodeState::Success(tick_args) => tick_args.clone(),
+            | RNodeState::Success(tick_args)
+            | RNodeState::Halting(tick_args) => tick_args.clone(),
         }
     }
 }
