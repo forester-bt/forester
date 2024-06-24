@@ -13,7 +13,7 @@ use tokio::runtime::{Builder, Runtime};
 use tokio::task::JoinError;
 use tokio::task::JoinHandle;
 use tokio_util::sync::CancellationToken;
-use crate::runtime::env::daemon::{DaemonFn, DaemonName, Daemon};
+use crate::runtime::env::daemon::{ DaemonName, Daemon};
 use crate::runtime::env::daemon::context::DaemonContext;
 use crate::runtime::env::daemon::task::{DaemonStopSignal, DaemonTask};
 

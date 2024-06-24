@@ -30,18 +30,18 @@ impl<'a> Converter for ToRosNavConverter<'a> {
         while let Some((id, st)) = stack.pop() {
             let node = self.tree.node(&id)?;
             if node.is_action() {
-                &self.write_terminal(&mut writer, id, node)?;
+                let _ = &self.write_terminal(&mut writer, id, node)?;
             } else {
                 match st {
                     State::Ready => {
-                        &self.write_interior_start(&mut writer, id, node)?;
+                        let _ = &self.write_interior_start(&mut writer, id, node)?;
                         stack.push((id, State::Started));
                         for child in node.children().iter().rev() {
                             stack.push((*child, State::Ready));
                         }
                     }
                     State::Started => {
-                        &self.write_interior_end(&mut writer, id, node)?;
+                        let _ = &self.write_interior_end(&mut writer, id, node)?;
                     }
                 }
             }

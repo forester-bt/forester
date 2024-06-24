@@ -43,7 +43,7 @@ impl<'a> RtTreeAnalyzer<'a> {
     {
         self.tree
             .iter()
-            .find(|(id, node)| filter(node))
+            .find(|(_id, node)| filter(node))
     }
     /// Returns the node by filter
     pub fn find_map_by<F, T>(&self, filter_map: F) -> Option<(RNodeId, T)>

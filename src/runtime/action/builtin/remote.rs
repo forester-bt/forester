@@ -1,4 +1,4 @@
-use crate::runtime::action::{Impl, ImplRemote, Tick};
+use crate::runtime::action::{ ImplRemote, Tick};
 use crate::runtime::args::{RtArgs, RtArgument};
 use crate::runtime::context::{TreeRemoteContextRef};
 use crate::runtime::{to_fail, TickResult};
@@ -62,7 +62,7 @@ impl ImplRemote for RemoteHttpAction {
         let resp = env.runtime.block_on(async {
             let client: Client<HttpConnector, Body> =
                 hyper::Client::builder().build(HttpConnector::new());
-            /// todo with vec is slow. Bytes?
+            // todo with vec is slow. Bytes?
             let body_js = serde_json::to_vec(&request).unwrap();
 
             let request = Request::builder()

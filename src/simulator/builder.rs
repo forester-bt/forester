@@ -1,3 +1,4 @@
+
 use crate::get_pb;
 use crate::runtime::action::keeper::ActionImpl;
 use crate::runtime::builder::ForesterBuilder;
@@ -97,7 +98,7 @@ impl SimulatorBuilder {
     pub fn root(&mut self, root: PathBuf) {
         self.root = Some(root);
     }
-
+    #[allow(irrefutable_let_patterns)]
     /// Build
     pub fn build(&mut self) -> RtResult<Simulator> {
         let mut fb = self.fb.take().ok_or(RuntimeError::uex(

@@ -8,7 +8,7 @@ pub mod transform;
 use crate::runtime::action::ActionName;
 use crate::runtime::args::transform::{to_dec_rt_args, to_rt_args};
 
-use crate::runtime::rtree::rnode::{DecoratorType, FlowType, RNode, RNodeId};
+use crate::runtime::rtree::rnode::{DecoratorType, RNode, RNodeId};
 use crate::runtime::rtree::transform::{StackItem, Transformer};
 use crate::runtime::{RtOk, RtResult, RuntimeError};
 use crate::tree::parser::ast::call::Call;
@@ -137,7 +137,7 @@ impl RuntimeTree {
                 // - if it is lambda we already found it
                 Call::HoInvocation(key) => {
                     debug!(target:"tree[construct]", "found ho invocation with id {id} in parent {parent_id}");
-                    let (p_id, parent_args, parent_params) =
+                    let (p_id, _parent_args, _parent_params) =
                     builder.get_chain_skip_lambda(&parent_id)?.get_tree();
                     let call = builder.find_ho_call(&parent_id, &key)?;
                     if call.is_lambda() || call.is_decorator() {

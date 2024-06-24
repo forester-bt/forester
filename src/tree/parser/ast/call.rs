@@ -34,7 +34,7 @@ impl Debug for Call {
                 let _ = write!(f, "{}({}) :", tpe, args);
                 let mut elems = f.debug_list();
                 elems.entry(call);
-                elems.finish();
+                let _ = elems.finish();
                 Ok(())
             }
         }
