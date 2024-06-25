@@ -125,16 +125,14 @@ pub fn finalize(
 
             match res {
                 TickResultFin::Failure(v) => {
-                    // Reset P_CURSOR so that the next tick will start from the beginning
-                    let args = tick_args
-                        .with(REASON, RtValue::str(v))
-                        .with(P_CURSOR, RtValue::int(0));
+                    // Remove P_CURSOR so that the next tick will start from the beginning
+                    let args = tick_args.remove(P_CURSOR).with(REASON, RtValue::str(v));
                     Ok(Stay(RNodeState::Failure(run_with(args, cursor, len))))
                 }
                 TickResultFin::Success => {
                     if cursor == len - 1 {
-                        // Reset P_CURSOR so that the next tick will start from the beginning
-                        let args = tick_args.with(P_CURSOR, RtValue::int(0));
+                        // Remove P_CURSOR so that the next tick will start from the beginning
+                        let args = tick_args.remove(P_CURSOR);
                         Ok(Stay(RNodeState::Success(run_with(args, cursor, len))))
                     } else {
                         Ok(Stay(RNodeState::Running(run_with(
@@ -160,8 +158,8 @@ pub fn finalize(
                 }
                 TickResultFin::Success => {
                     if cursor == len - 1 {
-                        // Reset P_CURSOR so that the next tick will start from the beginning
-                        let args = tick_args.with(P_CURSOR, RtValue::int(0));
+                        // Remove P_CURSOR so that the next tick will start from the beginning
+                        let args = tick_args.remove(P_CURSOR);
                         Ok(Stay(RNodeState::Success(run_with(args, cursor, len))))
                     } else {
                         Ok(Stay(RNodeState::Running(run_with(
@@ -181,10 +179,8 @@ pub fn finalize(
             match res {
                 TickResultFin::Failure(v) => {
                     if cursor == len - 1 {
-                        // Reset P_CURSOR so that the next tick will start from the beginning
-                        let args = tick_args
-                            .with(P_CURSOR, RtValue::int(0))
-                            .with(REASON, RtValue::str(v));
+                        // Remove P_CURSOR so that the next tick will start from the beginning
+                        let args = tick_args.remove(P_CURSOR).with(REASON, RtValue::str(v));
                         Ok(Stay(RNodeState::Failure(run_with(args, cursor, len))))
                     } else {
                         Ok(Stay(RNodeState::Running(run_with(
@@ -195,8 +191,8 @@ pub fn finalize(
                     }
                 }
                 TickResultFin::Success => {
-                    // Reset P_CURSOR so that the next tick will start from the beginning
-                    let args = tick_args.with(P_CURSOR, RtValue::int(0));
+                    // Remove P_CURSOR so that the next tick will start from the beginning
+                    let args = tick_args.remove(P_CURSOR);
                     Ok(Stay(RNodeState::Success(run_with(args, cursor, len))))
                 }
             }
@@ -253,19 +249,7 @@ pub fn monitor(
     _ctx: &mut TreeContext,
 ) -> RtResult<FlowDecision> {
     match tpe {
-        FlowType::Sequence => {
-            let cursor = read_cursor(tick_args.clone())?;
-            Ok(PopNode(RNodeState::Running(
-                tick_args.with(P_CURSOR, RtValue::int(cursor)),
-            )))
-        }
-        FlowType::Fallback => {
-            let cursor = read_cursor(tick_args.clone())?;
-            Ok(PopNode(RNodeState::Running(
-                tick_args.with(P_CURSOR, RtValue::int(cursor)),
-            )))
-        }
-        FlowType::MSequence => {
+        FlowType::Sequence | FlowType::MSequence | FlowType::Fallback => {
             let cursor = read_cursor(tick_args.clone())?;
             Ok(PopNode(RNodeState::Running(
                 tick_args.with(P_CURSOR, RtValue::int(cursor)),

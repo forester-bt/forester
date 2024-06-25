@@ -213,7 +213,7 @@ impl Forester {
                                     debug!(target:"trim","attempt to trim is  {:?}", self.trim(&ctx));
                                     ctx.push(child)?;
                                 } else {
-                                    debug!(target:"flow[run]", "tick:{}, {tpe}. The '{child}' is running, decide go up or stay here.",ctx.curr_ts());
+                                    debug!(target:"flow[run]", "tick:{}, {tpe}. The '{child}' is running, decide to go up or stay here.",ctx.curr_ts());
                                     // for parallel node we need to proceed with other children regardless of the current result
                                     match flow::monitor(tpe, args.clone(), tick_args, &mut ctx)? {
                                         FlowDecision::PopNode(ns) => {
@@ -232,7 +232,7 @@ impl Forester {
                             // this stage just updates the status and depending on the status,
                             // the flow goes further or stays on the node but on the next loop of while.
                             s @ (RNodeState::Failure(_) | RNodeState::Success(_)) => {
-                                debug!(target:"flow[run]", "tick:{}, {tpe}. The '{child}' is finished, decide go up or stay here.",ctx.curr_ts());
+                                debug!(target:"flow[run]", "tick:{}, {tpe}. The '{child}' is finished, decide to go up or stay here.",ctx.curr_ts());
                                 let decision = flow::finalize(
                                     tpe,
                                     args.clone(),
