@@ -3,7 +3,7 @@ use crate::runtime::context::{RNodeState, TreeContext};
 use crate::runtime::rtree::rnode::FlowType;
 use crate::runtime::{RtResult, RuntimeError, TickResult};
 use std::cmp::max;
-use FlowDecision::{PopNode, Stay};
+use FlowDecision::{Halt, PopNode, Stay};
 
 // current child
 pub const CURSOR: &str = "cursor";
@@ -15,6 +15,9 @@ pub const LEN: &str = "len";
 pub const P_CURSOR: &str = "prev_cursor";
 // reason for the failure
 pub const REASON: &str = "reason";
+// Record of the currently running child, in case a reactive flow node needs to halt it.
+// This typically stores the same information as P_CURSOR, but doesn't affect read_cursor() results.
+pub const RUNNING_CHILD: &str = "running_child";
 
 // the list of children and states, where
 // 0 is ready,
@@ -122,24 +125,48 @@ pub fn finalize(
         FlowType::Sequence | FlowType::RSequence => {
             let cursor = read_cursor(tick_args.clone())?;
             let len = read_len_or_zero(tick_args.clone());
+            let running_child = tick_args
+                .find(RUNNING_CHILD.to_string())
+                .and_then(RtValue::as_int);
 
             match res {
                 TickResultFin::Failure(v) => {
+                    // Remove RUNNING_CHILD as it's either just finished, we're about to halt it, or we've got a bug and should have cleared it earlier anyway
                     // Remove P_CURSOR so that the next tick will start from the beginning
-                    let args = tick_args.remove(P_CURSOR).with(REASON, RtValue::str(v));
+                    let args = tick_args
+                        .remove(RUNNING_CHILD)
+                        .remove(P_CURSOR)
+                        .with(REASON, RtValue::str(v));
+
+                    // Check if we need to halt a running child
+                    if let Some(child) = running_child {
+                        if child > cursor {
+                            // This failure result needs to interrupt the running child.
+                            // Note non-reactive sequences won't set RUNNING_CHILD, so this will be unreachable for them.
+                            return Ok(Halt {
+                                state: RNodeState::Failure(run_with(args, cursor, len)),
+                                halting_child: child,
+                            });
+                        }
+                    }
+
+                    // This failure result is just like any other sequence failure
                     Ok(Stay(RNodeState::Failure(run_with(args, cursor, len))))
                 }
                 TickResultFin::Success => {
                     if cursor == len - 1 {
-                        // Remove P_CURSOR so that the next tick will start from the beginning
-                        let args = tick_args.remove(P_CURSOR);
+                        // Remove P_CURSOR and RUNNING_CHILD so that the next tick will start fresh from the beginning
+                        let args = tick_args.remove(P_CURSOR).remove(RUNNING_CHILD);
                         Ok(Stay(RNodeState::Success(run_with(args, cursor, len))))
                     } else {
-                        Ok(Stay(RNodeState::Running(run_with(
-                            tick_args,
-                            cursor + 1,
-                            len,
-                        ))))
+                        let mut args = tick_args;
+                        if let Some(child) = running_child {
+                            if child == cursor {
+                                // Previously running child has just finished successfully
+                                args = args.remove(RUNNING_CHILD);
+                            }
+                        }
+                        Ok(Stay(RNodeState::Running(run_with(args, cursor + 1, len))))
                     }
                 }
             }
@@ -175,24 +202,48 @@ pub fn finalize(
         FlowType::Fallback | FlowType::RFallback => {
             let cursor = read_cursor(tick_args.clone())?;
             let len = read_len_or_zero(tick_args.clone());
+            let running_child = tick_args
+                .find(RUNNING_CHILD.to_string())
+                .and_then(RtValue::as_int);
 
             match res {
                 TickResultFin::Failure(v) => {
                     if cursor == len - 1 {
-                        // Remove P_CURSOR so that the next tick will start from the beginning
-                        let args = tick_args.remove(P_CURSOR).with(REASON, RtValue::str(v));
+                        // Remove P_CURSOR and RUNNING_CHILD so that the next tick will start fresh from the beginning
+                        let args = tick_args
+                            .remove(P_CURSOR)
+                            .remove(RUNNING_CHILD)
+                            .with(REASON, RtValue::str(v));
                         Ok(Stay(RNodeState::Failure(run_with(args, cursor, len))))
                     } else {
-                        Ok(Stay(RNodeState::Running(run_with(
-                            tick_args,
-                            cursor + 1,
-                            len,
-                        ))))
+                        let mut args = tick_args;
+                        if let Some(child) = running_child {
+                            if child == cursor {
+                                // Previously running child has just failed
+                                args = args.remove(RUNNING_CHILD);
+                            }
+                        }
+                        Ok(Stay(RNodeState::Running(run_with(args, cursor + 1, len))))
                     }
                 }
                 TickResultFin::Success => {
+                    // Remove RUNNING_CHILD as it's either just finished, we're about to halt it, or we've got a bug and should have cleared it earlier anyway
                     // Remove P_CURSOR so that the next tick will start from the beginning
-                    let args = tick_args.remove(P_CURSOR);
+                    let args = tick_args.remove(RUNNING_CHILD).remove(P_CURSOR);
+
+                    // Check if we need to halt a running child
+                    if let Some(child) = running_child {
+                        if child > cursor {
+                            // This success result needs to interrupt the running child.
+                            // Note non-reactive fallbacks won't set RUNNING_CHILD, so this will be unreachable for them.
+                            return Ok(Halt {
+                                state: RNodeState::Success(run_with(args, cursor, len)),
+                                halting_child: child,
+                            });
+                        }
+                    }
+
+                    // This success result is just like any other fallback success
                     Ok(Stay(RNodeState::Success(run_with(args, cursor, len))))
                 }
             }
@@ -249,6 +300,12 @@ pub fn monitor(
     _ctx: &mut TreeContext,
 ) -> RtResult<FlowDecision> {
     match tpe {
+        FlowType::RSequence | FlowType::RFallback => {
+            let cursor = read_cursor(tick_args.clone())?;
+            Ok(PopNode(RNodeState::Running(
+                tick_args.with(RUNNING_CHILD, RtValue::int(cursor)),
+            )))
+        }
         FlowType::Sequence | FlowType::MSequence | FlowType::Fallback => {
             let cursor = read_cursor(tick_args.clone())?;
             Ok(PopNode(RNodeState::Running(
@@ -283,6 +340,10 @@ pub fn monitor(
 pub enum FlowDecision {
     PopNode(RNodeState),
     Stay(RNodeState),
+    Halt {
+        state: RNodeState,
+        halting_child: i64,
+    },
 }
 
 fn replace_child_state(args: RtArgs, idx: usize, v: i64) -> RtArgs {
