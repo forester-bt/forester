@@ -139,13 +139,13 @@ pub fn finalize(
                         .with(REASON, RtValue::str(v));
 
                     // Check if we need to halt a running child
-                    if let Some(child) = running_child {
-                        if child > cursor {
+                    if let Some(child_cursor) = running_child {
+                        if child_cursor > cursor {
                             // This failure result needs to interrupt the running child.
                             // Note non-reactive sequences won't set RUNNING_CHILD, so this will be unreachable for them.
                             return Ok(Halt {
-                                state: RNodeState::Failure(run_with(args, cursor, len)),
-                                halting_child: child,
+                                new_state: RNodeState::Failure(run_with(args, cursor, len)),
+                                halting_child_cursor: child_cursor,
                             });
                         }
                     }
@@ -232,13 +232,13 @@ pub fn finalize(
                     let args = tick_args.remove(RUNNING_CHILD).remove(P_CURSOR);
 
                     // Check if we need to halt a running child
-                    if let Some(child) = running_child {
-                        if child > cursor {
+                    if let Some(child_cursor) = running_child {
+                        if child_cursor > cursor {
                             // This success result needs to interrupt the running child.
                             // Note non-reactive fallbacks won't set RUNNING_CHILD, so this will be unreachable for them.
                             return Ok(Halt {
-                                state: RNodeState::Success(run_with(args, cursor, len)),
-                                halting_child: child,
+                                new_state: RNodeState::Success(run_with(args, cursor, len)),
+                                halting_child_cursor: child_cursor,
                             });
                         }
                     }
@@ -341,8 +341,8 @@ pub enum FlowDecision {
     PopNode(RNodeState),
     Stay(RNodeState),
     Halt {
-        state: RNodeState,
-        halting_child: i64,
+        new_state: RNodeState,
+        halting_child_cursor: i64,
     },
 }
 

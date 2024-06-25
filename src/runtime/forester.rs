@@ -225,6 +225,9 @@ impl Forester {
                                             debug!(target:"flow[run]", "tick:{}, {tpe}. stay with the new state: {}",ctx.curr_ts(),&ns);
                                             ctx.new_state(id, ns)?;
                                         }
+                                        FlowDecision::Halt { .. } => {
+                                            unreachable!("A child returning running should not trigger a flow node halt.")
+                                        }
                                     }
                                 }
                             }
@@ -248,8 +251,27 @@ impl Forester {
                                         ctx.pop()?;
                                     }
                                     FlowDecision::Stay(ns) => {
-                                        debug!(target:"flow[run]", "tick:{}, {tpe}. The '{}' is finished as {}, the new state: {} ",ctx.curr_ts(),child,s, &ns);
+                                        debug!(target:"flow[run]", "tick:{}, {tpe}. The '{}' is finished as {}, the new state: {}. Stay at this node. ",ctx.curr_ts(),child,s, &ns);
                                         ctx.new_state(id, ns)?;
+                                    }
+                                    FlowDecision::Halt {
+                                        new_state,
+                                        halting_child_cursor,
+                                    } => {
+                                        // Force the state of the child to be halting, so it will interrupt itself on the next tick.
+                                        let halting_child_id =
+                                            children[halting_child_cursor as usize];
+                                        debug!(target:"flow[run]", "tick:{}, {tpe}. The '{}' is finished as {}, the new state: {}. Halting child '{}'. ",ctx.curr_ts(),child,s, &new_state, &halting_child_id);
+                                        ctx.new_state(
+                                            halting_child_id,
+                                            RNodeState::Halting(
+                                                ctx.state_last_set(&halting_child_id).args(),
+                                            ),
+                                        )?;
+                                        // The current node can continue as normal once the child is halted.
+                                        ctx.new_state(id, new_state)?;
+                                        // Normally we would fall through to Failure or Success next tick, but we need to pass control to the child so it can halt properly.
+                                        ctx.push(halting_child_id)?;
                                     }
                                 }
                             }
