@@ -13,6 +13,8 @@ use std::fmt::{Display, Formatter};
 use std::sync::Arc;
 use std::sync::Mutex;
 
+use super::rtree::rnode::RNode;
+
 pub type Timestamp = usize;
 pub type TracerRef = Arc<Mutex<Tracer>>;
 
@@ -212,6 +214,17 @@ impl TreeContext {
         }
     }
 
+    pub(crate) fn force_to_halting_state(&mut self, id: RNodeId) -> RtResult<Option<RNodeState>> {
+        self.ts_map.insert(id, self.curr_ts);
+        let new_state = RNodeState::Halting(self.state_last_set(&id).args());
+
+        // Trace the state change with an extra indent
+        self.tracer.lock()?.right();
+        self.trace(NewState(id, new_state.clone()))?;
+        self.tracer.lock()?.left();
+
+        Ok(self.state.insert(id, new_state))
+    }
     pub(crate) fn new_state(
         &mut self,
         id: RNodeId,
