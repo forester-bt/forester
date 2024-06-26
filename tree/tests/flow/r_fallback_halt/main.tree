@@ -1,10 +1,11 @@
 import "std::actions"
 impl incr(key:string,default:num);
 
-// Test that r_fallback successfully sends the interrupt signal to repeat(5)
-// If the interrupt is sent, we should see x incremented 7 times, otherwise repeat won't reset and we'll only see 5 increments.
+// Test that r_fallback successfully sends the interrupt signal to retry(5)
+// If the interrupt is sent, we should see x incremented 7 times, otherwise retry won't reset and we'll only see 5 increments.
+// This test doubles as a halt test of retry.
 root main repeat(2) r_fallback{
     inverter store_tick("tick")
     equal(tick, 3)
-    repeat(5) incr("x",0)
+    retry(5) inverter incr("x",0)
 }

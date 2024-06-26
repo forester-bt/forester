@@ -384,7 +384,12 @@ fn r_fallback_halt_on_interrupt() {
     );
 
     let mut f = fb.build().unwrap();
-    assert_eq!(f.run(), Ok(TickResult::success()));
+    assert_eq!(
+        f.run(),
+        Ok(TickResult::failure(
+            "decorator inverts the result.".to_string()
+        ))
+    );
 
     let x =
         f.bb.lock()
