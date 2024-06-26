@@ -6,6 +6,7 @@ use crate::runtime::TickResult;
 use crate::tests::fb;
 
 struct HaltTester {
+    pub err_on_halt: bool,
     pub halt_called: Arc<Mutex<i32>>,
 }
 
@@ -29,7 +30,13 @@ impl Impl for HaltTester {
         let _ = ctx;
         let mut halt_called = self.halt_called.lock().unwrap();
         *halt_called += 1;
-        Ok(())
+        if self.err_on_halt {
+            return Err(crate::runtime::RuntimeError::UnImplementedAction(
+                "testing halt errors properly".to_string(),
+            ));
+        } else {
+            Ok(())
+        }
     }
 }
 
@@ -76,13 +83,13 @@ fn mix_test() {
 }
 
 #[test]
-fn sync_action_halt() {
-    // See comment in the tree file for what this is testing.
+fn sync_action_halt_ok() {
     let mut fb = fb("actions/sync_halt");
 
     // Set up halt tester so we can query it later
     let halt_called = Arc::new(Mutex::new(0));
     let halt_tester = HaltTester {
+        err_on_halt: false,
         halt_called: halt_called.clone(),
     };
 
@@ -93,6 +100,35 @@ fn sync_action_halt() {
     assert_eq!(f.run(), Ok(TickResult::success()));
 
     println!("{}", f.tracer.lock().unwrap().to_string());
+
+    // Check that halt was called exactly once
+    assert_eq!(*halt_called.lock().unwrap(), 1);
+}
+
+#[test]
+fn sync_action_halt_err() {
+    let mut fb = fb("actions/sync_halt");
+
+    // Set up halt tester so we can query it later
+    let halt_called = Arc::new(Mutex::new(0));
+    let halt_tester = HaltTester {
+        err_on_halt: true,
+        halt_called: halt_called.clone(),
+    };
+
+    fb.tracer(crate::tracer::Tracer::default());
+    fb.register_sync_action("halt_tester", halt_tester);
+
+    let mut f = fb.build().unwrap();
+    let result = f.run();
+
+    println!("{}", f.tracer.lock().unwrap().to_string());
+    assert_eq!(
+        result,
+        Err(crate::runtime::RuntimeError::UnImplementedAction(
+            "testing halt errors properly".to_string(),
+        ))
+    );
 
     // Check that halt was called exactly once
     assert_eq!(*halt_called.lock().unwrap(), 1);
