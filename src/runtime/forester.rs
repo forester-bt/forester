@@ -388,11 +388,19 @@ impl Forester {
                 RNode::Leaf(f_name, args) => match ctx.state_last_set(&id) {
                     RNodeState::Halting(tick_args) => {
                         debug!(target:"leaf[halt]", "tick:{}, args :{:?}",ctx.curr_ts(), args);
+                        let ctx_ref = TreeContextRef::from_ctx(&ctx, self.trimmer.clone());
+                        self.keeper.halt(
+                            self.env.clone(),
+                            f_name.name()?,
+                            args.clone(),
+                            ctx_ref,
+                            &self.serv,
+                        )?;
                         ctx.new_state(id, RNodeState::Ready(tick_args))?;
                         ctx.pop()?;
                     }
                     _ => {
-                        debug!(target:"leaf","tick:{}, args :{:?}",ctx.curr_ts(), args);
+                        debug!(target:"leaf[run]","tick:{}, args :{:?}",ctx.curr_ts(), args);
                         if ctx.state_in_ts(&id).is_ready() {
                             let ctx_ref = TreeContextRef::from_ctx(&ctx, self.trimmer.clone());
                             let res = recover(self.keeper.on_tick(

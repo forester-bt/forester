@@ -6,13 +6,15 @@ use crate::runtime::context::{TreeContextRef, TreeRemoteContextRef};
 use crate::runtime::{RtResult, RuntimeError, TickResult};
 use std::sync::Arc;
 
+pub use crate::runtime::RtOk;
+
 pub type ActionName = String;
 pub type Tick = RtResult<TickResult>;
 
 /// Recovers the tick depending on the result.
 pub fn recover(tick: Tick) -> Tick {
     match tick {
-        Err(RuntimeError::RecoveryToFailure(r)) => Ok(TickResult::Failure(format!("{:?}",r))),
+        Err(RuntimeError::RecoveryToFailure(r)) => Ok(TickResult::Failure(format!("{:?}", r))),
         Err(RuntimeError::BlackBoardError(r)) => Ok(TickResult::Failure(r)),
         other => other,
     }
@@ -121,6 +123,13 @@ impl Action {
 /// ```
 pub trait Impl: Sync + Send {
     fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick;
+
+    fn halt(&self, args: RtArgs, ctx: TreeContextRef) -> RtOk {
+        // Default halt is a no-op function.
+        let _ = args;
+        let _ = ctx;
+        Ok(())
+    }
 }
 
 pub trait ImplAsync: Sync + Send {
