@@ -258,6 +258,9 @@ impl Forester {
                                         new_state,
                                         halting_child_cursor,
                                     } => {
+                                        // Normally we would fall through to Failure or Success next tick (e.g. Stay decision), but we need to pass control to the child so it can halt properly.
+                                        // The current node can continue as normal once the child is halted.
+                                        ctx.new_state(id, new_state)?;
                                         // Force the state of the child to be halting, so it will interrupt itself on the next tick.
                                         let halting_child_id =
                                             children[halting_child_cursor as usize];
@@ -268,13 +271,25 @@ impl Forester {
                                                 ctx.state_last_set(&halting_child_id).args(),
                                             ),
                                         )?;
-                                        // The current node can continue as normal once the child is halted.
-                                        ctx.new_state(id, new_state)?;
-                                        // Normally we would fall through to Failure or Success next tick, but we need to pass control to the child so it can halt properly.
                                         ctx.push(halting_child_id)?;
                                     }
                                 }
                             }
+                        }
+                    }
+                    RNodeState::Halting(_) => {
+                        debug!(target:"flow[halt]", "tick:{}, {tpe}. Checking for running children to halt.",ctx.curr_ts());
+                        let (new_state, halting_child_cursor) = flow::halt(tpe, args.clone());
+                        // Halting is a one-way process, pop ourselves then push any halting children.
+                        ctx.new_state(id, new_state)?;
+                        ctx.pop()?;
+                        if let Some(halting_child_cursor) = halting_child_cursor {
+                            let halting_child_id = children[halting_child_cursor];
+                            ctx.new_state(
+                                halting_child_id,
+                                RNodeState::Halting(ctx.state_last_set(&halting_child_id).args()),
+                            )?;
+                            ctx.push(halting_child_id)?;
                         }
                     }
                     // the node is finished. pass the control further or if it is root,
