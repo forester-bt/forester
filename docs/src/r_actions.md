@@ -14,23 +14,41 @@ There are three types of actions available at that moment:
 
 ## Traits
 
+The action trait implements two functions, `tick()` and `halt()`.
+
+The `tick()` function is the main entry point of the action and will be called whenever the node is executed.
+
+The `halt()` function is used to notify a `running` action that a reactive flow node (e.g. `r_sequnce`) has changed the control flow. This means the previously `running` action won't be called again, or won't be called for a while, and so should gracefully clean up. The `halt()` function has a default no-op implementation that can be used if no clean up is necessary.
+
+Actions must halt as quickly as possible, and should not block the execution.
+
 ### `Impl` for sync actions
+
+Sync actions are the only actions that currently implement the `halt()` function.
 
 ```rust
 pub trait Impl {
     fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick;
+
+    fn halt(&self, args: RtArgs, ctx: TreeContextRef) -> RtOk {
+        // Default halt is a no-op function.
+        let _ = args;
+        let _ = ctx;
+        Ok(())
+    }
 }
+
 ```
 
-#### `ImplAsync` for async actions
+### `ImplAsync` for async actions
 ```rust
 pub trait ImplAsync: Sync + Send {
     fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick;
 }
 ```
 
-Where `args` are the given arguments from the tree definition and invocation and `ctx` 
-is a reference of the invocation context with `bb` and `tracer`  
+Where `args` are the given arguments from the tree definition and invocation and `ctx`
+is a reference of the invocation context with `bb` and `tracer`.
 
 ## Mutability
 The actions are intentionally stateless thus they can't mutate.
@@ -43,7 +61,7 @@ fn simple_delay() {
     let mut forester_builder = fb("decorators/simple_delay");
 
     forester_builder.register_sync_action("store", StoreData);
- 
+
 }
 ```
 
@@ -52,7 +70,7 @@ fn simple_delay() {
 The async actions are executed in the multithreading environment and return the `running` tick result instantly.
 It does not block the execution of the tree and can be used in parallel nodes, etc.
 
-On the other hand, every time when the tree is reloaded, the tick number is increased that can exceed the limit on ticks 
+On the other hand, every time when the tree is reloaded, the tick number is increased that can exceed the limit on ticks
 if the system has it. Therefore, it needs to take into account (when forester runs with the limit of ticks.)
 
 
@@ -107,7 +125,7 @@ How to implement the client side, please see [remote action lib](./rem_action.md
 
 ## Default actions
 
-By default, there are several implementations for http and interactions with bb are available in  
+By default, there are several implementations for http and interactions with bb are available in
 
 ```rust
 use forester_rs::runtime::action::builtin::*;

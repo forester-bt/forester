@@ -100,4 +100,4 @@ but on the next tick it starts from the node `store` again.
 
 `r_sequence` will halt the `running` child to allow a graceful shutdown if a prior child changes from `success` to `failure`. In the above example, if `store` returned `failure` on the second tick then `perform_action` would be halted before `r_sequence` returned `failure` itself.
 
-Halting must be performed as quickly as possible. Note that currently only build-in flow and decorator nodes are halted, not user-implemented ones.
+Halting must be performed as quickly as possible. Note that currently only build-in flow, built-in decorator and sync action nodes are halted, async and remote actions are not.
