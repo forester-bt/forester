@@ -226,10 +226,16 @@ impl Forester {
                                             ctx.new_state(id, ns)?;
                                         }
                                         FlowDecision::Halt { .. } => {
-                                            unreachable!("A child returning running should not trigger a flow node halt.")
+                                            unreachable!("A child returning running should not trigger a flow node halt decision.");
                                         }
                                     }
                                 }
+                            }
+                            // Halting must be an atomic process, it is never spread over multiple ticks so should never be seen in this flow.
+                            RNodeState::Halting(_) => {
+                                unreachable!(
+                                    "A flow node child should never return a state of Halting."
+                                );
                             }
                             // child is finished, thus the node needs to make a decision how to proceed.
                             // this stage just updates the status and depending on the status,
@@ -260,7 +266,7 @@ impl Forester {
                                     } => {
                                         // Normally we would fall through to Failure or Success next tick (e.g. Stay decision), but we need to pass control to the child so it can halt properly.
                                         // The current node can continue as normal once the child is halted.
-                                        ctx.new_state(id, new_state)?;
+                                        ctx.new_state(id, new_state.clone())?;
                                         // Force the state of the child to be halting, so it will interrupt itself on the next tick.
                                         let halting_child_id =
                                             children[halting_child_cursor as usize];
@@ -277,6 +283,7 @@ impl Forester {
                             }
                         }
                     }
+                    // The node's parent has commanded us to halt.
                     RNodeState::Halting(_) => {
                         debug!(target:"flow[halt]", "tick:{}, {tpe}. Checking for running children to halt.",ctx.curr_ts());
                         let (new_state, halting_child_cursor) = flow::halt(tpe, args.clone());
@@ -340,6 +347,12 @@ impl Forester {
                             ctx.new_state(id, new_state)?;
                             ctx.pop()?;
                         }
+                        // Halting must be an atomic process, it is never spread over multiple ticks so should never be seen in this flow.
+                        RNodeState::Halting(_) => {
+                            unreachable!(
+                                "A decorator node child should never return a state of Halting."
+                            );
+                        }
                         // child is finished, thus the node needs to make a decision how to proceed.
                         // this stage just updates the status and depending on the status,
                         // the flow goes further or stays on the node but on the next loop of while.
@@ -357,6 +370,19 @@ impl Forester {
                             ctx.pop()?;
                         }
                     },
+                    // The node's parent has commanded us to halt.
+                    // The only resetting a decorator needs to do is trigger a prepare next time it's ticked.
+                    RNodeState::Halting(_) => {
+                        debug!(target:"decorator[halt]", "tick:{}, {tpe}. Halting child.",ctx.curr_ts());
+                        // Halting is a one-way process, pop ourselves then push the halting child.
+                        ctx.new_state(id, RNodeState::Ready(ctx.state_last_set(&id).args()))?;
+                        ctx.pop()?;
+                        ctx.new_state(
+                            *child,
+                            RNodeState::Halting(ctx.state_last_set(&child).args()),
+                        )?;
+                        ctx.push(*child)?;
+                    }
                     // the node is finished. pass the control further or if it is root,
                     // finish the whole procedure
                     RNodeState::Success(_) | RNodeState::Failure(_) => {

@@ -225,7 +225,7 @@ pub fn finalize(
             match res {
                 TickResultFin::Failure(v) => {
                     if cursor == len - 1 {
-                        let args = tick_args.with(REASON, RtValue::str(v));
+                        let args = args.with(REASON, RtValue::str(v));
                         Ok(Stay(RNodeState::Failure(run_with(args, cursor, len))))
                     } else {
                         if let Some(running) = running_child {
