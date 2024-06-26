@@ -3,13 +3,13 @@ pub mod imports;
 
 use crate::read_file;
 use crate::runtime::action::ActionName;
+use crate::runtime::builder::{builtin, ros_core, ros_nav};
 use crate::tree::parser::ast::{FileEntity, Tree};
 use crate::tree::parser::Parser;
 use crate::tree::project::file::File;
 use crate::tree::{cerr, TreeError};
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
-use crate::runtime::builder::{builtin, ros_core, ros_nav};
 
 pub type FileName = String;
 pub type TreeName = String;
@@ -49,13 +49,13 @@ impl<'a> Project {
     /// build the project with the given root and main file
     ///
     /// Suppose we have the following structure:
-    /// ```no-run
+    ///
     /// - root_folder
-    ///     - folder    
+    ///     - folder
     ///         - main.tree # root tree_name
     ///     - other.tree
-    /// ```
-    /// Setting up the rooot as root_folder allows pulling in the other.tree file.
+    ///
+    /// Setting up the root as root_folder allows pulling in the other.tree file.
     pub fn build_with_root(
         main_file: FileName,
         main_call: TreeName,
@@ -176,25 +176,21 @@ impl<'a> Project {
     }
 }
 fn file_to_str(root: PathBuf, file: FileName) -> Result<String, TreeError> {
-
-    if file.contains("::"){
-        let parts:Vec<_> = file.split("::").collect();
-        if parts.len() != 2{
-            return Err(TreeError::IOError(format!("invalid file name: {}", file)))
-        }else {
+    if file.contains("::") {
+        let parts: Vec<_> = file.split("::").collect();
+        if parts.len() != 2 {
+            return Err(TreeError::IOError(format!("invalid file name: {}", file)));
+        } else {
             match parts.as_slice() {
-                ["std","actions"] => Ok(builtin::builtin_actions_file()),
-                ["ros","nav2"] => Ok(ros_nav::ros_actions_file()),
-                ["ros","core"] => Ok(ros_core::ros_actions_file()),
-                _ => Err(TreeError::IOError(format!("invalid file name: {}", file)))
+                ["std", "actions"] => Ok(builtin::builtin_actions_file()),
+                ["ros", "nav2"] => Ok(ros_nav::ros_actions_file()),
+                ["ros", "core"] => Ok(ros_core::ros_actions_file()),
+                _ => Err(TreeError::IOError(format!("invalid file name: {}", file))),
             }
         }
-
     } else {
         let mut path = root;
         path.push(file);
         Ok(read_file(&path)?)
     }
-
 }
-
