@@ -128,11 +128,8 @@ pub fn finalize(
             let running_child = tick_args
                 .find(RUNNING_CHILD.to_string())
                 .and_then(RtValue::as_int);
-            let prev_cursor = tick_args
-                .find(P_CURSOR.to_string())
-                .and_then(RtValue::as_int);
 
-            // There's only one scenario where we don't remove P_CURSOR and RUNNING_CHILD, we'll re-add them if that's the case.
+            // There's only one scenario where we don't remove RUNNING_CHILD, we'll re-add it if that's the case.
             let mut args = tick_args.remove(RUNNING_CHILD).remove(P_CURSOR);
 
             match res {
@@ -143,7 +140,7 @@ pub fn finalize(
                     if let Some(running) = running_child {
                         if running > cursor {
                             // This failure result needs to interrupt the running child.
-                            // Note non-reactive sequences won't set RUNNING_CHILD, so this will be unreachable for them.
+                            // Note non-reactive sequences will always have running == p_cursor == cursor, so this will be unreachable for them.
                             return Ok(Halt {
                                 new_state: RNodeState::Failure(run_with(args, cursor, len)),
                                 halting_child_cursor: running,
@@ -161,12 +158,6 @@ pub fn finalize(
                             if running > cursor {
                                 // We haven't reached the previously running child yet, re-add it.
                                 args = args.with(RUNNING_CHILD, RtValue::int(running))
-                            }
-                        }
-                        if let Some(prev) = prev_cursor {
-                            if prev > cursor {
-                                // We haven't reached the previous cursor position yet, re-add it.
-                                args = args.with(P_CURSOR, RtValue::int(prev))
                             }
                         }
                         Ok(Stay(RNodeState::Running(run_with(args, cursor + 1, len))))
@@ -215,11 +206,8 @@ pub fn finalize(
             let running_child = tick_args
                 .find(RUNNING_CHILD.to_string())
                 .and_then(RtValue::as_int);
-            let prev_cursor = tick_args
-                .find(P_CURSOR.to_string())
-                .and_then(RtValue::as_int);
 
-            // There's only one scenario where we don't remove P_CURSOR and RUNNING_CHILD, we'll re-add them if that's the case.
+            // There's only one scenario where we don't remove RUNNING_CHILD, we'll re-add it if that's the case.
             let mut args = tick_args.remove(RUNNING_CHILD).remove(P_CURSOR);
 
             match res {
@@ -234,12 +222,6 @@ pub fn finalize(
                                 args = args.with(RUNNING_CHILD, RtValue::int(running))
                             }
                         }
-                        if let Some(prev) = prev_cursor {
-                            if prev > cursor {
-                                // We haven't reached the previous cursor position yet, re-add it.
-                                args = args.with(P_CURSOR, RtValue::int(prev))
-                            }
-                        }
                         Ok(Stay(RNodeState::Running(run_with(args, cursor + 1, len))))
                     }
                 }
@@ -248,7 +230,7 @@ pub fn finalize(
                     if let Some(running) = running_child {
                         if running > cursor {
                             // This success result needs to interrupt the running child.
-                            // Note non-reactive fallbacks won't set RUNNING_CHILD, so this will be unreachable for them.
+                            // Note non-reactive fallbacks will always have running == p_cursor == cursor, so this will be unreachable for them.
                             return Ok(Halt {
                                 new_state: RNodeState::Success(run_with(args, cursor, len)),
                                 halting_child_cursor: running,
@@ -319,14 +301,7 @@ pub fn monitor(
                 tick_args.with(RUNNING_CHILD, RtValue::int(cursor)),
             )))
         }
-        FlowType::Sequence | FlowType::Fallback => {
-            let cursor = read_cursor(tick_args.clone())?;
-            Ok(PopNode(RNodeState::Running(
-                tick_args.with(P_CURSOR, RtValue::int(cursor)),
-            )))
-        }
-        FlowType::MSequence => {
-            // Memory sequences need both P_CURSOR and RUNNING_CHILD, since the halting and restarting logic are separate.
+        FlowType::Sequence | FlowType::MSequence | FlowType::Fallback => {
             let cursor = read_cursor(tick_args.clone())?;
             Ok(PopNode(RNodeState::Running(
                 tick_args
@@ -358,33 +333,23 @@ pub fn monitor(
 // Returns a tuple of the new state and the cursor position of the child to be halted, if one exists.
 pub fn halt(flow_type: &FlowType, tick_args: RtArgs) -> (RNodeState, Option<usize>) {
     match flow_type {
-        FlowType::RSequence | FlowType::RFallback => {
-            // Reactive sequence/fallback nodes check if they need to halt a child at the RUNNING_CHILD cursor position.
+        FlowType::Sequence
+        | FlowType::MSequence
+        | FlowType::RSequence
+        | FlowType::Fallback
+        | FlowType::RFallback => {
+            // Sequence/fallback nodes check if they need to halt a child at the RUNNING_CHILD cursor position.
             let running_child_cursor = tick_args
                 .find(RUNNING_CHILD.to_string())
                 .and_then(RtValue::as_int)
                 .and_then(|v| Some(v as usize));
-            let args = tick_args.remove(RUNNING_CHILD).remove(P_CURSOR);
-            let new_state = RNodeState::Ready(args);
-            (new_state, running_child_cursor)
-        }
-        FlowType::Sequence | FlowType::Fallback => {
-            // Normal sequence/fallback nodes check if they need to halt a child at the P_CURSOR cursor position
-            let running_child_cursor = tick_args
-                .find(P_CURSOR.to_string())
-                .and_then(RtValue::as_int)
-                .and_then(|v| Some(v as usize));
-            let args = tick_args.remove(P_CURSOR);
-            let new_state = RNodeState::Ready(args);
-            (new_state, running_child_cursor)
-        }
-        FlowType::MSequence => {
-            // Memory sequence nodes check for running nodes, but we don't want to reset their memory (i.e. P_CURSOR).
-            let running_child_cursor = tick_args
-                .find(RUNNING_CHILD.to_string())
-                .and_then(RtValue::as_int)
-                .and_then(|v| Some(v as usize));
-            let args = tick_args.remove(RUNNING_CHILD);
+            let mut args = tick_args.remove(RUNNING_CHILD);
+
+            // MSequence needs to keep its position, but other nodes don't.
+            if flow_type != &FlowType::MSequence {
+                args = args.remove(P_CURSOR);
+            }
+
             let new_state = RNodeState::Ready(args);
             (new_state, running_child_cursor)
         }
