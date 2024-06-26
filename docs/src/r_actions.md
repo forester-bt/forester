@@ -20,7 +20,7 @@ The `tick()` function is the main entry point of the action and will be called w
 
 The `halt()` function is used to notify a `running` action that a reactive flow node (e.g. `r_sequnce`) has changed the control flow. This means the previously `running` action won't be called again, or won't be called for a while, and so should gracefully clean up. The `halt()` function has a default no-op implementation that can be used if no clean up is necessary.
 
-Actions must halt as quickly as possible, and should not block the execution.
+Actions must halt as quickly as possible, and the call to `halt()` should not block the execution.
 
 ### `Impl` for sync actions
 
