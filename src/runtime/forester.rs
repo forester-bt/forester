@@ -371,10 +371,10 @@ impl Forester {
                         }
                     },
                     // The node's parent has commanded us to halt.
-                    // The only resetting a decorator needs to do is trigger a prepare next time it's ticked.
+                    // The only resetting a decorator needs to do is trigger a prepare next time it's ticked and halt its child.
                     RNodeState::Halting(_) => {
                         debug!(target:"decorator[halt]", "tick:{}, {tpe}. Halting child.",ctx.curr_ts());
-                        // Halting is a one-way process, pop ourselves then push the halting child.
+                        // Halting is a one-way process, pop ourselves then halt and push the child.
                         ctx.new_state(id, RNodeState::Ready(ctx.state_last_set(&id).args()))?;
                         ctx.pop()?;
                         ctx.new_state(
