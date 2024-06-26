@@ -2,7 +2,7 @@ use crate::runtime::action::builtin::data::GenerateData;
 
 use crate::runtime::action::{Impl, Tick};
 use crate::runtime::args::{RtArgs, RtValue};
-use crate::runtime::context::{TreeContextRef};
+use crate::runtime::context::TreeContextRef;
 use crate::runtime::TickResult;
 use crate::tests::{fb, test_folder, turn_on_logs};
 struct StoreTick;
@@ -257,6 +257,32 @@ fn sequence_reset_after_running_failure() {
 }
 
 #[test]
+fn r_sequence_halt_on_interrupt() {
+    // See comment in the tree file for what this is testing.
+    let mut fb = fb("flow/r_sequence_halt");
+
+    fb.register_sync_action(
+        "incr",
+        GenerateData::new(|v| RtValue::int(v.as_int().unwrap_or(0) + 1)),
+    );
+
+    let mut f = fb.build().unwrap();
+    assert_eq!(f.run(), Ok(TickResult::success()));
+
+    let x =
+        f.bb.lock()
+            .unwrap()
+            .get("x".to_string())
+            .ok()
+            .flatten()
+            .unwrap()
+            .clone()
+            .as_int()
+            .unwrap();
+    assert_eq!(x, 7)
+}
+
+#[test]
 fn fallback() {
     let mut fb = fb("flow/fallback");
 
@@ -345,6 +371,32 @@ fn fallback_reset_after_running_success() {
             .as_int()
             .unwrap();
     assert_eq!(x, 10)
+}
+
+#[test]
+fn r_fallback_halt_on_interrupt() {
+    // See comment in the tree file for what this is testing.
+    let mut fb = fb("flow/r_fallback_halt");
+
+    fb.register_sync_action(
+        "incr",
+        GenerateData::new(|v| RtValue::int(v.as_int().unwrap_or(0) + 1)),
+    );
+
+    let mut f = fb.build().unwrap();
+    assert_eq!(f.run(), Ok(TickResult::success()));
+
+    let x =
+        f.bb.lock()
+            .unwrap()
+            .get("x".to_string())
+            .ok()
+            .flatten()
+            .unwrap()
+            .clone()
+            .as_int()
+            .unwrap();
+    assert_eq!(x, 7)
 }
 
 #[test]

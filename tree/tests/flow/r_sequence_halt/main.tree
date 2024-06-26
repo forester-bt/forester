@@ -1,0 +1,10 @@
+import "std::actions"
+impl incr(key:string,default:num);
+
+// Test that r_sequence successfully sends the interrupt signal to repeat(5)
+// If the interrupt is sent, we should see x incremented 7 times, otherwise repeat won't reset and we'll only see 5 increments.
+root main retry(2) r_sequence{
+    store_tick("tick")
+    inverter equal(tick, 3)
+    repeat(5) incr("x",0)
+}
