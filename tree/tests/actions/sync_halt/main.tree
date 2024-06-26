@@ -1,0 +1,10 @@
+import "std::actions"
+impl halt_tester();
+
+
+root main r_fallback{
+    inverter store_tick("tick")
+    equal(tick, 2)
+
+    halt_tester()
+}

@@ -1,6 +1,37 @@
+use std::sync::{Arc, Mutex};
+
+use crate::runtime::action::Impl;
 use crate::runtime::args::RtValue;
 use crate::runtime::TickResult;
 use crate::tests::fb;
+
+struct HaltTester {
+    pub halt_called: Arc<Mutex<i32>>,
+}
+
+impl Impl for HaltTester {
+    fn tick(
+        &self,
+        args: crate::runtime::args::RtArgs,
+        ctx: crate::runtime::context::TreeContextRef,
+    ) -> crate::runtime::action::Tick {
+        let _ = args;
+        let _ = ctx;
+        Ok(TickResult::running())
+    }
+
+    fn halt(
+        &self,
+        args: crate::runtime::args::RtArgs,
+        ctx: crate::runtime::context::TreeContextRef,
+    ) -> crate::runtime::RtOk {
+        let _ = args;
+        let _ = ctx;
+        let mut halt_called = self.halt_called.lock().unwrap();
+        *halt_called += 1;
+        Ok(())
+    }
+}
 
 #[test]
 fn builtin_actions() {
@@ -42,4 +73,27 @@ fn mix_test() {
     let fb = fb("actions/mix_test");
     let mut f = fb.build().unwrap();
     assert_eq!(f.run(), Ok(TickResult::success()));
+}
+
+#[test]
+fn sync_action_halt() {
+    // See comment in the tree file for what this is testing.
+    let mut fb = fb("actions/sync_halt");
+
+    // Set up halt tester so we can query it later
+    let halt_called = Arc::new(Mutex::new(0));
+    let halt_tester = HaltTester {
+        halt_called: halt_called.clone(),
+    };
+
+    fb.tracer(crate::tracer::Tracer::default());
+    fb.register_sync_action("halt_tester", halt_tester);
+
+    let mut f = fb.build().unwrap();
+    assert_eq!(f.run(), Ok(TickResult::success()));
+
+    println!("{}", f.tracer.lock().unwrap().to_string());
+
+    // Check that halt was called exactly once
+    assert_eq!(*halt_called.lock().unwrap(), 1);
 }
