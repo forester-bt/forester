@@ -5,6 +5,8 @@ use crate::runtime::{RtResult, RuntimeError, TickResult};
 use std::cmp::max;
 use FlowDecision::{Halt, PopNode, Stay};
 
+type HaltingChildCursor = usize;
+
 // current child
 pub const CURSOR: &str = "cursor";
 // the child len
@@ -141,10 +143,10 @@ pub fn finalize(
                         if running > cursor {
                             // This failure result needs to interrupt the running child.
                             // Note non-reactive sequences will always have running == p_cursor == cursor, so this will be unreachable for them.
-                            return Ok(Halt {
-                                new_state: RNodeState::Failure(run_with(args, cursor, len)),
-                                halting_child_cursor: running,
-                            });
+                            return Ok(Halt(
+                                RNodeState::Failure(run_with(args, cursor, len)),
+                                running as usize,
+                            ));
                         }
                     }
 
@@ -231,10 +233,10 @@ pub fn finalize(
                         if running > cursor {
                             // This success result needs to interrupt the running child.
                             // Note non-reactive fallbacks will always have running == p_cursor == cursor, so this will be unreachable for them.
-                            return Ok(Halt {
-                                new_state: RNodeState::Success(run_with(args, cursor, len)),
-                                halting_child_cursor: running,
-                            });
+                            return Ok(Halt(
+                                RNodeState::Success(run_with(args, cursor, len)),
+                                running as usize,
+                            ));
                         }
                     }
 
@@ -342,7 +344,7 @@ pub fn halt(flow_type: &FlowType, tick_args: RtArgs) -> (RNodeState, Option<usiz
             let running_child_cursor = tick_args
                 .find(RUNNING_CHILD.to_string())
                 .and_then(RtValue::as_int)
-                .and_then(|v| Some(v as usize));
+                .map(|v| v as usize);
             let mut args = tick_args.remove(RUNNING_CHILD);
 
             // MSequence needs to keep its position, but other nodes don't.
@@ -365,10 +367,7 @@ pub fn halt(flow_type: &FlowType, tick_args: RtArgs) -> (RNodeState, Option<usiz
 pub enum FlowDecision {
     PopNode(RNodeState),
     Stay(RNodeState),
-    Halt {
-        new_state: RNodeState,
-        halting_child_cursor: i64,
-    },
+    Halt(RNodeState, HaltingChildCursor),
 }
 
 fn replace_child_state(args: RtArgs, idx: usize, v: i64) -> RtArgs {

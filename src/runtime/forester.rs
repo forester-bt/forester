@@ -230,17 +230,15 @@ impl Forester {
                                             debug!(target:"flow[run]", "tick:{}, {tpe}. stay with the new state: {}",ctx.curr_ts(),&ns);
                                             ctx.new_state(id, ns)?;
                                         }
-                                        FlowDecision::Halt { .. } => {
-                                            unreachable!("A child returning running should not trigger a flow node halt decision.");
+                                        FlowDecision::Halt(..) => {
+                                            return Err(RuntimeError::Unexpected("A child returning running should not trigger a flow node halt decision.".to_string()));
                                         }
                                     }
                                 }
                             }
                             // Halting must be an atomic process, it is never spread over multiple ticks so should never be seen in this flow.
                             RNodeState::Halting(_) => {
-                                unreachable!(
-                                    "A flow node child should never return a state of Halting."
-                                );
+                                return Err(RuntimeError::Unexpected("A child returning running should not trigger a flow node halt decision.".to_string()));
                             }
                             // child is finished, thus the node needs to make a decision how to proceed.
                             // this stage just updates the status and depending on the status,
@@ -265,16 +263,12 @@ impl Forester {
                                         debug!(target:"flow[run]", "tick:{}, {tpe}. The '{}' is finished as {}, the new state: {}. Stay at this node. ",ctx.curr_ts(),child,s, &ns);
                                         ctx.new_state(id, ns)?;
                                     }
-                                    FlowDecision::Halt {
-                                        new_state,
-                                        halting_child_cursor,
-                                    } => {
+                                    FlowDecision::Halt(new_state, halting_child_cursor) => {
                                         // Normally we would fall through to Failure or Success next tick (e.g. Stay decision), but we need to pass control to the child so it can halt properly.
                                         // The current node can continue as normal once the child is halted.
                                         ctx.new_state(id, new_state.clone())?;
                                         // Force the state of the child to be halting, so it will interrupt itself on the next tick.
-                                        let halting_child_id =
-                                            children[halting_child_cursor as usize];
+                                        let halting_child_id = children[halting_child_cursor];
                                         debug!(target:"flow[run]", "tick:{}, {tpe}. The '{}' is finished as {}, the new state: {}. Halting child '{}'. ",ctx.curr_ts(),child,s, &new_state, &halting_child_id);
                                         ctx.force_to_halting_state(halting_child_id)?;
                                         ctx.push(halting_child_id)?;
@@ -346,9 +340,10 @@ impl Forester {
                         }
                         // Halting must be an atomic process, it is never spread over multiple ticks so should never be seen in this flow.
                         RNodeState::Halting(_) => {
-                            unreachable!(
+                            return Err(RuntimeError::Unexpected(
                                 "A decorator node child should never return a state of Halting."
-                            );
+                                    .to_string(),
+                            ));
                         }
                         // child is finished, thus the node needs to make a decision how to proceed.
                         // this stage just updates the status and depending on the status,
