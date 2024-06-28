@@ -161,7 +161,7 @@ impl Forester {
             let id = *id;
             debug!(target:"loop", "node = {}, tick = {}", id,ctx.curr_ts());
             match self.tree.node(&id)? {
-                RNode::Flow(tpe, _n, args, children) => match ctx.state_in_ts(&id) {
+                RNode::Flow(tpe, _n, init_args, children) => match ctx.state_in_ts(&id) {
                     // do nothing, since there are no children
                     RNodeState::Ready(tick_args) if children.is_empty() => {
                         debug!(target:"flow[ready]", "tick:{}, {tpe}. The children are empty. Go to the fin state", ctx.curr_ts());
@@ -213,9 +213,14 @@ impl Forester {
                                     debug!(target:"trim","attempt to trim is  {:?}", self.trim(&ctx));
                                     ctx.push(child)?;
                                 } else {
-                                    debug!(target:"flow[run]", "tick:{}, {tpe}. The '{child}' is running, decide go up or stay here.",ctx.curr_ts());
+                                    debug!(target:"flow[run]", "tick:{}, {tpe}. The '{child}' is running, decide to go up or stay here.",ctx.curr_ts());
                                     // for parallel node we need to proceed with other children regardless of the current result
-                                    match flow::monitor(tpe, args.clone(), tick_args, &mut ctx)? {
+                                    match flow::monitor(
+                                        tpe,
+                                        init_args.clone(),
+                                        tick_args,
+                                        &mut ctx,
+                                    )? {
                                         FlowDecision::PopNode(ns) => {
                                             debug!(target:"flow[run]", "tick:{}, {tpe}. Go up with the new state: {}",ctx.curr_ts(),&ns);
                                             ctx.new_state(id, ns)?;
@@ -225,17 +230,24 @@ impl Forester {
                                             debug!(target:"flow[run]", "tick:{}, {tpe}. stay with the new state: {}",ctx.curr_ts(),&ns);
                                             ctx.new_state(id, ns)?;
                                         }
+                                        FlowDecision::Halt(..) => {
+                                            return Err(RuntimeError::Unexpected("A child returning running should not trigger a flow node halt decision.".to_string()));
+                                        }
                                     }
                                 }
+                            }
+                            // Halting must be an atomic process, it is never spread over multiple ticks so should never be seen in this flow.
+                            RNodeState::Halting(_) => {
+                                return Err(RuntimeError::Unexpected("A child returning running should not trigger a flow node halt decision.".to_string()));
                             }
                             // child is finished, thus the node needs to make a decision how to proceed.
                             // this stage just updates the status and depending on the status,
                             // the flow goes further or stays on the node but on the next loop of while.
                             s @ (RNodeState::Failure(_) | RNodeState::Success(_)) => {
-                                debug!(target:"flow[run]", "tick:{}, {tpe}. The '{child}' is finished, decide go up or stay here.",ctx.curr_ts());
+                                debug!(target:"flow[run]", "tick:{}, {tpe}. The '{child}' is finished, decide to go up or stay here.",ctx.curr_ts());
                                 let decision = flow::finalize(
                                     tpe,
-                                    args.clone(),
+                                    init_args.clone(),
                                     tick_args.clone(),
                                     s.clone().try_into()?,
                                     &mut ctx,
@@ -248,11 +260,34 @@ impl Forester {
                                         ctx.pop()?;
                                     }
                                     FlowDecision::Stay(ns) => {
-                                        debug!(target:"flow[run]", "tick:{}, {tpe}. The '{}' is finished as {}, the new state: {} ",ctx.curr_ts(),child,s, &ns);
+                                        debug!(target:"flow[run]", "tick:{}, {tpe}. The '{}' is finished as {}, the new state: {}. Stay at this node. ",ctx.curr_ts(),child,s, &ns);
                                         ctx.new_state(id, ns)?;
+                                    }
+                                    FlowDecision::Halt(new_state, halting_child_cursor) => {
+                                        // Normally we would fall through to Failure or Success next tick (e.g. Stay decision), but we need to pass control to the child so it can halt properly.
+                                        // The current node can continue as normal once the child is halted.
+                                        ctx.new_state(id, new_state.clone())?;
+                                        // Force the state of the child to be halting, so it will interrupt itself on the next tick.
+                                        let halting_child_id = children[halting_child_cursor];
+                                        debug!(target:"flow[run]", "tick:{}, {tpe}. The '{}' is finished as {}, the new state: {}. Halting child '{}'. ",ctx.curr_ts(),child,s, &new_state, &halting_child_id);
+                                        ctx.force_to_halting_state(halting_child_id)?;
+                                        ctx.push(halting_child_id)?;
                                     }
                                 }
                             }
+                        }
+                    }
+                    // The node's parent has commanded us to halt.
+                    RNodeState::Halting(tick_args) => {
+                        debug!(target:"flow[halt]", "tick:{}, {tpe}. Checking for running children to halt.",ctx.curr_ts());
+                        let (new_state, halting_child_cursor) = flow::halt(tpe, tick_args.clone());
+                        // Halting is a one-way process, pop ourselves then push any halting children.
+                        ctx.new_state(id, new_state)?;
+                        ctx.pop()?;
+                        if let Some(halting_child_cursor) = halting_child_cursor {
+                            let halting_child_id = children[halting_child_cursor];
+                            ctx.force_to_halting_state(halting_child_id)?;
+                            ctx.push(halting_child_id)?;
                         }
                     }
                     // the node is finished. pass the control further or if it is root,
@@ -303,6 +338,13 @@ impl Forester {
                             ctx.new_state(id, new_state)?;
                             ctx.pop()?;
                         }
+                        // Halting must be an atomic process, it is never spread over multiple ticks so should never be seen in this flow.
+                        RNodeState::Halting(_) => {
+                            return Err(RuntimeError::Unexpected(
+                                "A decorator node child should never return a state of Halting."
+                                    .to_string(),
+                            ));
+                        }
                         // child is finished, thus the node needs to make a decision how to proceed.
                         // this stage just updates the status and depending on the status,
                         // the flow goes further or stays on the node but on the next loop of while.
@@ -320,6 +362,16 @@ impl Forester {
                             ctx.pop()?;
                         }
                     },
+                    // The node's parent has commanded us to halt.
+                    // The only resetting a decorator needs to do is trigger a prepare next time it's ticked and halt its child.
+                    RNodeState::Halting(_) => {
+                        debug!(target:"decorator[halt]", "tick:{}, {tpe}. Halting child.",ctx.curr_ts());
+                        // Halting is a one-way process, pop ourselves then halt and push the child.
+                        ctx.new_state(id, RNodeState::Ready(ctx.state_last_set(&id).args()))?;
+                        ctx.pop()?;
+                        ctx.force_to_halting_state(*child)?;
+                        ctx.push(*child)?;
+                    }
                     // the node is finished. pass the control further or if it is root,
                     // finish the whole procedure
                     RNodeState::Success(_) | RNodeState::Failure(_) => {
@@ -328,23 +380,38 @@ impl Forester {
                     }
                 },
                 // The leaf nodes process atomically.
-                RNode::Leaf(f_name, args) => {
-                    debug!(target:"leaf","args :{:?}",args);
-                    if ctx.state_in_ts(&id).is_ready() {
+                RNode::Leaf(f_name, args) => match ctx.state_last_set(&id) {
+                    RNodeState::Halting(tick_args) => {
+                        debug!(target:"leaf[halt]", "tick:{}, args :{:?}",ctx.curr_ts(), args);
                         let ctx_ref = TreeContextRef::from_ctx(&ctx, self.trimmer.clone());
-                        let res = recover(self.keeper.on_tick(
+                        self.keeper.halt(
                             self.env.clone(),
                             f_name.name()?,
                             args.clone(),
                             ctx_ref,
                             &self.serv,
-                        ))?;
-                        let new_state = RNodeState::from(args.clone(), res);
-                        debug!(target:"leaf", "tick:{}, the new state: {}",ctx.curr_ts(),&new_state);
-                        ctx.new_state(id, new_state)?;
+                        )?;
+                        ctx.new_state(id, RNodeState::Ready(tick_args))?;
+                        ctx.pop()?;
                     }
-                    ctx.pop()?;
-                }
+                    _ => {
+                        debug!(target:"leaf[run]","tick:{}, args :{:?}",ctx.curr_ts(), args);
+                        if ctx.state_in_ts(&id).is_ready() {
+                            let ctx_ref = TreeContextRef::from_ctx(&ctx, self.trimmer.clone());
+                            let res = recover(self.keeper.on_tick(
+                                self.env.clone(),
+                                f_name.name()?,
+                                args.clone(),
+                                ctx_ref,
+                                &self.serv,
+                            ))?;
+                            let new_state = RNodeState::from(args.clone(), res);
+                            debug!(target:"leaf", "tick:{}, the new state: {}",ctx.curr_ts(),&new_state);
+                            ctx.new_state(id, new_state)?;
+                        }
+                        ctx.pop()?;
+                    }
+                },
             }
         }
         // clean up the tree

@@ -1,0 +1,15 @@
+import "std::actions"
+impl incr(key:string,default:num);
+
+// We're testing that sequence will restart from the first child after a halt interrupts a running child.
+// This also tests that the halt is propagated to the sequences's running child.
+root main retry(2) r_sequence{
+    store_tick("tick")
+    inverter equal(tick, 3)
+
+    sequence {
+        incr("x",0)
+        // Repeat is used to force incr to return RUNNING the first time.
+        repeat(5) incr("y",0)
+    }
+}

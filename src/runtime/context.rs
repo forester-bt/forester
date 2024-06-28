@@ -1,7 +1,7 @@
 use crate::runtime::action::Tick;
 use crate::runtime::args::{RtArgs, RtValue};
 use crate::runtime::blackboard::{BBRef, BlackBoard};
-use crate::runtime::env::{RtEnvRef};
+use crate::runtime::env::RtEnvRef;
 use crate::runtime::forester::flow::REASON;
 use crate::runtime::rtree::rnode::RNodeId;
 use crate::runtime::trimmer::{TrimmingQueue, TrimmingQueueRef};
@@ -12,6 +12,8 @@ use std::collections::{HashMap, VecDeque};
 use std::fmt::{Display, Formatter};
 use std::sync::Arc;
 use std::sync::Mutex;
+
+use super::rtree::rnode::RNode;
 
 pub type Timestamp = usize;
 pub type TracerRef = Arc<Mutex<Tracer>>;
@@ -212,6 +214,17 @@ impl TreeContext {
         }
     }
 
+    pub(crate) fn force_to_halting_state(&mut self, id: RNodeId) -> RtResult<Option<RNodeState>> {
+        self.ts_map.insert(id, self.curr_ts);
+        let new_state = RNodeState::Halting(self.state_last_set(&id).args());
+
+        // Trace the state change with an extra indent
+        self.tracer.lock()?.right();
+        self.trace(NewState(id, new_state.clone()))?;
+        self.tracer.lock()?.left();
+
+        Ok(self.state.insert(id, new_state))
+    }
     pub(crate) fn new_state(
         &mut self,
         id: RNodeId,
@@ -245,6 +258,7 @@ pub enum RNodeState {
     Running(RtArgs),
     Success(RtArgs),
     Failure(RtArgs),
+    Halting(RtArgs),
 }
 
 impl Display for RNodeState {
@@ -261,6 +275,9 @@ impl Display for RNodeState {
             }
             RNodeState::Failure(args) => {
                 f.write_str(format!("Failure({})", args).as_str())?;
+            }
+            RNodeState::Halting(args) => {
+                f.write_str(format!("Halting({})", args).as_str())?;
             }
         }
         Ok(())
@@ -280,7 +297,7 @@ impl RNodeState {
             RNodeState::Ready(_) => Err(RuntimeError::uex(
                 "the ready is the unexpected state for ".to_string(),
             )),
-            RNodeState::Running(_) => Ok(TickResult::running()),
+            RNodeState::Running(_) | RNodeState::Halting(_) => Ok(TickResult::running()),
             RNodeState::Success(_) => Ok(TickResult::success()),
             RNodeState::Failure(args) => {
                 let reason = args
@@ -308,7 +325,8 @@ impl RNodeState {
             RNodeState::Ready(tick_args)
             | RNodeState::Running(tick_args)
             | RNodeState::Failure(tick_args)
-            | RNodeState::Success(tick_args) => tick_args.clone(),
+            | RNodeState::Success(tick_args)
+            | RNodeState::Halting(tick_args) => tick_args.clone(),
         }
     }
 }
