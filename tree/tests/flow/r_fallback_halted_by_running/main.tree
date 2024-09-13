@@ -1,0 +1,15 @@
+import "std::actions"
+impl incr(key:string,default:num);
+
+// We're testing a reactively-checked child returning running will halt any other running children.
+// If a running child does halt other running children, repeat(5) will be reset and b will be incremented a total of 9 times. If no halt is called, b will only be incremented 5 times.
+root main repeat(2) sequence {
+    r_fallback {
+        sequence {
+            incr("a",0)
+            equal(a,5)
+            repeat(2) success()
+        }
+        repeat(5) incr("b",0)
+    }
+}

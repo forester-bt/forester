@@ -230,15 +230,27 @@ impl Forester {
                                             debug!(target:"flow[run]", "tick:{}, {tpe}. stay with the new state: {}",ctx.curr_ts(),&ns);
                                             ctx.new_state(id, ns)?;
                                         }
-                                        FlowDecision::Halt(..) => {
-                                            return Err(RuntimeError::Unexpected("A child returning running should not trigger a flow node halt decision.".to_string()));
+                                        FlowDecision::Halt(new_state, halting_child_cursor) => {
+                                            // A reactively-checked child returning running will halt any other running child.
+                                            // Pop ourselves then halt the previously running child.
+                                            let halting_child_id = children[halting_child_cursor];
+                                            debug!(target:"flow[run]", "tick:{}, {tpe}. Reactively checked child '{child}' has returned running. Halting previously running child '{halting_child_id}', then go up with new state: {}.", ctx.curr_ts(), new_state);
+
+                                            ctx.new_state(id, new_state)?;
+                                            ctx.pop()?;
+
+                                            ctx.force_to_halting_state(halting_child_id)?;
+                                            ctx.push(halting_child_id)?;
                                         }
                                     }
                                 }
                             }
                             // Halting must be an atomic process, it is never spread over multiple ticks so should never be seen in this flow.
                             RNodeState::Halting(_) => {
-                                return Err(RuntimeError::Unexpected("A child returning running should not trigger a flow node halt decision.".to_string()));
+                                return Err(RuntimeError::Unexpected(
+                                    "A flow node child should never return a state of Halting."
+                                        .to_string(),
+                                ));
                             }
                             // child is finished, thus the node needs to make a decision how to proceed.
                             // this stage just updates the status and depending on the status,
