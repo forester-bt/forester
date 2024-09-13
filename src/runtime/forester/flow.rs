@@ -298,10 +298,29 @@ pub fn monitor(
 ) -> RtResult<FlowDecision> {
     match tpe {
         FlowType::RSequence | FlowType::RFallback => {
-            let cursor = read_cursor(tick_args.clone())?;
-            Ok(PopNode(RNodeState::Running(
-                tick_args.with(RUNNING_CHILD, RtValue::int(cursor)),
-            )))
+            // RSequence and RFallback don't use P_CURSOR
+            // let's get the cursor manually so P_CURSOR doesn't accidentially poison our result.
+            let cursor = tick_args
+                .find(CURSOR.to_string())
+                .and_then(RtValue::as_int)
+                .unwrap_or(0);
+            let previous_running_child = tick_args
+                .find(RUNNING_CHILD.to_string())
+                .and_then(RtValue::as_int);
+
+            let new_state =
+                RNodeState::Running(tick_args.with(RUNNING_CHILD, RtValue::int(cursor)));
+
+            // Check there isn't another child already being tracked by the RUNNING_CHILD key.
+            // If there is we'll need to halt that before going any further.
+            if let Some(prev_running_child_cursor) = previous_running_child {
+                if prev_running_child_cursor > cursor {
+                    return Ok(Halt(new_state, prev_running_child_cursor as usize));
+                }
+            }
+
+            // There was no other previously running child, continue as normal
+            Ok(PopNode(new_state))
         }
         FlowType::Sequence | FlowType::MSequence | FlowType::Fallback => {
             let cursor = read_cursor(tick_args.clone())?;

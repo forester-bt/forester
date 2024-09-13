@@ -98,6 +98,8 @@ root main {
 The node `perform_action` returns `running` and the whole sequence returns `running`
 but on the next tick it starts from the node `store` again.
 
-`r_sequence` will halt the `running` child to allow a graceful shutdown if a prior child changes from `success` to `failure`. In the above example, if `store` returned `failure` on the second tick then `perform_action` would be halted before `r_sequence` returned `failure` itself.
+`r_sequence` will halt the `running` child to allow a graceful shutdown if a prior child changes from `success` to `failure` or `running`. In the above example, if `store` returned `failure` on the second tick then `perform_action` would be halted before `r_sequence` returned `failure` itself.
+
+If `store` returned `running` on the second tick then `perform_action` would also be halted, before potentially being restarted if `store` then returned `success` again. Limiting the `r_sequence` node to a single `running` child avoids undefined behaviour in nodes that assume they are being run synchronously.
 
 Halting must be performed as quickly as possible. Note that currently only build-in flow, built-in decorator and sync action nodes are halted, async and remote actions are not.

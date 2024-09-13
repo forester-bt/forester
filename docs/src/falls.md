@@ -76,6 +76,8 @@ root main {
 The node `action` returns `running` and the whole sequence returns `running`
 but on the next tick it starts from the node `needs_to_charge` again.
 
-`r_fallback` will halt the `running` child to allow a graceful shutdown if a prior child changes from `failure` to `success`. In the above example, if `needs_to_change` returned `success` on the second tick then `action` would be halted before `r_fallback` returned `success` itself.
+`r_fallback` will halt the `running` child to allow a graceful shutdown if a prior child changes from `failure` to `success` or `running`. In the above example, if `needs_to_change` returned `success` on the second tick then `action` would be halted before `r_fallback` returned `success` itself.
+
+If `needs_to_charge` returned `running` on the second tick then `action` would also be halted, before potentially being restarted if `needs_to_charge` then returned `failure` again. Limiting the `r_fallback` node to a single `running` child avoids undefined behaviour in nodes that assume they are being run synchronously.
 
 Halting must be performed as quickly as possible. Note that currently only build-in flow, built-in decorator and sync action nodes are halted, async and remote actions are not.

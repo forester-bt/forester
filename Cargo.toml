@@ -4,7 +4,7 @@ description = "Workflow framework based on the behavior trees"
 authors = ["BorisZhguchev <zhguchev@hotmail.com>"]
 homepage = "https://github.com/besok/forester"
 repository = "https://github.com/besok/forester"
-version = "0.4.0"
+version = "0.4.1"
 edition = "2021"
 license-file = "LICENSE"
 

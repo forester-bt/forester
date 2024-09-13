@@ -323,6 +323,44 @@ fn r_sequence_halt_on_interrupt() {
 }
 
 #[test]
+fn r_sequence_halted_by_running() {
+    // See comment in the tree file for what this is testing.
+    let mut fb = fb("flow/r_sequence_halted_by_running");
+
+    fb.register_sync_action(
+        "incr",
+        GenerateData::new(|v| RtValue::int(v.as_int().unwrap_or(0) + 1)),
+    );
+
+    let mut f = fb.build().unwrap();
+    assert_eq!(f.run(), Ok(TickResult::success()));
+
+    let a =
+        f.bb.lock()
+            .unwrap()
+            .get("a".to_string())
+            .ok()
+            .flatten()
+            .unwrap()
+            .clone()
+            .as_int()
+            .unwrap();
+    assert_eq!(a, 10);
+
+    let b =
+        f.bb.lock()
+            .unwrap()
+            .get("b".to_string())
+            .ok()
+            .flatten()
+            .unwrap()
+            .clone()
+            .as_int()
+            .unwrap();
+    assert_eq!(b, 9);
+}
+
+#[test]
 fn fallback() {
     let mut fb = fb("flow/fallback");
 
@@ -487,6 +525,44 @@ fn r_fallback_halt_on_interrupt() {
             .as_int()
             .unwrap();
     assert_eq!(x, 7)
+}
+
+#[test]
+fn r_fallback_halted_by_running() {
+    // See comment in the tree file for what this is testing.
+    let mut fb = fb("flow/r_fallback_halted_by_running");
+
+    fb.register_sync_action(
+        "incr",
+        GenerateData::new(|v| RtValue::int(v.as_int().unwrap_or(0) + 1)),
+    );
+
+    let mut f = fb.build().unwrap();
+    assert_eq!(f.run(), Ok(TickResult::success()));
+
+    let a =
+        f.bb.lock()
+            .unwrap()
+            .get("a".to_string())
+            .ok()
+            .flatten()
+            .unwrap()
+            .clone()
+            .as_int()
+            .unwrap();
+    assert_eq!(a, 10);
+
+    let b =
+        f.bb.lock()
+            .unwrap()
+            .get("b".to_string())
+            .ok()
+            .flatten()
+            .unwrap()
+            .clone()
+            .as_int()
+            .unwrap();
+    assert_eq!(b, 9);
 }
 
 #[test]
