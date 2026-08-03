@@ -1,76 +1,90 @@
-# Engine
+# Engine Internals
 
-The runtime engine of the framework is `Forester`.
-It encompasses several components:
-- Blackboard
-- ActionKeeper
-- Runtime Env
-- Tracer
+The `Forester` engine is the central execution runtime. It drives the tick loop, manages node state, dispatches actions, and coordinates the Blackboard, ActionKeeper, and optional tracer.
 
+---
 
-## Example
+## Internal Components
 
-```rust
- use std::path::PathBuf;
- use forester::tracer::Tracer;
- use forester::runtime::builder::ForesterBuilder;
- use forester::runtime::action::Action;
- use forester::runtime::action::builtin::data::StoreData;
- use forester_rs::runtime::action::Action;
- use forester_rs::runtime::action::builtin::data::StoreData;
- use forester_rs::runtime::builder::ForesterBuilder;
- use forester_rs::tracer::Tracer;
- fn test(root:PathBuf){
-     let mut root = PathBuf::new();
+| Component | Description |
+|---|---|
+| **Engine Core** | Manages the tree node graph, drives the tick loop, and handles state transitions (`Running`, `Success`, `Failure`). |
+| **Blackboard** | In-memory shared key-value store for passing state between nodes. |
+| **ActionKeeper** | Registry mapping `impl` action names to Rust handlers or remote action clients. |
+| **Tracer** | Optional execution logger that records tick-by-tick node evaluations for debugging and replay. |
 
-     let mut fb = ForesterBuilder::new();
-     fb.main_file("main.tree".to_string());
-     fb.root(root);
-     fb.register_action("store", Action::sync(StoreData));
-     
-     fb.tracer(Tracer::default());
-     fb.bb_load("db/db.json".to_string());
-     let forester = fb.build().unwrap();
-     
-     forester.run(); //  forester.run_until( Some(100));
- }
+---
 
-```
+## Tick Loop
 
-## Tick limitation
+On each tick, the engine traverses the tree from the root node down, evaluating each node according to its type (sequence, fallback, parallel, decorator, or action). The tick loop continues until the root node returns `Success` or `Failure`.
 
-`Forester` allows limiting how many ticks will be done by running `run_with(Some(number))`
+### Bounded Execution
 
-## Runtime environment
-The framework uses `tokio` as a platform to orchestrate threads and parallelize the job.
-By default, it creates its own tokio runtime env. 
-Nevertheless, if there is existing env, it can be provided in `ForesterBuilder` 
-
-## Http Server
-
-The server provides an option to set up the http server to interact with the tree. 
-The server exposes the access to the blackboard and the tracer.
-
-To turn on the server, it is required to provide the port number in the `ForesterBuilder`.
-*When the forester finishes the execution of the tree, the server will be shut down.*
+To prevent infinite loops and enable time-boxed execution (useful for simulation or testing), the tick count can be capped:
 
 ```rust
- fn serv(fb:ForesterBuilder){
-     fb.http_serv(10000); // the port then will be sent to the remote actions as well
- }
+// Run for a maximum of 100 ticks
+forester.run_until(Some(100)).unwrap();
+
+// Run until the root returns Success or Failure (unbounded)
+forester.run().unwrap();
 ```
 
-## The API
+---
 
-The server exposes the following endpoints:
+## Runtime Environment
 
-- `GET /tracer/print` - print the tracer
-- `POST /tracer/custom` - add a custom message to the tracer. It accepts the json body with `CustomEvent`
-- `GET /bb/:key/lock` - lock the key
-- `GET /bb/:key/unlock` - unlock the key
-- `GET /bb/:key/locked` - check if the key is locked
-- `GET /bb/:key/contains` - check if the key is in the bb
-- `GET /bb/:key/take` - take the key from the bb
-- `POST /bb/:key` - put the key to the bb. It accepts the json body from `RtValue`
-- `GET /bb/:key` - get the key from the bb
-- `GET /` - health check. Returns 'Ok'
+The engine uses [Tokio](https://tokio.rs/) as its async runtime to schedule and parallelize async action execution.
+
+By default, the engine creates its own Tokio runtime. If the engine is embedded in an application that already has a Tokio runtime, it can be provided via `ForesterBuilder`:
+
+```rust
+use forester_rs::runtime::builder::ForesterBuilder;
+use forester_rs::tracer::Tracer;
+use forester_rs::runtime::action::Action;
+use forester_rs::runtime::action::builtin::data::StoreData;
+
+fn main() {
+    let mut fb = ForesterBuilder::from_file_system();
+    fb.main_file("main.tree".to_string());
+    fb.register_action("store", Action::sync(StoreData));
+    fb.tracer(Tracer::default());
+    fb.bb_load("db/initial_state.json".to_string());
+
+    let mut forester = fb.build().unwrap();
+
+    // Unbounded run
+    let result = forester.run().unwrap();
+    println!("Result: {:?}", result);
+}
+```
+
+---
+
+## Built-In HTTP Server
+
+The engine optionally exposes an HTTP server during tree execution. This enables external processes — including remote action servers and monitoring tools — to interact with the Blackboard and tracer at runtime.
+
+Enable it by specifying a port in `ForesterBuilder`:
+
+```rust
+fb.http_serv(10000);
+```
+
+> **Note**: The HTTP server shuts down automatically when the root tree finishes execution.
+
+### HTTP API Endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/` | Health check. Returns `Ok`. |
+| `GET` | `/tracer/print` | Prints current tracer output. |
+| `POST` | `/tracer/custom` | Appends a custom event to the tracer log (body: `CustomEvent` JSON). |
+| `GET` | `/bb/:key` | Reads value at `key` from the Blackboard. |
+| `POST` | `/bb/:key` | Writes a value to `key` in the Blackboard (body: `RtValue` JSON). |
+| `GET` | `/bb/:key/take` | Reads and removes `key` from the Blackboard. |
+| `GET` | `/bb/:key/lock` | Locks `key` to prevent concurrent writes. |
+| `GET` | `/bb/:key/unlock` | Unlocks `key`. |
+| `GET` | `/bb/:key/locked` | Returns whether `key` is currently locked. |
+| `GET` | `/bb/:key/contains` | Returns whether `key` exists in the Blackboard. |

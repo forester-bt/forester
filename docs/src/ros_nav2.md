@@ -1,58 +1,64 @@
 # Export to ROS Nav2
-[ROS](https://www.ros.org/) in general and [ROS Nav2](https://navigation.ros.org/) in particular are very popular in robotics.
-They take care of many aspects of robot control, including navigation, localization, mapping, and more.
 
-Forester provides a way to export a tree to ROS Nav2.
-The intermediate format is [Nav2](https://navigation.ros.org/behavior_trees/index.html#) XML format.
+[ROS](https://www.ros.org/) in general and [ROS Nav2](https://navigation.ros.org/) in particular are highly popular in robotics. They manage critical aspects of robot control, including navigation, localization, mapping, and more.
 
-The transformation format for now is pretty straightforward.
+Forester provides native support for exporting a tree directly to ROS Nav2. The intermediate format is the [Nav2 XML format](https://navigation.ros.org/behavior_trees/index.html#).
 
-## Control nodes
-The control nodes are mapped to the nav2 control nodes directly:
- - `PipelineSequence` to `sequence`
- - `RoundRobin` to `fallback`
- - `ReactiveFallback` to `r_fallback`
+The transformation process is straightforward.
 
-If the control node has a name, it is used as the name of the control node in the nav2 tree.
+## Control Nodes
 
-```
-sequence FollowPathWithFallback{
-    .. 
+Forester control nodes map directly to Nav2 control nodes:
+- `sequence` becomes `PipelineSequence`
+- `fallback` becomes `RoundRobin`
+- `r_fallback` becomes `ReactiveFallback`
+
+If a Forester control node is explicitly named, that name is applied to the resulting Nav2 XML element.
+
+For example:
+```forester
+sequence FollowPathWithFallback {
+    // ... 
 }
 ```
-will become 
+Becomes:
 ```xml
 <PipelineSequence name="FollowPathWithFallback">
 </PipelineSequence>
 ```
 
 ## Actions
-The actions can be mapped straightforwardly to the nav2 actions.
 
-Every action can implicitly take a `name` parameter, which is used as the name of the action in the nav2 tree. 
-But the name parameter can be omitted also.
+Forester actions map directly to Nav2 actions.
 
-Some of the actions take the subtree as a parameter. The parameter has a name `sub`
+Every action accepts an implicit `name` parameter, which dictates the name of the action in the Nav2 tree. This parameter is optional and can be omitted.
+
+For actions that take a subtree as a parameter (like decorators), the parameter must be named `sub`.
 
 ### Retry
-Retry is represented in two options:
- - `Retry` - the number of retries is specified  without a name like `retry(3)`
- - `RecoveryNode` - the number of retries is specified with the default way like `RecoveryNode(number_of_retries = 3)`. 
-This becomes only way to convey the name of the node.
 
-```f-tree
+Retry logic can be represented in two ways, depending on whether you need to name the node in Nav2:
+
+- **The `retry` decorator:** The number of retries is specified compactly (e.g., `retry(3)`), but you cannot assign a name to the node.
+- **The `RecoveryNode` action:** The number of retries is passed as an argument. This is the only way to explicitly assign a `name` parameter to the retry node.
+
+```forester
+    // Allows you to convey the name to Nav2
     RecoveryNode(
-            number_of_retries = 1,
-            name = "ComputePathToPose", // it allows to convey the name
-            sub = ComputePathWithFallback()
-        )
-    retry(1) ComputePathWithFallback() // it is not possible to convey the name
+        number_of_retries = 1,
+        name = "ComputePathToPose", 
+        sub = ComputePathWithFallback()
+    )
     
-    // but everything else is the same    
+    // Cannot convey a name to Nav2
+    retry(1) ComputePathWithFallback() 
+    
+    // Everything else functions exactly the same
 ```
 
 ## Example
 
+**Forester Tree:**
 ```f-tree
 import "ros::nav2"
 
@@ -69,13 +75,14 @@ sequence NavigateWithReplanning {
     )
     retry(1) FollowPathWithFallback()
 }
-sequence ComputePathWithFallback{
-    ComputePathToPose(goal = goal,path = path,planner_id = "GridBased")
+
+sequence ComputePathWithFallback {
+    ComputePathToPose(goal = goal, path = path, planner_id = "GridBased")
     ComputePathToPoseRecoveryFallback()
 }
 
-sequence FollowPathWithFallback{
-    FollowPath(path = path,controller_id = "FollowPath")
+sequence FollowPathWithFallback {
+    FollowPath(path = path, controller_id = "FollowPath")
     FollowPathRecoveryFallback()
 }
 
@@ -83,21 +90,21 @@ r_fallback ComputePathToPoseRecoveryFallback {
     GoalUpdated()
     ClearEntireCostmap(name = "ClearGlobalCostmap-Context", service_name = "global_costmap/clear_entirely_global_costmap")
 }
+
 r_fallback FollowPathRecoveryFallback {
     GoalUpdated()
     ClearEntireCostmap(name = "ClearLocalCostmap-Context", service_name = "local_costmap/clear_entirely_local_costmap")
 }
 ```
 
-will be transformed into
-
+**Transformed Nav2 XML:**
 ```xml
 <root main_tree_to_execute="MainTree">
   <BehaviorTree ID="MainTree">
-    <RecoveryNode number_of_retries="6" name="NavigateRecovery">
+    <RecoveryNode name="NavigateRecovery" number_of_retries="6">
       <PipelineSequence name="NavigateWithReplanning">
         <RateController hz="1">
-          <RecoveryNode number_of_retries="1" name="ComputePathToPose">
+          <RecoveryNode name="ComputePathToPose" number_of_retries="1">
             <RecoveryNode number_of_retries="1">
               <PipelineSequence name="ComputePathWithFallback">
                 <ComputePathToPose goal="{goal}" path="{path}" planner_id="GridBased"/>
@@ -111,7 +118,7 @@ will be transformed into
         </RateController>
         <RecoveryNode number_of_retries="1">
           <PipelineSequence name="FollowPathWithFallback">
-            <FollowPath path="{path}" controller_id="FollowPath"/>
+            <FollowPath controller_id="FollowPath" path="{path}"/>
             <ReactiveFallback name="FollowPathRecoveryFallback">
               <GoalUpdated/>
               <ClearEntireCostmap name="ClearLocalCostmap-Context" service_name="local_costmap/clear_entirely_local_costmap"/>
@@ -126,33 +133,29 @@ will be transformed into
 
 ## Tools
 
-The changes arrived in the latest version of f-tree, therefore better to update f-tree
+Ensure you are running the latest version of the CLI to use these features:
 ```shell
 cargo install f-tree 
 ```
 
 ### Headers
-To have headers for nav2 actions, you need to import the `ros::nav2` module in your project.
-To see the content of the file, run
+To use Nav2 actions with the correct signatures, you must import the `ros::nav2` module in your Forester project.
 
+To view the contents and available actions in this file, run:
 ```shell 
 f-tree -d print-ros-nav2
 ```
 
-### Export from console
-
-To export the tree from the console, run
-
+### Exporting via the Console
+To export the tree from the command line, run:
 ```shell
-f-tree.exe nav2 
+f-tree nav2 
 ```
 
-### Export from Intellij plugin
+### Exporting via the IntelliJ Plugin
+Run the task `Export to ROS Nav2` directly within your IDE.
 
-Run the task `Export to ROS Nav2`
-
-### Export from code
-
+### Exporting via Code
 ```rust
 #[test]
 fn smoke() {
@@ -160,9 +163,11 @@ fn smoke() {
 
     let project = Project::build("main.tree".to_string(), root_path.clone()).unwrap();
     let tree = RuntimeTree::build(project).unwrap().tree;
-    fb.push("test.xml");
-    
-    tree.to_ros_nav(root_path.clone()).unwrap();
 
+    // Define the output file
+    root_path.push("test.xml");
+
+    // Export the tree
+    tree.to_ros_nav(root_path).unwrap();
 }
 ```

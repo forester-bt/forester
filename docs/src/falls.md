@@ -1,83 +1,88 @@
-# Fallback
+# Fallback (Selector) Nodes
 
-A Fallback ticks children sequentially until someone returns a `Success`.
-Otherwise, if all children return `Failure`, the node returns `Failure`.
+A **Fallback** (also known as a Selector) node executes its child nodes in order from left to right until one child returns `Success`. If all children return `Failure`, the Fallback node returns `Failure`.
 
-In the language, the tree definitions and lambda invocations of this element are marked with the key word `fallback`.
+In the Forester DSL, fallback nodes are declared using the `fallback` keyword (or its reactive variant `r_fallback`).
+
+---
+
+## Standard Fallback (`fallback`)
+
+### Execution Flow & Rules
+1. **Initial Tick**: Starts at the first child node.
+2. **Child Failure**: Moves to the next child. If the last child fails, the fallback returns `Failure`.
+3. **Child Success**: Immediately short-circuits remaining children and returns `Success`.
+4. **Child Running**: Halts evaluation and returns `Running`. On the next tick, execution resumes at the running child.
+5. **Reset / Halt**: If restarted or aborted, evaluation resets back to the first child.
+
+### Precondition Check Pattern
+
+Fallbacks are commonly used to enforce preconditions before running an action (i.e. `[Precondition OR Action]`):
 
 ```f-tree
-cond is_busy()
-impl take_from_others()
-
-root main  {
-    fallback {
-        any_tasks() // goes farther if the first actions is failure
-        do_it()
-    }
-}
-```
-
-## Common behavior
-- When it gets the first `tick` it switches to state `running`
-- When a child returns `success` it stops the execution and returns `success`
-- If a child returns `running`, the node returns `running` as well
-- If a child returns `failure`, the node proceeds to the next child
-    - if this is a final child, it returns `failure`
-- When a node is restarted or halted the process starts from the beginning
-
-## Intention
-Often, it is used for making conditions.
-The script below emulates a simple condition that needs to do before
-```f-tree
-cond can_take(sub:object)
-impl move_to(sub:object)
-impl take(sub:object)
+import "std::actions"
 
 root main sequence {
+    // If item is already held, skip move_to_item()
     fallback {
-        can_take(item)
-        move_to(item)
+        is_item_in_hand(item = "battery_pack")
+        move_to_item(item = "battery_pack")
     }
-    take(item)
+    
+    pickup_item(item = "battery_pack")
+}
 
-}
-```
-using a programming language, it could be the following:
-```rust
-fn main(item:String){
-    if !can_take(item) {
-        move_to(item)
-    }
-    take(item)
-}
+impl is_item_in_hand(item: string);
+impl move_to_item(item: string);
+impl pickup_item(item: string);
 ```
 
-# Subtypes
+### LLM Fallback Pattern (AI Agents)
 
-There is one subtype that brings a few subtleties to the common process
-
-
-## Reactive Fallback
-
-This Fallback defines in the language with the keyword `r_fallback` and has the following peculiarity:
-The fallback restarts all children on the next tick if someone returned `running`:
+Fallbacks provide a clean mechanism for multi-model LLM fallbacks without nested `try/except` blocks:
 
 ```f-tree
-...
-root main {
-    r_fallback {
-        needs_to_charge()    // returns failure
-        action()  // returns running
-        fin_and_save()
-    }
+root main fallback {
+    call_primary_llm({"model": "gpt-4o"})
+    call_fallback_llm({"model": "claude-3-5-sonnet"})
+    alert_human_operator({"reason": "All LLM APIs failed"})
 }
+
+impl call_primary_llm(config: object);
+impl call_fallback_llm(config: object);
+impl alert_human_operator(config: object);
 ```
 
-The node `action` returns `running` and the whole sequence returns `running`
-but on the next tick it starts from the node `needs_to_charge` again.
+### Flow Diagram
 
-`r_fallback` will halt the `running` child to allow a graceful shutdown if a prior child changes from `failure` to `success` or `running`. In the above example, if `needs_to_change` returned `success` on the second tick then `action` would be halted before `r_fallback` returned `success` itself.
+```mermaid
+graph TD
+    Root["root main"] --> Fall["fallback"]
+    Fall --> A["call_primary_llm"]
+    Fall --> B["call_fallback_llm"]
+    Fall --> C["alert_human_operator"]
+```
 
-If `needs_to_charge` returned `running` on the second tick then `action` would also be halted, before potentially being restarted if `needs_to_charge` then returned `failure` again. Limiting the `r_fallback` node to a single `running` child avoids undefined behaviour in nodes that assume they are being run synchronously.
+---
 
-Halting must be performed as quickly as possible. Note that currently only build-in flow, built-in decorator and sync action nodes are halted, async and remote actions are not.
+## Reactive Fallback (`r_fallback`)
+
+An `r_fallback` **re-evaluates all preceding children on every tick**, even while a lower child is currently `Running`.
+
+```f-tree
+root main r_fallback {
+    emergency_battery_low()    // Checked on EVERY tick
+    perform_long_task()        // Returns Running for multiple ticks
+    fallback_idle()
+}
+
+impl emergency_battery_low();
+impl perform_long_task();
+impl fallback_idle();
+```
+
+### Preemption Behavior
+If `perform_long_task()` is `Running` and `emergency_battery_low()` evaluates to `Success` on a subsequent tick:
+1. `r_fallback` immediately **halts** `perform_long_task()`.
+2. `r_fallback` executes `emergency_battery_low()` and returns `Success`.
+3. Lower nodes are safely preempted.

@@ -1,105 +1,79 @@
-# Sequence
+# Sequence Nodes
 
-A Sequence node ticks all underlying nodes as long as they return `Success`.
-Otherwise, when a child returns `failure` the sequence is aborted.
+A **Sequence** node executes its child nodes in order from left to right as long as each child returns `Success`. If any child returns `Failure` or `Running`, the sequence halts further evaluation and immediately propagates that status up the tree.
 
-In the language, the tree definitions and lambda invocations of this element are marked with the key word `sequence`.
+In the Forester DSL, sequence nodes are declared using the `sequence` keyword (or its memory/reactive variants `m_sequence` and `r_sequence`).
+
+---
+
+## Standard Sequence (`sequence`)
+
+### Execution Flow & Rules
+1. **Initial Tick**: Starts at the first child node.
+2. **Child Success**: Moves to the next child. If the last child succeeds, the sequence returns `Success`.
+3. **Child Running**: Halts evaluation and returns `Running`. On the next tick, execution resumes at the running child.
+4. **Child Failure**: Immediately aborts remaining children and returns `Failure`.
+5. **Reset / Halt**: If restarted or aborted, execution starts back from the first child.
+
+### Example
 
 ```f-tree
-impl store(key:string, value:string); // store a string value to a key in blackboard
+import "std::actions"
 
-root main {
-    sequence {
-        store("a","1") // first tick and proceed if succeeded
-        store("b","2") // sec tick and proceed if succeeded
-        store("c","3") // thrd tick and finish if succeeded
-    }
-}
-```
-
-with a graph representation
-
-```dot process
-strict digraph  {
-    1[label="root
-main ",shape=rect,color=black]
-    1 -> 2
-    2[label="sequence",shape=rect,color=darkred]
-    2 -> 3
-    2 -> 4
-    2 -> 5
-    3[label="store (key=a,default=1)",shape=component,color=green]
-    4[label="store (key=b,default=2)",shape=component,color=green]
-    5[label="store (key=c,default=3)",shape=component,color=green]
-}
-```
-
-## Common behaviour
-- When it gets the first `tick` it switches to state `running`
-- When a child returns `success` it proceeds to the next one and ticks it
-  - if this is a final child, it returns `success`
-- If a child returns `running`, the node returns `running` as well
-- If a child returns `failure`, the node returns `failure` as well
-- When a node is restarted or halted, the process starts from the beginning (see memory sequence for an exception)
-
-## Intention
-Often, it is used as a straight chain of instructions
-```f-tree
-// if the definition has only one child
-// (root has only one child) '{''}' can be omitted
 root main sequence {
-        validate_env()
-        perform_action()
-        finish_and_save()
+    store("key_a", "1")  // Tick 1: proceed if Success
+    store("key_b", "2")  // Tick 2: proceed if Success
+    store("key_c", "3")  // Tick 3: finish with Success
 }
 
+impl store(key: string, value: string);
 ```
 
-# Subtypes
+### Flow Diagram
 
-There are 2 subtypes that bring a few subtleties to the common process.
+```mermaid
+graph TD
+    Root["root main"] --> Seq["sequence"]
+    Seq --> A["store (key_a)"]
+    Seq --> B["store (key_b)"]
+    Seq --> C["store (key_c)"]
+```
 
-## Memory Sequence
+---
 
-This sequence defines in the language with the keyword `m_sequence` and has the following peculiarity:
-The sequence memorizes the children that have succeeded and skips them next time.
+## Sequence Variants
+
+Forester provides two specialized sequence variants for state persistence and real-time reactive control loops:
+
+### 1. Memory Sequence (`m_sequence`)
+
+An `m_sequence` **remembers** which child nodes have already succeeded. When re-ticked (e.g. after a decorator retry or on subsequent ticks), it skips previously succeeded children and resumes execution at the first non-successful child.
 
 ```f-tree
-root main {
+root main sequence {
     retry(5) m_sequence {
-        store("key",1)    // returns success
-        perform_action()  // returns failure
-        finish_and_save()
+        check_preconditions()  // Returns Success once
+        execute_task()         // Returns Failure -> retry triggers m_sequence
+        finish_and_cleanup()   // Execution resumes here without re-checking preconditions
     }
 }
 ```
 
-The node `perform_action` returns `failure` and the decorator `retry` restarts `sequence`.
-The main difference with a sequence is an execution starts from the node `perform_action` skipping the node `store`.
+* **Memory Reset**: Memory persists until the entire sequence finishes with `Success` or is explicitly reset.
 
-This memory persists even if the `m_sequence` is halted by a reactive flow node. The memory will only be reset once the final action has returned `success`.
-That is, if `finish_and_save` returns `success`, the next iteration will start with `store` again.
+---
 
-## Reactive Sequence
+### 2. Reactive Sequence (`r_sequence`)
 
-This sequence defines in the language with the keyword `r_sequence` and has the following peculiarity:
-The sequence restarts all children if they return either failure or running.
+An `r_sequence` **re-evaluates all preceding children on every tick**, even if they succeeded on prior ticks. This ensures that preconditions remain valid while long-running lower nodes execute.
 
 ```f-tree
-root main {
-    r_sequence {
-        store("key",1)    // returns success
-        perform_action()  // returns running
-        finish_and_save()
-    }
+root main r_sequence {
+    is_battery_ok()       // Re-checked on EVERY tick
+    navigate_to_target()  // Returns Running for multiple ticks
+    perform_docking()
 }
 ```
 
-The node `perform_action` returns `running` and the whole sequence returns `running`
-but on the next tick it starts from the node `store` again.
-
-`r_sequence` will halt the `running` child to allow a graceful shutdown if a prior child changes from `success` to `failure` or `running`. In the above example, if `store` returned `failure` on the second tick then `perform_action` would be halted before `r_sequence` returned `failure` itself.
-
-If `store` returned `running` on the second tick then `perform_action` would also be halted, before potentially being restarted if `store` then returned `success` again. Limiting the `r_sequence` node to a single `running` child avoids undefined behaviour in nodes that assume they are being run synchronously.
-
-Halting must be performed as quickly as possible. Note that currently only build-in flow, built-in decorator and sync action nodes are halted, async and remote actions are not.
+* **Preemption & Halting**: If `is_battery_ok()` changes from `Success` to `Failure` while `navigate_to_target()` is `Running`, the `r_sequence` immediately halts `navigate_to_target()` and returns `Failure`.
+* **Halting behavior**: Halting ensures graceful teardown of active synchronous and flow nodes before propagating state changes.

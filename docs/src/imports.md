@@ -1,64 +1,97 @@
-# Imports
+# Imports & Modularity
 
-The code of the trees can be organized as a project, breaking down the tree [definitions](./definitions.md) into different files.
-It enables the project to be organized logically avoiding redundancy. 
+Forester allows behavior tree definitions to be split across multiple files and organized into logical sub-modules. Imports make trees modular, reusable, and easy to maintain across large projects.
 
-Therefore, the imports can appear in the file anywhere but are mostly grouped at the top, forming a sort of header.
+Imports are typically declared at the top of `.tree` files.
 
-## Syntax
+---
 
-### The whole file
-To import the whole file, the following syntax needs to be applied:
+## 1. Import Syntax
+
+### Complete File Import
+Imports all tree definitions and action signatures from the target file:
+
 ```f-tree
-import "nested/impls.tree"
-import "/usr/home/projects/impls.tree"
-import "C:\projects\forester\tree\tests\plain_project\nested\impls.tree"
+import "std::actions"
+import "navigation/nav.tree"
+import "sensors/battery.tree"
 ```
-### The definition with alias
+
+### Selective Import with Aliasing
+Imports specific definitions from a file and renames them using aliases to prevent naming conflicts:
+
 ```f-tree
-import "nested/impls.tree" {
-    grasp => grasp_ball,
+import "robot_a/vision.tree" {
+    detect_object => detect_robot_a_object,
+}
+
+import "robot_b/vision.tree" {
+    detect_object => detect_robot_b_object,
 }
 ```
 
-## Import path
-The path of the imports can be:
- - absolute : `C:\plain_project\nested\impls.tree`
- - relative : `nested/impls.tree`
+---
 
-### Absolute path
- ```f-tree
- import "C:\projects\forester\tree\tests\plain_project\nested\impls.tree"
- ```
+## 2. Import Paths
 
-### Relative path
- The relative path relates to the root of the project, that is pointed out in the start.
- Typically, the structure is the following:
- ```file
- - project_folder
-    - main.tree // the file that has a root tree
-    - .. folders
-    - folder
-        - def.tree
-    - folder_nested
-        - another_nested
-            - file.tree    
+Forester supports three types of import paths:
+
+### Relative Paths (Recommended)
+Relative paths are evaluated relative to the project root directory:
+
+Given the project directory structure:
+```text
+my_project/
+├── main.tree
+└── modules/
+    └── navigation/
+        └── move.tree
 ```
-Here the import of the `file.tree` can be
-```
-import "folder_nested/another_nested/file.tree"
-```
-in any other file.
 
-## Aliases
-To avoid the problem of ambiguous names when several tree definitions with the same name can be imported,
-the aliases can come to the rescue.
+In `main.tree`, import `move.tree` using:
+```f-tree
+import "modules/navigation/move.tree"
+```
 
-They allow renaming tree definition while imports:
+### Standard Library Imports
+Built-in standard library actions and decorators can be imported using standard package specifiers:
 
 ```f-tree
-import "/robot_specific_ops/cv.tree" // has a tree def cv
-import "/common_ops/cv.tree" { // also has a tree def cv 
-    cv => com_cv // to avoid ambiguity, we can rename it using an alias.
+import "std::actions"
+```
+
+### Absolute Paths
+Absolute file paths can be used (primarily for global system modules):
+
+```f-tree
+import "/opt/forester/std/common.tree"
+```
+
+---
+
+## 3. Resolving Name Conflicts with Aliases
+
+When two separate `.tree` files define sub-trees with identical names, use alias mappings inside curly braces `{ }` to assign unique local names:
+
+```f-tree
+// Import 'check_status' from hardware module
+import "hardware/status.tree" {
+    check_status => check_hardware_status,
+}
+
+// Import 'check_status' from LLM agent module
+import "agent/status.tree" {
+    check_status => check_agent_status,
+}
+
+root main sequence {
+    check_hardware_status()
+    check_agent_status()
 }
 ```
+
+---
+
+## 4. Circular Import Handling
+
+The Forester compiler automatically detects and resolves circular dependency graphs during compilation, raising a clear static compilation error if unresolvable recursive imports occur.

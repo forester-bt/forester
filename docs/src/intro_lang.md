@@ -1,36 +1,45 @@
-# Tree language
+# Forester Tree Language (`.tree`)
 
-The tree language is a frontend for the framework itself.
-Generally, the language is a simple dsl encompassing the basic abstractions \
-and enabling to create of the building block upon the abstractions \
+The Forester Tree Language is a strongly-typed, functional domain-specific language (DSL) designed to describe behavior tree architecture cleanly without verbosity or repetition.
 
-### Why the language is needed
+Unlike traditional XML-based or JSON-based behavior tree formats, Forester treats behavior trees as **first-class, composable abstractions**.
 
-The basic idea behind the language is an attempt to provide a set of generalizations \
-which will alleviate the redundancy in some cases.
+---
 
-- The language allows creating the tree definitions accepting other trees as parameters (higher order trees)
-- The language provides lambda definitions
+## Why a Dedicated DSL?
 
-The syntax of the language is very simple and is described in this chapter.
+Standard behavior tree formats (such as XML trees used in ROS) often suffer from extreme duplication and verbosity. Forester's DSL solves this by introducing functional primitives:
 
-### Structure of the project
+* **Higher-Order Trees (HOT)**: Pass trees as parameters to other trees to create reusable patterns (e.g., generic retry loops, fallback wrappers, logging decorators).
+* **Strong Type System**: Built-in support for strings, numbers, booleans, arrays, objects, and subtrees, validated at compile time.
+* **Blackboard Pointers**: Pass live references to Blackboard memory into actions, allowing nodes to operate on dynamically updated state (essential for AI agent context).
+* **Lambdas**: Write inline, anonymous subtrees without declaring throwaway named definitions.
 
-The scripts are supposed to be in the folder which is marked as `root` directory.
-All imports start from the root and represent a path relating to the root directory:
+---
 
-```file
- - project_folder
-    - main.tree
-    - gripper.tree
-    - cv.tree
-    - utility
-        - utility.tree
-        - helpers.tree
+## Project Structure & File Conventions
+
+Forester projects consist of one or more `.tree` files organized within a root project directory:
+
+```text
+my_project/
+├── main.tree           # Entry point containing the root tree
+├── agent_tools.tree    # Custom actions and tool definitions
+├── navigation/
+│   ├── move.tree       # Sub-tree definitions
+│   └── recovery.tree   # Recovery patterns
 ```
 
-The project should have at least one `root` tree [definition](./definitions.md). If the project has several,
-the one that is supposed to run needs to be pointed out to.
+### Key Conventions
 
-### File extension
-The files have the extension `tree`.
+1. **File Extension**: All Forester source files use the `.tree` extension.
+2. **Root Entry Point**: A project must define at least one `root` node (e.g., `root main sequence { ... }`).
+3. **Module Imports**: Imports resolve relative to the root directory (e.g., `import "navigation::move"`).
+
+---
+
+## Language Roadmap & Tooling
+
+To ensure a seamless developer experience, Forester provides language tooling across popular editors:
+* **Syntax Highlighting & Linting**: Editor support for `.tree` files.
+* **Language Server Protocol (LSP)**: Autocompletion, inline type errors, and navigation support for VS Code, Neovim, and IntelliJ.

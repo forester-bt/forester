@@ -1,130 +1,128 @@
-# Trimming
+# Trimming (Live Tree Modification)
 
-The engine provides a simple way to change the runtime tree or other components on a fly during the execution.
+**Trimming** is Forester's mechanism for modifying a running behavior tree at runtime — replacing, removing, or substituting nodes in the live execution graph without stopping the engine.
 
-## The premises of trimming
+---
 
-Why do we need to have this process?
+## Use Cases
 
-### Performance/Optimization tasks
+### Performance & JIT Optimization
+Cache or fold static subtrees that have already completed, reducing redundant evaluation on subsequent ticks. Analogous to JIT compiler transformations in virtual machines.
 
-The execution can be optimized from the performance/memory point of view as JIT compilers act.
-Thus, it enables the transformation of the execution folding/caching of some nodes.
+### Adaptive Logic
+Dynamically swap decision branches based on runtime signals — Blackboard state, sensor readings, or LLM responses. Enables online reinforcement learning workflows where policy branches update as the tree runs.
 
-### Logical tasks
+### Research & Experimentation
+Replace specific nodes mid-execution to compare behavioral outcomes under the same environmental conditions without restarting the engine.
 
-When the execution needs to be changed according to some logical premises or incentives based on the runtime
-information (like a process of reinforcement learning)
+---
 
-### Research tasks
+## Core Components
 
-The possibility to perform research on how the process can be changed in case to compare the results in the same
-environment.
+### 1. `TrimTask`
 
-## The structure of Trimming
+A `TrimTask` encapsulates a single runtime modification. When registered with the engine, it is invoked on each tick with a snapshot of the current tree state. The task decides whether to apply, skip, or reject itself:
 
-The trimming consists of several simple components:
-
-### Trimming task
-A task that will be executed. 
-Typically, the task can decide whether it needs to be postponed, rejected or get to execute. 
-The implementation touches the different components like trimming of a runtime tree.
 ```rust
 pub enum TrimTask {
     RtTree(Box<dyn RtTreeTrimTask>),
 }
-
-impl TrimTask {
-    /// the main method to execute
-    pub fn process(&self, snapshot: TreeSnapshot<'_>) -> RtResult<TrimRequest> {..}
-}
 ```
 
-### TrimRequest
-A request to trim. Since, there are no guarantees of the specific order of the different tasks or even the moment of time (in terms of ticks) 
-when it will be executed (for instance, the nodes that this task tries to trim are running and therefore this task will be postponed), 
-the request has influence on the possible execution of itself. 
-
-The possible states:
-- Reject: The task can reject itself, when it finds out that, for instance, another task performed the same changed 
-or made the tree unsuitable for the current changes.
-- Skip: Skip the current tick. When the conditions are inappropriate. 
-For instance, the task waits for a specific data in bb or a particular tick or anything else.
-- Attempt: Attempt to trim
+Register a trim task before running the tree:
 
 ```rust
-#[derive(Debug)]
+forester.add_trim_task(TrimTask::rt_tree(MyTrimTask));
+forester.run_until(Some(100)).unwrap();
+```
+
+---
+
+### 2. `TrimRequest` — Task Decision States
+
+Each invocation of `RtTreeTrimTask::process()` returns a `TrimRequest` indicating how the engine should proceed:
+
+```rust
 pub enum TrimRequest {
-    Reject,
-    Skip,
-    Attempt(RequestBody),
+    Reject, // Permanently cancel this task (another task already made the change,
+            // or the tree is no longer a valid target)
+    Skip,   // Defer to the next tick (conditions not yet met)
+    Attempt(RequestBody), // Proceed with the modification
 }
 ```
 
-### RequestBody
-Just a structure that bears all changes of the request.
+| State | Description |
+|---|---|
+| **`Reject`** | Permanently cancels this task. Use when the modification is no longer valid or applicable. |
+| **`Skip`** | Defers the task to the next tick. Use when waiting for a specific Blackboard value, tick number, or tree state. |
+| **`Attempt(body)`** | Submits the modification for validation and application by the engine. |
 
-### Validations
+---
 
-Under the hood, the engine tries to validate a given request and ensure that the tree will not be corrupted.
-For now, it performs only the check if the nodes of the tree that are about to be replaced are not running.
+### 3. Validation
 
-## Constrains
+Before applying a `TrimRequest::Attempt`, the engine validates that the nodes targeted for replacement are **not currently in a `Running` state**. If they are, the attempt is automatically deferred.
 
-There is no way to foresee and guarantee the possible order or the possible moment when the trimming task will be executed, 
-or even will it be executed at all, therefore, better to pursue to create the task idempotent and validate the incoming state diligently.
+---
 
-## Example
+## Constraints & Best Practices
+
+> **No ordering guarantees**: There is no guarantee of the order in which multiple trim tasks execute, or the exact tick at which any task will be applied.
+
+- Design trim tasks to be **idempotent** — safe to apply multiple times without side effects.
+- Always **validate the incoming tree snapshot** inside `process()` before constructing the `RequestBody`.
+- Use `TrimRequest::Reject` when another task has already made the intended change.
+
+---
+
+## Example: Replace a Node After Tick 90
 
 ```rust
- use forester_rs::*;
- use forester_rs::runtime::forester::Forester;
- use forester_rs::runtime::rtree::builder::RtTreeBuilder;
- use forester_rs::runtime::RtResult;
- use forester_rs::runtime::trimmer::task::{RtTreeTrimTask, TrimTask};
- use forester_rs::runtime::trimmer::{RequestBody, TreeSnapshot, TrimRequest};
- use forester_rs::runtime::rtree::builder::RtNodeBuilder;
- use forester_rs::runtime::rtree::rnode::RNodeName;
- use forester_rs::runtime::args::RtArgs;
+use forester_rs::runtime::trimmer::task::{RtTreeTrimTask, TrimTask};
+use forester_rs::runtime::trimmer::{RequestBody, TreeSnapshot, TrimRequest};
+use forester_rs::runtime::rtree::builder::{RtNodeBuilder, RtTreeBuilder};
+use forester_rs::runtime::rtree::rnode::RNodeName;
+use forester_rs::runtime::args::RtArgs;
+use forester_rs::runtime::RtResult;
 
- fn smoke(mut forester: Forester) {
+struct ReplaceFailWithSuccess;
 
-     forester.add_trim_task(TrimTask::rt_tree(Test));
-     let result = forester.run_until(Some(100)).unwrap();
-     println!("{}",result);
- }
+impl RtTreeTrimTask for ReplaceFailWithSuccess {
+    fn process(&self, snapshot: TreeSnapshot<'_>) -> RtResult<TrimRequest> {
+        // Wait until tick 90 before applying this modification
+        if snapshot.tick < 90 {
+            return Ok(TrimRequest::Skip);
+        }
 
- struct Test;
+        let tree = snapshot.tree;
 
- // just take a not and manually replace it.
- impl RtTreeTrimTask for Test {
-     fn process(&self, snapshot: TreeSnapshot<'_>) -> RtResult<TrimRequest> {
-         if snapshot.tick < 90 {
-             Ok(TrimRequest::Skip)
-         } else {
-             let tree = snapshot.tree;
-             let id = tree
-                 .nodes
-                 .iter()
-                 .find(|(_, n)| {
-                     n.name()
-                         .and_then(|n| n.name().ok())
-                         .filter(|n| n.as_str() == "fail_empty")
-                         .is_some()
-                 })
-                 .map(|(id, _)| id)
-                 .unwrap();
-             let mut rtb = RtTreeBuilder::new_from(tree.max_id() + 1);
-             rtb.set_as_root(action!(node_name!("success")), id.clone());
+        // Find the node named "fail_empty" in the running tree
+        let target_id = tree
+            .nodes
+            .iter()
+            .find(|(_, node)| {
+                node.name()
+                    .and_then(|n| n.name().ok())
+                    .filter(|n| n.as_str() == "fail_empty")
+                    .is_some()
+            })
+            .map(|(id, _)| id)
+            .unwrap();
 
-             Ok(TrimRequest::attempt(RequestBody::new(
-                 rtb,
-                 Default::default(),
-             )))
-         }
-     }
- }
+        // Build a replacement node: swap fail_empty -> success()
+        let mut builder = RtTreeBuilder::new_from(tree.max_id() + 1);
+        builder.set_as_root(action!(node_name!("success")), target_id.clone());
 
+        Ok(TrimRequest::attempt(RequestBody::new(
+            builder,
+            Default::default(),
+        )))
+    }
+}
 
-
+fn run(mut forester: Forester) {
+    forester.add_trim_task(TrimTask::rt_tree(ReplaceFailWithSuccess));
+    let result = forester.run_until(Some(100)).unwrap();
+    println!("Result: {}", result);
+}
 ```

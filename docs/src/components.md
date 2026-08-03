@@ -1,58 +1,45 @@
-# Components 
+# Forester Architecture & Components
 
-All in all, the framework provides the following components :
+Forester is structured into four primary subsystems: the **Language & Compiler**, the **Runtime Engine**, **Analysis & Simulation**, and **Integrations & Tooling**.
 
-- Analysis
-  - Visualization
-  - Tracing
-  - Simulatioon
-- Language as an entry point
-- Runtime
-- Console utility and extention
+---
 
+## 1. Language & Compiler
 
-## Scripts
-That section describes the language and a way how the users can describe the logic of the trees:
+Forester provides a domain-specific language (DSL) tailored for behavior tree orchestration.
 
-### Tree lang
-The scripts. They are usually can be stored as a folder with one or more `root` node which will be executed afterwords.
-The syntax of the language takes a vast part of the book and described in the following [chapter](./intro_lang.md)
+* **Tree DSL (`.tree`)**: A strongly-typed language for describing execution logic, higher-order trees, lambdas, decorators, and Blackboard memory references.
+* **Static Analysis & Compiler**: Parses scripts, verifies type constraints, validates argument bounds, and detects structural errors before runtime.
 
-### Validations and Optimizations
-These parts come with static analyzer and are conducted when the users compile the scripts into the runtime tree.
-They are described in the corresponding sections [Validations](./validations.md) and [Optimizations](./optimizations.md)
+---
 
-### Tools
-There are some number of extensions for ides to alleviate the writing scripts and running the trees. 
-The detailed description is in the chapter [Tools](./tools.md)
+## 2. Runtime Engine
 
-## Runtime
-That is the central part of the framework. The runtime orchestrates the tree execution alongside \
-with the storing and manipulating some data and actions.
+The Rust runtime engine manages tree execution and state.
 
-### Engine
-The main orchestrator. It is described in the chapter [Engine](./engine.md)
+* **Engine Core**: Ticks nodes reactively, supporting synchronous execution (for fast control loops) and asynchronous execution (for non-blocking I/O).
+* **Blackboard**: High-performance, shared memory store for passing data between tree nodes dynamically.
+* **Action Keeper**: Registers and executes actions (local Rust callbacks or remote RPC handlers).
 
-### Blackboard
-The component which is responsible for the storing the intermediate data that can be passing across the tree.
-The mechanism of working is described in that [chapter](./bb.md)
+---
 
-### ActionKeeper
-The component stores and processes the user implemented actions (*tasks* or *conditions*).
-The chapter [Action](./actions.md) describes how to interact with ActionKeeper.
+## 3. Analysis & Simulation
 
-## Analysis
-This component helps to analyse the trees and also interacts with them in an easy way
+Tools to inspect, debug, and validate behavior trees during development.
 
-### Visualization
-The users can visualize the tree using graphviz format.
-This [section](./viz.md) explains how to do that.
+* **`f-tree` CLI**: Unified command-line tool for compiling, analyzing, and running trees.
+* **Visualization**: Generates tree diagrams (Graphviz) to inspect tree structure visually.
+* **Execution Tracing**: Detailed execution telemetry for stepping through ticks and debugging node state.
+* **Simulator**: Executes trees against stubbed action responses to test orchestration logic before linking real hardware or external LLM APIs.
 
-### Tracing
-The users can turn on some extra logging that can float up some extra meta information \ 
-helpful to design and debug the trees. This [page](./trace.md) explains how to handle the tracing.
+---
 
-### Simulation
-The users can run the tree with some stubs instead of the real implementations of the actions. \ 
-It can help swiftly define and correct the behavior of the tree itself.
-This [chapter](./sim.md) describes it.
+## 4. Integrations & Tooling
+
+Bridge Forester to external runtimes, robotics engines, and developer editors.
+
+* **Remote Action SDKs**: Lightweight clients allowing actions to run outside the Rust process:
+  - **Python (`forester-http-ra-py`)**: Execute Python functions and LangChain/LlamaIndex tools seamlessly over HTTP.
+  - **Rust (`forester-rs`)**: Native Rust action integration.
+* **ROS Nav2 Exporter**: Exports Forester trees directly to ROS2 Nav2 XML format for robotics navigation pipelines.
+* **Editor Tooling**: Syntax highlighting, linting, and Language Server Protocol (LSP) support for IDEs (VS Code, IntelliJ).

@@ -1,67 +1,82 @@
-# Built-in actions
-By default, the framework provides a set of the actions 
-and conditions that are already implemented.
+# Built-In Standard Library Actions (`std::actions`)
 
-To use them, the user should import the special file
+Forester provides a built-in standard library of common utility actions, Blackboard operations, and state helpers.
+
+To use standard library actions, import `std::actions` at the top of your `.tree` file:
+
 ```f-tree
 import "std::actions"
-```
-or just a specific definition of the file
-```f-tree
-import "std::actions" {
-    store => store_data,
-    fail
+
+root main sequence {
+    store("session_id", "12345")
+    equal("session_id", "12345")
 }
 ```
 
-## File
+Selective imports with aliasing can also be used:
+
 ```f-tree
- //
-// Built-in actions. 
-// The actions are accessible using the import 'import "std::actions"' 
-// Better off, the file be avoided modifying
-//
-
-// Fails execution, returning Result::Failure        
-impl fail(reason:string);
-impl fail_empty();
-
-// Success execution, returning Result::Success  
-impl success();
-
-// Running execution, returning Result::Running  
-impl running();
-
-// Sleeps on duration(milliseconds) then returns Result::Success
-// impl sleep(duration:num);
-
-// Stores the string value in the given key. Returns Result::Success. 
-// If the cell is locked, returns Result::Failure   
-impl store(key:string, value:string);
-
-// Compares a given value with what is in the cell:
-// - Returns Result::Success if they are equal
-// - Returns Fail(reason)if they are not equal
-// - Returns Fail(reason) if there is no cell in bbe with the given key.
-impl equal(key:string, expected:any);
-
-// Store the current tick
-impl store_tick(name:string);
-
-// Lock key in bb
-impl lock(key:string);
-
-// Unlock key in bb
-impl unlock(key:string);
-
-// Performs http get request
-impl http_get(url:string, bb_key:string);
-
-
+import "std::actions" {
+    store => set_blackboard_key,
+    fail => throw_failure,
+}
 ```
 
+---
 
+## Standard Action Reference
 
-# Http server (sync | async)
-# Curl
- 
+### 1. Terminal / Flow Control Actions
+
+| Action | Arguments | Return State | Description |
+|---|---|---|---|
+| **`success()`** | None | `Success` | Instantly returns `Success`. Useful as stub or default branch. |
+| **`fail(reason)`** | `reason: string` | `Failure` | Instantly fails execution with an explicit error reason. |
+| **`fail_empty()`** | None | `Failure` | Instantly fails execution without a reason message. |
+| **`running()`** | None | `Running` | Returns `Running`. Keeps node active on subsequent ticks. |
+| **`sleep(duration)`**| `duration: number` | `Success` | Non-blocking sleep for $N$ milliseconds before returning `Success`. |
+
+---
+
+### 2. Blackboard Memory Actions
+
+| Action | Arguments | Description |
+|---|---|---|
+| **`store(key, value)`** | `key: string, value: string` | Stores a value into the Blackboard under `key`. |
+| **`equal(key, expected)`**| `key: string, expected: string` | Compares Blackboard value under `key` to `expected`. Returns `Success` if equal, `Failure` otherwise. |
+| **`store_tick(key)`** | `key: string` | Stores the current engine tick number into `key`. |
+| **`lock(key)`** | `key: string` | Locks a Blackboard key to prevent modifications by other nodes. |
+| **`unlock(key)`** | `key: string` | Unlocks a previously locked Blackboard key. |
+
+---
+
+### 3. I/O & Network Actions
+
+| Action | Arguments | Description |
+|---|---|---|
+| **`http_get(url, bb_key)`** | `url: string, bb_key: string` | Performs an HTTP GET request to `url` and stores the response payload into `bb_key`. |
+
+---
+
+## Code Example
+
+```f-tree
+import "std::actions"
+
+root main sequence {
+    // 1. Initialize Blackboard state
+    store("agent_status", "initializing")
+    
+    // 2. Perform work
+    fallback {
+        http_get("https://api.example.com/health", "health_response")
+        fail("Health check API unreachable")
+    }
+    
+    // 3. Verify status
+    equal("agent_status", "initializing")
+    
+    // 4. Update status to active
+    store("agent_status", "active")
+}
+```

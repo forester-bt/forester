@@ -1,128 +1,120 @@
-# Setup
+# Setup & Quick Start
 
-There are two ways to interact with Forester
+Forester can be used as a CLI tool for simulation/analysis, embedded as a Rust dependency, or integrated remotely from Python.
 
-## Using console utility for simulation and visualization
+---
 
-The console utility `f-tree` can be installed using `cargo`
+## 1. CLI Tool Setup (`f-tree`)
+
+Install the `f-tree` command-line utility via `cargo`:
 
 ```shell
 cargo install f-tree
 ```
 
-and then be used with
+Verify installation and view available subcommands:
 
 ```shell
-~ f-tree
-A console utility to interact with Forester
-
-Usage: f-tree <COMMAND>
-
-Commands:
-  sim   Runs simulation. Expects a simulation profile
-  vis   Runs visualization. Output is in svg format.
-  help  Print this message or the help of the given subcommand(s)
-
-Options:
-  -h, --help     Print help
-  -V, --version  Print version
+f-tree --help
 ```
 
+### Common CLI Subcommands
 
-## As a dependency to run from a rust code
+* **Simulation (`f-tree sim`)**: Run behavior tree execution against simulated action stubs.
+* **Visualization (`f-tree vis`)**: Generate SVG/Graphviz visual diagrams of `.tree` files.
+* **Tree Validation (`f-tree check`)**: Statically validate tree syntax, types, and imports.
+
+---
+
+## 2. Rust Project Integration
+
+Add `forester-rs` to your `Cargo.toml`:
 
 ```toml
-forester-rs = "*"
+[dependencies]
+forester-rs = "0.2"
 ```
 
-
-### From file system
+### Example 1: Loading Trees from the Filesystem
 
 ```rust
-
- use std::path::PathBuf;
- use forester_rs::flow;
- use forester_rs::tracer::Tracer;
- use forester_rs::runtime::builder::ForesterBuilder;
- use forester_rs::runtime::action::Action;
- use forester_rs::runtime::action::builtin::data::StoreData;
+use forester_rs::runtime::builder::ForesterBuilder;
+use forester_rs::runtime::action::Action;
+use forester_rs::tracer::Tracer;
 
 fn main() {
     let mut fb = ForesterBuilder::from_file_system();
     fb.main_file("main.tree".to_string());
-    fb.root(root);
-    fb.register_action("store", Action::sync(StoreData));
+    fb.root("main");
     fb.tracer(Tracer::default());
-    fb.bb_load("db/db.json".to_string());
+    fb.bb_load("db/initial_state.json".to_string());
     
-    let forester = fb.build().unwrap();
-
-    let result = forester.run().unwrap();
-    println!("result {:?}",result);
+    let mut forester = fb.build().expect("Failed to build Forester runtime");
+    let result = forester.run().expect("Tree execution failed");
+    
+    println!("Execution completed with result: {:?}", result);
 }
-
-
 ```
 
-### On the fly for small scripts
+### Example 2: In-Memory / Inline DSL Script Execution
 
 ```rust
-
-use std::path::PathBuf;
-use forester_rs::flow;
-use forester_rs::tracer::Tracer;
 use forester_rs::runtime::builder::ForesterBuilder;
-use forester_rs::runtime::action::Action;
-use forester_rs::runtime::action::builtin::data::StoreData;
 
 fn main() {
     let mut fb = ForesterBuilder::from_text();
-    fb.register_action("cv",Action::sync(ReturnResult::success()));
     
     fb.text(r#"
+        import "std::actions"
+        
         root main sequence {
-            cv()
-            cv()
-            cv()
+            action_a()
+            action_b()
         }
+        
+        impl action_a();
+        impl action_b();
     "#.to_string());
-    let mut forester = fb.build().unwrap();
 
-    let result = forester.run().unwrap();
-    println!("result {:?}",result);
+    let mut forester = fb.build().expect("Failed to parse inline script");
+    let result = forester.run().expect("Execution failed");
+    
+    println!("Result: {:?}", result);
 }
-
-
 ```
 
-
-### Manually construct the trees
+### Example 3: Programmatic Tree Construction
 
 ```rust
-
-use std::path::PathBuf;
-use forester_rs::flow;
-use forester_rs::tracer::Tracer;
 use forester_rs::runtime::builder::ForesterBuilder;
-use forester_rs::runtime::action::Action;
-use forester_rs::runtime::action::builtin::data::StoreData;
+use forester_rs::flow;
 
 fn main() {
     let mut fb = ForesterBuilder::from_code();
-    fb.register_action("cv",Action::sync(ReturnResult::success()));
+    
+    // Programmatically construct tree nodes using Rust macros
     fb.add_rt_node(
-          flow!(fallback node_name!(), args!();
-              action!(),
-              action!(),
-              action!(),
-              action!()
-          )
+        flow!(fallback "recovery_root", args!();
+            action!("check_sensor"),
+            action!("reset_state")
+        )
     );
+    
     let mut forester = fb.build().unwrap();
-
     let result = forester.run().unwrap();
-    println!("result {:?}",result);
+    
+    println!("Result: {:?}", result);
 }
-
-
 ```
+
+---
+
+## 3. Python Integration (Remote Actions for AI Tools)
+
+For Python-based AI workflows (LangChain, LlamaIndex, custom LLM tools), install the Python remote-action client:
+
+```shell
+pip install forester-http-ra-py
+```
+
+The Python client connects your Python tools over HTTP to the Forester Rust runtime, executing remote actions seamlessly.

@@ -1,66 +1,49 @@
-# Intellij plugin
+# IntelliJ Plugin
 
 ## Introduction
 
-This plugin enriches your development experience by providing seamless task orchestration capabilities,
-allowing you to perform tasks synchronously or asynchronously,
-locally or remotely, all within the familiar IntelliJ environment.
-Whether you are working on game development, artificial intelligence, robotics, or any domain requiring efficient task management,
-the Forester-IntelliJ Plugin is here to simplify your workflow and boost productivity.
+The Forester IntelliJ Plugin provides native IDE support for writing and testing behavior trees in the `.tree` language. It does not orchestrate tasks itself; rather, it bridges the IDE environment with the Forester runtime and CLI tools.
 
+This allows you to write type-checked behavior trees, navigate complex hierarchical logic, and run simulations with visual SVG outputs directly from your editor, accelerating the development cycle for robotics and AI agent orchestration.
 
 ## Installation
 
-To install the Forester-IntelliJ Plugin, follow these simple steps:
-
-1. Open your IntelliJ IDE.
-2. Go to "Settings" or "Preferences" from the main menu.
-3. Choose "Plugins" from the left-hand side menu.
-4. Click on the "Marketplace" or "Browse repositories" button.
-5. Search for "Forester-IntelliJ Plugin."
-6. Click "Install" and restart the IDE to activate the plugin.
+1. Open your IntelliJ IDE (IDEA, CLion, PyCharm, etc.).
+2. Go to **Settings** (or **Preferences** on macOS) from the main menu.
+3. Select **Plugins** from the left-hand menu.
+4. Click on the **Marketplace** tab.
+5. Search for "Forester".
+6. Click **Install** and restart the IDE to activate the plugin.
 
 ## Features
 
 ### Syntax Highlighting
+Provides specialized syntax highlighting for the `.tree` language, making keywords, higher-order trees, decorators, and actions easily distinguishable.
 
-The Forester-IntelliJ Plugin includes specialized syntax highlighting, making it easier for you to identify and distinguish Forester-related elements in your code.
-This feature helps improve code readability and ensures that your tasks are accurately represented.
-
-### Folding
-
-With the folding feature, you can conveniently collapse sections of your behavior trees, making complex task structures more manageable.
-Folding enhances code organization and enables you to focus on specific parts of the task tree as needed.
+### Code Folding
+Allows you to collapse sections of your behavior trees (such as large sequences or fallbacks), making complex task structures readable and easier to navigate.
 
 ### Structure View
-
-The plugin provides an intuitive Structure View that displays the hierarchical organization of your behavior trees.
-Quickly navigate through the task structure, identify parent-child relationships, and easily access specific sections of your tasks with ease.
+Displays the hierarchical organization of your behavior trees in the IDE's Structure tool window. You can quickly see parent-child relationships and jump to specific node definitions.
 
 ### Task Visualization
-
-The Forester-IntelliJ Plugin offers a task to visualize the tree that brings behavior trees to life.
-Gain valuable insights into your task flows and dependencies through interactive graphical representations.
-This visual aid fosters a better understanding of your task hierarchy, facilitating effective task organization and management.
+Integrates with Forester's graph generation to visually map out your behavior trees. This outputs interactive or static graphical representations (SVGs) of your execution flows.
 
 ### Task Simulation
-
-With the task simulation feature, you can run and test your behavior trees directly within the IntelliJ IDE.
-Simulate task executions to verify their correctness and efficiency, enabling you to fine-tune your task orchestration process.
+Run and test your behavior trees directly within the IDE using simulation profiles. You can execute stubbed runs to verify the logic and fallback routing without needing the actual application runtime to be active.
 
 ## Usage
 
-### Creating a New Task
+### Creating a Run Configuration
+1. Open the **Run/Debug Configurations** dialog in your IDE.
+2. Click the **+** (Add New Configuration) button and select the Forester configuration type.
+3. Specify your root folder, main tree file, and simulation profile (if applicable).
 
-1. Navigate to the "Edit configurations" menu in your IntelliJ IDE.
-2. Select "New Task" to create a new task.
-
-### Running Simulation and Visualization Task
-
-1. Open the behavior tree you want to simulate.
-2. Click on the "Run Simulation" button to initiate the simulation process (on the gutter on the root tree)
-3. Observe the execution flow and identify any potential issues or optimizations.
+### Running a Simulation via the Editor
+1. Open the `.tree` file containing your root node.
+2. Click the green **Run** icon located in the editor gutter next to the `root` keyword.
+3. The IDE will execute the tree simulation and output the trace logs and visual graphs to your configured output directories.
 
 ## Links
-- [repo](https://github.com/besok/forester-intellij-plugin)
-- [plugin]()
+- [Repository](https://github.com/forester-bt/forester-intellij-plugin)
+- [JetBrains Marketplace Plugin Page](https://plugins.jetbrains.com/plugin/22387-forester)

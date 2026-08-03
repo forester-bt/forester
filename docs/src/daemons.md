@@ -1,101 +1,144 @@
-# Daemons
-Forester provides the conception of the background processes called daemons. \
-Daemons are used to perform some actions in the background. \
-For example, it can be used to publish some messages  or subscribe to the topics from the external system \
-or to perform some actions on the blackboard in the background.
+# Daemons (Background Processes)
 
-*The daemons are executed at the same runtime environment 
-as a tree thus the daemons can affect the performance of the tree directly.*
+**Daemons** are long-running background tasks that execute concurrently alongside the behavior tree. They share the same Tokio runtime environment as the engine and have direct access to the Blackboard.
 
-## Daemon definition
-The enum `Daemon` encapsulates a daemon function and provides the following variants:
-- sync - the daemon function is synchronous and will be wrapped into async function.
-- async - the daemon function is asynchronous and will be executed as is.
+Common uses:
+- **Sensor polling**: Continuously reading hardware or network sensor streams and writing values to the Blackboard.
+- **Message publishing**: Sending telemetry or heartbeat events to external systems.
+- **AI context maintenance**: Streaming LLM token output or monitoring API rate limits in the background.
+- **Watchdogs**: Monitoring tree health or enforcing resource constraints.
 
+> **Performance note**: Daemons run in the same async runtime as the tree. Heavy daemon workloads can directly impact tick loop performance. Keep daemon logic lightweight, or offload expensive work to separate processes.
 
-## How to stop the daemon
-Since, the daemon is supposed to be a long-living background process, there is no way to predict when it will be stopped. \
-Therefore, depending on the daemon type, the engine provides the following ways to stop the daemon:
+---
 
-### Sync daemon
-The sync daemon function accepts the `StopSignal` as an argument. \
-The `StopSignal` is a simple atomic boolean that initially false and when it switches to true, the daemon should be stopped. 
+## Daemon Types
 
-### Async daemon
-The async daemon function accepts the `CancellationToken` as an argument. \
-The `CancellationToken` is a mechanism from tokio that allows to stop the async function.(one shot channel)
+| Type | Trait | Stop Mechanism |
+|---|---|---|
+| **Sync** | `DaemonFn` | `StopFlag` — an `AtomicBool` that flips to `true` when the engine requests shutdown |
+| **Async** | `AsyncDaemonFn` | `CancellationToken` — a Tokio one-shot cancellation channel |
 
+---
 
-## Examples of the daemon
+## Implementing Daemons
+
+### Sync Daemon
+
+Poll the `StopFlag` in a loop. When it becomes `true`, the daemon should exit promptly:
 
 ```rust
-struct DaemonSync;
+use forester_rs::runtime::env::daemon::{DaemonFn, DaemonContext, StopFlag};
+use std::sync::atomic::Ordering::Relaxed;
 
-impl DaemonFn for DaemonSync {
+struct SensorPollerDaemon;
+
+impl DaemonFn for SensorPollerDaemon {
     fn perform(&mut self, ctx: DaemonContext, signal: StopFlag) {
         while !signal.load(Relaxed) {
             std::thread::sleep(std::time::Duration::from_millis(50));
+            
             let mut bb = ctx.bb.lock().unwrap();
-            let v = bb.get("test".to_string()).expect("no errors")
-                .cloned().unwrap_or(RtValue::int(0));
-
-            bb.put("test_daemon".to_string(), v).unwrap();
+            let reading = read_sensor(); // your sensor read logic
+            bb.put("sensor_value".to_string(), RtValue::int(reading)).unwrap();
         }
     }
 }
+```
 
-impl AsyncDaemonFn for DaemonSync {
-    fn prepare(&mut self, ctx: DaemonContext, signal: CancellationToken) -> Pin<Box<dyn Future<Output=()> + Send>> {
+---
+
+### Async Daemon
+
+Use `tokio::select!` to respond to cancellation alongside your periodic work:
+
+```rust
+use forester_rs::runtime::env::daemon::{AsyncDaemonFn, DaemonContext};
+use tokio_util::sync::CancellationToken;
+use std::pin::Pin;
+use std::future::Future;
+
+struct AsyncSensorPollerDaemon;
+
+impl AsyncDaemonFn for AsyncSensorPollerDaemon {
+    fn prepare(&mut self, ctx: DaemonContext, signal: CancellationToken) -> Pin<Box<dyn Future<Output = ()> + Send>> {
         Box::pin(async move {
             loop {
                 tokio::select! {
-                _ = signal.cancelled() => {
-                    return;
+                    _ = signal.cancelled() => {
+                        // Gracefully shut down
+                        return;
+                    }
+                    _ = tokio::time::sleep(std::time::Duration::from_millis(10)) => {
+                        let mut bb = ctx.bb.lock().unwrap();
+                        let reading = fetch_remote_sensor().await;
+                        bb.put("sensor_value".to_string(), RtValue::int(reading)).unwrap();
+                    }
                 }
-                _ = tokio::time::sleep(std::time::Duration::from_millis(10)) => {
-                    let mut bb = ctx.bb.lock().unwrap();
-                    let v = bb.get("test".to_string()).expect("no errors")
-                        .cloned().unwrap_or(RtValue::int(0));
-
-                    bb.put("test_daemon".to_string(), v).unwrap();
-                }
-            }
             }
         })
     }
 }
 ```
 
-## Daemon registration
+---
 
-The daemon can be registered as follows:
+## Registering Daemons
 
-### Using the tree builder
+### At Startup via `ForesterBuilder`
+
+Register daemons before building the engine. Named daemons can be controlled from within the tree using built-in actions:
 
 ```rust
+use forester_rs::runtime::env::daemon::Daemon;
 
-fn register(fb:ForesterBuilder){
-    let signal = Arc::new(AtomicBool::new(false));
-    fb.register_named_daemon("daemon".to_string(), Daemon::sync(DaemonSync));
-    fb.register_daemon(DaemonSync(signal));
-}
+// Named daemon (controllable from the tree via stop_daemon / daemon_alive)
+fb.register_named_daemon("sensor_poller".to_string(), Daemon::sync(SensorPollerDaemon));
 
-
+// Anonymous daemon (runs for the lifetime of the engine, no tree control)
+fb.register_daemon(Daemon::a_sync(AsyncSensorPollerDaemon));
 ```
 
-### Using the runtime environment
+### At Runtime from Inside an Action
+
+Daemons can also be started dynamically during tree execution from within a sync action:
 
 ```rust
-impl Impl for Action {
+use forester_rs::runtime::action::{Impl, RtArgs, Tick, TickResult};
+use forester_rs::runtime::context::TreeContextRef;
+use forester_rs::runtime::env::daemon::Daemon;
+
+impl Impl for StartPollerAction {
     fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
         let env = ctx.env().lock()?;
-        env.start_daemon(Daemon::a_sync(DaemonSync), ctx.into());
+        env.start_daemon(Daemon::a_sync(AsyncSensorPollerDaemon), ctx.into());
         Ok(TickResult::success())
     }
 }
 ```
 
-## BuiltIn actions
-There are 2 built-in actions that can be used to control the daemons:
- - `stop_daemon` - stops the daemon by the name
- - `daemon_alive` - check if the daemon is alive by the name
+---
+
+## Controlling Daemons from the Tree
+
+Two built-in standard library actions are available to control named daemons from `.tree` files:
+
+```f-tree
+import "std::actions"
+
+root main sequence {
+    // Start the main task
+    execute_mission()
+    
+    // Check if background poller is still running
+    daemon_alive("sensor_poller")
+    
+    // Stop the background poller when done
+    stop_daemon("sensor_poller")
+}
+```
+
+| Action | Description |
+|---|---|
+| **`daemon_alive(name)`** | Returns `Success` if the named daemon is still running, `Failure` otherwise. |
+| **`stop_daemon(name)`** | Sends the stop signal to the named daemon and returns `Success`. |

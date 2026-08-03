@@ -1,7 +1,6 @@
 [book]
 authors = ["Boris Zhguchev"]
 language = "en"
-multilingual = false
 src = "src"
 title = "Documentation for Forester"
 

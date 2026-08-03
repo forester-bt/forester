@@ -1,72 +1,94 @@
-# Lambda
+# Lambdas (Anonymous Inline Sub-Trees)
 
-The anonymous definitions can be defined and instantly invoked at the same time.
-The definitions are unique and every time the new definition is created.
+A **Lambda** is an anonymous, inline sub-tree that is defined and executed at the point of invocation — no named definition required.
 
-- They don't have a name
-- They are unique
-- They don't have arguments
+Lambdas are ideal for one-off logic that is too simple to justify a named definition, or for passing inline behavior directly as a Higher-Order Tree argument.
 
-**Only the elements of [Flow](./flow.md)  can be used in lambdas**
-**The actions always have to be defined explicitly.**
+---
+
+## Key Properties
+
+- **No name**: Lambdas are anonymous — they cannot be referenced from elsewhere.
+- **No parameters**: Lambdas do not accept arguments. They operate on Blackboard state directly.
+- **Flow nodes only**: Lambdas can only contain flow control nodes (`sequence`, `fallback`, `parallel`, decorators) and action invocations. Action signatures must still be declared with `impl` elsewhere.
+- **Unique instances**: Each lambda definition creates a distinct node in the compiled tree.
+
+---
+
+## Basic Syntax
+
+Any inline `sequence`, `fallback`, or `parallel` block without a name is a lambda:
 
 ```f-tree
+import "std::actions"
+
 impl job();
 
-root main {
-    // lambda invocation
+root main sequence {
+    // Lambda: unnamed inline sequence
     sequence {
         job()
         job()
         job()
     }
-    // another lambda invocation
+    
+    // Lambda: unnamed fallback with nested lambdas
     fallback {
         sequence {
             job()
-            job()   
-        }
-        // the second level of lambda
-        sequence {
             job()
-            // also lambda, but the backets are omitted. 
-            r_sequence job()
         }
+        // Decorator on a single-child lambda (brackets omitted)
+        retry(3) job()
     }
-
 }
 ```
 
-## Parameter
+---
 
-Lambda can be used as parameters as well.
+## Lambdas as Higher-Order Tree Arguments
+
+Lambdas can be passed directly as `tree`-typed arguments to Higher-Order Tree definitions. This avoids the need to create throwaway named definitions just to pass a block of logic:
 
 ```f-tree
 impl savepoint();
-impl job();
+impl fetch_data();
+impl validate();
+impl store_result();
 
-sequence wrapper(item:tree){
+sequence bookmarked(action: tree) {
     savepoint()
-    item(..)
+    action(..)
     savepoint()
 }
 
 root main sequence {
-    wrapper(
+    // Pass an inline lambda as the 'action' argument
+    bookmarked(
         sequence {
-            job()
-            job()
-            job()
+            fetch_data()
+            validate()
+            store_result()
         }
     )
-    wrapper(
-        item = 
-            fallback {
-                job()
-                job()
-                job()
-            }
-    )
     
+    // Named argument syntax
+    bookmarked(
+        action = fallback {
+            fetch_data()
+            store_result()
+        }
+    )
 }
 ```
+
+---
+
+## When to Use a Lambda vs. a Named Definition
+
+| Situation | Recommendation |
+|---|---|
+| One-off logic used in a single place | **Lambda** |
+| Logic reused in 2+ places | **Named sub-tree definition** |
+| Passed as a HOT argument inline | **Lambda** |
+| Needs its own parameters | **Named sub-tree definition** |

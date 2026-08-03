@@ -1,113 +1,149 @@
 # Decorators
 
-The decorators are the specific type of node,
-that transforms the result of its child.
-Every decorator has a specific keyword and set of parameters.
+A **Decorator** is a specialized single-child node that wraps a child node and modifies its execution behavior or transforms its return state (`Success`, `Failure`, or `Running`).
 
-** Every decorator should have solely one child **
+Every decorator accepts **exactly one child node** (which can be a single action, a sub-tree, or a block wrapped in `{ }`).
 
-## Inverter
+---
 
-The keyword is `inverter`.
-The decorator inverts the result of the child.\
-*Only the final results are inverted, for `running` the result will be
-`running` as well*
+## Built-In Decorator Reference
+
+| Decorator | Parameters | Default | Description |
+|---|---|---|---|
+| **`inverter`** | None | — | Inverts child `Success` to `Failure`, and `Failure` to `Success`. (`Running` is untouched). |
+| **`force_success`** | None | — | Always returns `Success` regardless of whether the child succeeds or fails. |
+| **`force_fail`** | None | — | Always returns `Failure` regardless of child outcome. |
+| **`repeat(N)`** | `count: number` | `0` (Infinite) | Repeats execution of the child $N$ times. If count is `0`, repeats infinitely. |
+| **`retry(N)`** | `attempts: number` | `0` (Infinite) | Re-ticks the child up to $N$ times if it returns `Failure`. If attempts is `0`, retries indefinitely. |
+| **`timeout(ms)`** | `limit: number` | `1000` | Limits child execution time in milliseconds. Halts child and returns `Failure` if exceeded. |
+| **`delay(ms)`** | `wait: number` | `0` | Delays the initial execution of the child for the specified duration in milliseconds. |
+
+---
+
+## Placement of Decorators
+
+Decorators in Forester can be placed in two main ways:
+
+### 1. In Tree / Root Definitions (Header Decorators)
+Decorators can be placed directly in the declaration header of a `root` node or sub-tree definition:
 
 ```f-tree
-main root sequence {
-    inverter check_condition() // inverts the result
+// Root node wrapped in a repeat decorator
+root main_fixed repeat(5) {
+    execute_cycle()
+}
+
+// Sub-tree definition wrapped with a retry decorator
+sequence retryable_task retry(3) {
+    perform_step()
 }
 ```
 
-## ForceSuccess
-
-The keyword is `force_success`.
-Always returns `success` regardless of the child response
-
-## ForceFail
-
-The keyword is `force_fail`.
-Always returns `failure` regardless of the child response
-
-## Repeat
-
-The keyword is `repeat`
-It repeats the child so the number of times according to the passing parameter
-
-- count: the number of repetitions. 0 by default
-- if the count is 0 the repeat becomes an infinite loop
+### 2. At Invocation Sites
+Decorators can be placed directly before an action invocation, sub-tree call, or inline lambda:
 
 ```f-tree
-// the job will be performed INF times
+root main sequence {
+    // Decorator on an action invocation
+    retry(3) perform_task()
+    
+    // Decorator on a sequence block
+    timeout(1000) sequence {
+        fetch_data()
+    }
+    
+    // Decorator on an inline lambda
+    retry(5) lambda sequence {
+        fetch_sensor_data()
+        validate_reading()
+    }
+}
+```
+
+---
+
+## Detailed Examples
+
+### 1. Inverter (`inverter`)
+Inverts the result of condition checks or actions:
+
+```f-tree
+import "std::actions"
+
+root main sequence {
+    // Succeeds if obstacle_detected() fails
+    inverter obstacle_detected()
+    move_forward()
+}
+
+impl obstacle_detected();
+impl move_forward();
+```
+
+---
+
+### 2. Result Overrides (`force_success` & `force_fail`)
+Enforce specific outcome states regardless of child execution:
+
+```f-tree
+root main sequence {
+    // Attempt cleanup; continue even if cleanup returns Failure
+    force_success cleanup_temp_files()
+    proceed_main_task()
+}
+
+impl cleanup_temp_files();
+impl proceed_main_task();
+```
+
+---
+
+### 3. Repeat (`repeat`)
+Executes a child multiple times (or infinitely for continuous control loops):
+
+```f-tree
+// Infinite execution loop
 root main_idle repeat {
-    job()
+    background_health_check()
 }
 
-// the job will be performed 5 times
-root main repeat(5) {
-    job()    
+// Fixed 5-cycle loop
+root main_fixed repeat(5) {
+    execute_cycle()
 }
+
+impl background_health_check();
+impl execute_cycle();
 ```
 
-## Retry
+---
 
-The keyword is `retry`
-If the child returns `failure`, the decorator tries to run it again.
-The number of attempts is restricted by the given argument
-
-- attempt: the number of repetitions. 0 by default
-- if the attempt is 0 the Retry becomes an infinite loop
+### 4. Retry (`retry`)
+Automatically retries failing actions (ideal for network calls or LLM tool invocations):
 
 ```f-tree
-// 0 by default. will be never failed.
-root main retry {
-    sequence { 
-        job1() 
-        job2() 
-    }
+root main sequence {
+    // Retry up to 5 times if call_llm returns Failure
+    retry(5) call_llm({"prompt": "analyze_image"})
 }
 
-// the decorator will try to repeat the sequence upt to 10 times if it returns failure
-root main_with_retry retry(10) {
-    sequence { 
-        job1() 
-        job2() 
-    }
-}
+impl call_llm(params: object);
 ```
 
-## Timeout
+---
 
-The keyword is `timeout`
-The decorator tries to measure how long the child is running and shut id down if it exceeds the limit.
-**For now, it works only for asynchronous actions since the decorator measures time when the child returns `running`**
-
-- limit: the threshold in milliseconds. 1000 by default.
+### 5. Timeout (`timeout`) & Delay (`delay`)
+Controls timing for async actions:
 
 ```f-tree
-// if the squence works asynchonously (returns running)
-// the timeout will count up the time of the first start 
-// and then recheck it every time when the child returns running 
-root main_with_retry timeout {
-    sequence { 
-        job1() 
-        job2() 
-    }
+root main sequence {
+    // Wait 500ms before starting initial tick
+    delay(500) initialize_sensors()
+    
+    // Shut down async action if it runs longer than 3000ms
+    timeout(3000) fetch_remote_data()
 }
-```
 
-## Delay
-
-The keyword is `delay`
-The decorator delays the initial run of the child for the given as a parameter time.
-
-- wait: the delay time in milliseconds. 0 by default.
-
-```f-tree
-// the delay is zero
-root main delay job()
-
-// the delay is 1 second
-root main_d delay(1000) job()
-
+impl initialize_sensors();
+impl fetch_remote_data();
 ```
