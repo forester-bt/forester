@@ -1,0 +1,3261 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Documentation for Forester</title>
+        <meta name="robots" content="noindex">
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="favicon-8114d1fc.png">
+        <link rel="stylesheet" href="css/variables-8adf115d.css">
+        <link rel="stylesheet" href="css/general-e96d0476.css">
+        <link rel="stylesheet" href="css/chrome-d279d366.css">
+        <link rel="stylesheet" href="css/print-9e4910d8.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="fonts/fonts-9644e21d.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="mdbook-highlight-css" href="highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="ayu-highlight-3fdfc3ac.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex-ec62ecf6.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc-75ffd5dd.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="mdbook-body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="mdbook-sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("mdbook-sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="mdbook-sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="mdbook-page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="mdbook-menu-bar-hover-placeholder"></div>
+                <div id="mdbook-menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="mdbook-sidebar-toggle" class="icon-button" for="mdbook-sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="mdbook-sidebar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"/></svg></span>
+                        </label>
+                        <button id="mdbook-theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="mdbook-theme-list">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M371.3 367.1c27.3-3.9 51.9-19.4 67.2-42.9L600.2 74.1c12.6-19.5 9.4-45.3-7.6-61.2S549.7-4.4 531.1 9.6L294.4 187.2c-24 18-38.2 46.1-38.4 76.1L371.3 367.1zm-19.6 25.4l-116-104.4C175.9 290.3 128 339.6 128 400c0 3.9 .2 7.8 .6 11.6c1.8 17.5-10.2 36.4-27.8 36.4H96c-17.7 0-32 14.3-32 32s14.3 32 32 32H240c61.9 0 112-50.1 112-112c0-2.5-.1-5-.2-7.5z"/></svg></span>
+                        </button>
+                        <ul id="mdbook-theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-ayu">Ayu</button></li>
+                        </ul>
+                        <button id="mdbook-search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="mdbook-searchbar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352c79.5 0 144-64.5 144-144s-64.5-144-144-144S64 128.5 64 208s64.5 144 144 144z"/></svg></span>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Documentation for Forester</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="mdbook-search-wrapper" class="hidden">
+                    <form id="mdbook-searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="mdbook-searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="mdbook-searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <span class=fa-svg id="fa-spin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M304 48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zm0 416c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM48 304c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48zm464-48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM142.9 437c18.7-18.7 18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zm0-294.2c18.7-18.7 18.7-49.1 0-67.9S93.7 56.2 75 75s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zM369.1 437c18.7 18.7 49.1 18.7 67.9 0s18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9z"/></svg></span>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="mdbook-searchresults-outer" class="searchresults-outer hidden">
+                        <div id="mdbook-searchresults-header" class="searchresults-header"></div>
+                        <ul id="mdbook-searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('mdbook-sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('mdbook-sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#mdbook-sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="mdbook-content" class="content">
+                    <main>
+                        <p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="pics/logo.png" alt="Logo"><span class="img-wrapper"><img src="pics/logo.png" alt="Logo"></span></label></p>
+<h1 id="forester"><a class="header" href="#forester">Forester</a></h1>
+<p><strong>Forester</strong> is a domain-specific language (DSL) and high-performance Rust runtime designed for building, testing, and executing <strong>behavior trees</strong>.</p>
+<p>It is specifically engineered for two core domains:</p>
+<ul>
+<li><strong>🧠 AI Agents</strong>: Orchestrating LLM-based tools, state management, and fallback loops without unmaintainable Python code or DAG spaghettification.</li>
+<li><strong>🤖 Robotics &amp; Industrial Systems</strong>: Managing deterministic, reactive hardware control loops, with built-in export to <strong>ROS Nav2</strong> and simulation support for <strong>Webots</strong>.</li>
+</ul>
+<hr>
+<h2 id="why-forester"><a class="header" href="#why-forester">Why Forester?</a></h2>
+<p>As systems grow in complexity, state machines and Directed Acyclic Graphs (DAGs) break down when handling fallbacks, retries, and dynamic error recovery. Forester separates <strong>decision logic</strong> (tree orchestration) from <strong>execution logic</strong> (actions), enabling modular, maintainable control flow.</p>
+<h3 id="key-differentiators"><a class="header" href="#key-differentiators">Key Differentiators</a></h3>
+<ul>
+<li><strong>Dedicated Orchestration DSL</strong>: Write tree logic once in a strongly-typed, functional language featuring higher-order trees, lambdas, and live Blackboard pointers.</li>
+<li><strong>Sync &amp; Async Execution</strong>: Non-blocking async execution for I/O and remote calls, alongside predictable sync execution for tight control loops.</li>
+<li><strong>Local &amp; Remote Action Clients</strong>: Execute actions natively in Rust (<code>forester-rs</code>) or remotely via lightweight clients (such as Python’s <code>forester-http-ra-py</code> for LangChain/LlamaIndex tools).</li>
+<li><strong>Rich Analysis &amp; Simulation</strong>: Inspect execution traces, visualize trees, and test orchestration in simulation before deploying to physical hardware or production agents.</li>
+<li><strong>ROS Nav2 &amp; Webots Integration</strong>: Export Forester trees directly into ROS Nav2 XML or run against Webots simulation environments.</li>
+<li><strong>Static Validations &amp; Optimizations</strong>: Catch tree errors, numeric overflows, and structural flaws at compile time rather than runtime.</li>
+</ul>
+<hr>
+<h2 id="why-behavior-trees"><a class="header" href="#why-behavior-trees">Why Behavior Trees?</a></h2>
+<p>Behavior trees provide a clean, mathematical abstraction over decision logic:</p>
+<ul>
+<li><strong>Modularity</strong>: Small, independent nodes (sequences, fallbacks, decorators) can be composed into deep hierarchical behaviors.</li>
+<li><strong>Reactivity</strong>: Ticks evaluate preconditions dynamically, allowing real-time preemptions and fallbacks when environment state changes.</li>
+<li><strong>Separation of Concerns</strong>: Tree nodes decide <em>what</em> to do next; external action handlers perform <em>how</em> it gets done.</li>
+</ul>
+<h3 id="learn-more-about-behavior-trees"><a class="header" href="#learn-more-about-behavior-trees">Learn More About Behavior Trees</a></h3>
+<ul>
+<li><a href="https://outforafight.wordpress.com/2014/07/15/behaviour-behavior-trees-for-ai-dudes-part-1/">Chris Simpson’s Behavior Trees for AI</a></li>
+<li><a href="https://robohub.org/introduction-to-behavior-trees/">Introduction to Behavior Trees</a></li>
+<li><a href="https://www.polymathrobotics.com/blog/state-machines-vs-behavior-trees">State Machines vs. Behavior Trees</a></li>
+</ul>
+<h3 id="related-ecosystem-projects"><a class="header" href="#related-ecosystem-projects">Related Ecosystem Projects</a></h3>
+<ul>
+<li><a href="https://www.behaviortree.dev/">BehaviorTree.CPP</a> — C++ behavior tree framework widely used in ROS2.</li>
+<li><a href="https://github.com/bitbrain/beehave">Beehave</a> — Behavior tree AI library for the Godot Engine.</li>
+<li><a href="https://github.com/Sollimann/bonsai">Bonsai</a> — Pure Rust behavior tree implementation.</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="forester-architecture--components"><a class="header" href="#forester-architecture--components">Forester Architecture &amp; Components</a></h1>
+<p>Forester is structured into four primary subsystems: the <strong>Language &amp; Compiler</strong>, the <strong>Runtime Engine</strong>, <strong>Analysis &amp; Simulation</strong>, and <strong>Integrations &amp; Tooling</strong>.</p>
+<hr>
+<h2 id="1-language--compiler"><a class="header" href="#1-language--compiler">1. Language &amp; Compiler</a></h2>
+<p>Forester provides a domain-specific language (DSL) tailored for behavior tree orchestration.</p>
+<ul>
+<li><strong>Tree DSL (<code>.tree</code>)</strong>: A strongly-typed language for describing execution logic, higher-order trees, lambdas, decorators, and Blackboard memory references.</li>
+<li><strong>Static Analysis &amp; Compiler</strong>: Parses scripts, verifies type constraints, validates argument bounds, and detects structural errors before runtime.</li>
+</ul>
+<hr>
+<h2 id="2-runtime-engine"><a class="header" href="#2-runtime-engine">2. Runtime Engine</a></h2>
+<p>The Rust runtime engine manages tree execution and state.</p>
+<ul>
+<li><strong>Engine Core</strong>: Ticks nodes reactively, supporting synchronous execution (for fast control loops) and asynchronous execution (for non-blocking I/O).</li>
+<li><strong>Blackboard</strong>: High-performance, shared memory store for passing data between tree nodes dynamically.</li>
+<li><strong>Action Keeper</strong>: Registers and executes actions (local Rust callbacks or remote RPC handlers).</li>
+</ul>
+<hr>
+<h2 id="3-analysis--simulation"><a class="header" href="#3-analysis--simulation">3. Analysis &amp; Simulation</a></h2>
+<p>Tools to inspect, debug, and validate behavior trees during development.</p>
+<ul>
+<li><strong><code>f-tree</code> CLI</strong>: Unified command-line tool for compiling, analyzing, and running trees.</li>
+<li><strong>Visualization</strong>: Generates tree diagrams (Graphviz) to inspect tree structure visually.</li>
+<li><strong>Execution Tracing</strong>: Detailed execution telemetry for stepping through ticks and debugging node state.</li>
+<li><strong>Simulator</strong>: Executes trees against stubbed action responses to test orchestration logic before linking real hardware or external LLM APIs.</li>
+</ul>
+<hr>
+<h2 id="4-integrations--tooling"><a class="header" href="#4-integrations--tooling">4. Integrations &amp; Tooling</a></h2>
+<p>Bridge Forester to external runtimes, robotics engines, and developer editors.</p>
+<ul>
+<li><strong>Remote Action SDKs</strong>: Lightweight clients allowing actions to run outside the Rust process:
+<ul>
+<li><strong>Python (<code>forester-http-ra-py</code>)</strong>: Execute Python functions and LangChain/LlamaIndex tools seamlessly over HTTP.</li>
+<li><strong>Rust (<code>forester-rs</code>)</strong>: Native Rust action integration.</li>
+</ul>
+</li>
+<li><strong>ROS Nav2 Exporter</strong>: Exports Forester trees directly to ROS2 Nav2 XML format for robotics navigation pipelines.</li>
+<li><strong>Editor Tooling</strong>: Syntax highlighting, linting, and Language Server Protocol (LSP) support for IDEs (VS Code, IntelliJ).</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="setup--quick-start"><a class="header" href="#setup--quick-start">Setup &amp; Quick Start</a></h1>
+<p>Forester can be used as a CLI tool for simulation/analysis, embedded as a Rust dependency, or integrated remotely from Python.</p>
+<hr>
+<h2 id="1-cli-tool-setup-f-tree"><a class="header" href="#1-cli-tool-setup-f-tree">1. CLI Tool Setup (<code>f-tree</code>)</a></h2>
+<p>Install the <code>f-tree</code> command-line utility via <code>cargo</code>:</p>
+<pre><code class="language-shell">cargo install f-tree
+</code></pre>
+<p>Verify installation and view available subcommands:</p>
+<pre><code class="language-shell">f-tree --help
+</code></pre>
+<h3 id="common-cli-subcommands"><a class="header" href="#common-cli-subcommands">Common CLI Subcommands</a></h3>
+<ul>
+<li><strong>Simulation (<code>f-tree sim</code>)</strong>: Run behavior tree execution against simulated action stubs.</li>
+<li><strong>Visualization (<code>f-tree vis</code>)</strong>: Generate SVG/Graphviz visual diagrams of <code>.tree</code> files.</li>
+<li><strong>Tree Validation (<code>f-tree check</code>)</strong>: Statically validate tree syntax, types, and imports.</li>
+</ul>
+<hr>
+<h2 id="2-rust-project-integration"><a class="header" href="#2-rust-project-integration">2. Rust Project Integration</a></h2>
+<p>Add <code>forester-rs</code> to your <code>Cargo.toml</code>:</p>
+<pre><code class="language-toml">[dependencies]
+forester-rs = "0.2"
+</code></pre>
+<h3 id="example-1-loading-trees-from-the-filesystem"><a class="header" href="#example-1-loading-trees-from-the-filesystem">Example 1: Loading Trees from the Filesystem</a></h3>
+<pre class="playground"><code class="language-rust">use forester_rs::runtime::builder::ForesterBuilder;
+use forester_rs::runtime::action::Action;
+use forester_rs::tracer::Tracer;
+
+fn main() {
+    let mut fb = ForesterBuilder::from_file_system();
+    fb.main_file("main.tree".to_string());
+    fb.root("main");
+    fb.tracer(Tracer::default());
+    fb.bb_load("db/initial_state.json".to_string());
+    
+    let mut forester = fb.build().expect("Failed to build Forester runtime");
+    let result = forester.run().expect("Tree execution failed");
+    
+    println!("Execution completed with result: {:?}", result);
+}</code></pre>
+<h3 id="example-2-in-memory--inline-dsl-script-execution"><a class="header" href="#example-2-in-memory--inline-dsl-script-execution">Example 2: In-Memory / Inline DSL Script Execution</a></h3>
+<pre class="playground"><code class="language-rust">use forester_rs::runtime::builder::ForesterBuilder;
+
+fn main() {
+    let mut fb = ForesterBuilder::from_text();
+    
+    fb.text(r#"
+        import "std::actions"
+        
+        root main sequence {
+            action_a()
+            action_b()
+        }
+        
+        impl action_a();
+        impl action_b();
+    "#.to_string());
+
+    let mut forester = fb.build().expect("Failed to parse inline script");
+    let result = forester.run().expect("Execution failed");
+    
+    println!("Result: {:?}", result);
+}</code></pre>
+<h3 id="example-3-programmatic-tree-construction"><a class="header" href="#example-3-programmatic-tree-construction">Example 3: Programmatic Tree Construction</a></h3>
+<pre class="playground"><code class="language-rust">use forester_rs::runtime::builder::ForesterBuilder;
+use forester_rs::flow;
+
+fn main() {
+    let mut fb = ForesterBuilder::from_code();
+    
+    // Programmatically construct tree nodes using Rust macros
+    fb.add_rt_node(
+        flow!(fallback "recovery_root", args!();
+            action!("check_sensor"),
+            action!("reset_state")
+        )
+    );
+    
+    let mut forester = fb.build().unwrap();
+    let result = forester.run().unwrap();
+    
+    println!("Result: {:?}", result);
+}</code></pre>
+<hr>
+<h2 id="3-python-integration-remote-actions-for-ai-tools"><a class="header" href="#3-python-integration-remote-actions-for-ai-tools">3. Python Integration (Remote Actions for AI Tools)</a></h2>
+<p>For Python-based AI workflows (LangChain, LlamaIndex, custom LLM tools), install the Python remote-action client:</p>
+<pre><code class="language-shell">pip install forester-http-ra-py
+</code></pre>
+<p>The Python client connects your Python tools over HTTP to the Forester Rust runtime, executing remote actions seamlessly.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="forester-tree-language-tree"><a class="header" href="#forester-tree-language-tree">Forester Tree Language (<code>.tree</code>)</a></h1>
+<p>The Forester Tree Language is a strongly-typed, functional domain-specific language (DSL) designed to describe behavior tree architecture cleanly without verbosity or repetition.</p>
+<p>Unlike traditional XML-based or JSON-based behavior tree formats, Forester treats behavior trees as <strong>first-class, composable abstractions</strong>.</p>
+<hr>
+<h2 id="why-a-dedicated-dsl"><a class="header" href="#why-a-dedicated-dsl">Why a Dedicated DSL?</a></h2>
+<p>Standard behavior tree formats (such as XML trees used in ROS) often suffer from extreme duplication and verbosity. Forester’s DSL solves this by introducing functional primitives:</p>
+<ul>
+<li><strong>Higher-Order Trees (HOT)</strong>: Pass trees as parameters to other trees to create reusable patterns (e.g., generic retry loops, fallback wrappers, logging decorators).</li>
+<li><strong>Strong Type System</strong>: Built-in support for strings, numbers, booleans, arrays, objects, and subtrees, validated at compile time.</li>
+<li><strong>Blackboard Pointers</strong>: Pass live references to Blackboard memory into actions, allowing nodes to operate on dynamically updated state (essential for AI agent context).</li>
+<li><strong>Lambdas</strong>: Write inline, anonymous subtrees without declaring throwaway named definitions.</li>
+</ul>
+<hr>
+<h2 id="project-structure--file-conventions"><a class="header" href="#project-structure--file-conventions">Project Structure &amp; File Conventions</a></h2>
+<p>Forester projects consist of one or more <code>.tree</code> files organized within a root project directory:</p>
+<pre><code class="language-text">my_project/
+├── main.tree           # Entry point containing the root tree
+├── agent_tools.tree    # Custom actions and tool definitions
+├── navigation/
+│   ├── move.tree       # Sub-tree definitions
+│   └── recovery.tree   # Recovery patterns
+</code></pre>
+<h3 id="key-conventions"><a class="header" href="#key-conventions">Key Conventions</a></h3>
+<ol>
+<li><strong>File Extension</strong>: All Forester source files use the <code>.tree</code> extension.</li>
+<li><strong>Root Entry Point</strong>: A project must define at least one <code>root</code> node (e.g., <code>root main sequence { ... }</code>).</li>
+<li><strong>Module Imports</strong>: Imports resolve relative to the root directory (e.g., <code>import "navigation::move"</code>).</li>
+</ol>
+<hr>
+<h2 id="language-roadmap--tooling"><a class="header" href="#language-roadmap--tooling">Language Roadmap &amp; Tooling</a></h2>
+<p>To ensure a seamless developer experience, Forester provides language tooling across popular editors:</p>
+<ul>
+<li><strong>Syntax Highlighting &amp; Linting</strong>: Editor support for <code>.tree</code> files.</li>
+<li><strong>Language Server Protocol (LSP)</strong>: Autocompletion, inline type errors, and navigation support for VS Code, Neovim, and IntelliJ.</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="forester-syntax-overview"><a class="header" href="#forester-syntax-overview">Forester Syntax Overview</a></h1>
+<p>The syntax of the <code>.tree</code> language is declarative, strongly typed, and modular. A Forester script consists of six primary elements:</p>
+<ol>
+<li><strong>Imports</strong>: Module references to include external <code>.tree</code> files or built-in stdlib actions.</li>
+<li><strong>Root Declarations</strong>: The entry point of the behavior tree (<code>root main ...</code>).</li>
+<li><strong>Tree Definitions</strong>: Named sub-trees (<code>sequence</code>, <code>fallback</code>, <code>parallel</code>) with typed parameters.</li>
+<li><strong>Action Implementations (<code>impl</code>)</strong>: Contract definitions for native or remote actions executed by the runtime.</li>
+<li><strong>Invocations &amp; Decorators</strong>: Calls to sub-trees and actions, wrapped with built-in decorators (e.g. <code>retry</code>, <code>inverter</code>, <code>timeout</code>).</li>
+<li><strong>Higher-Order Tree Delegates (<code>..</code>)</strong>: Invoking sub-trees passed as parameters.</li>
+</ol>
+<hr>
+<h2 id="comprehensive-syntax-example"><a class="header" href="#comprehensive-syntax-example">Comprehensive Syntax Example</a></h2>
+<pre><code class="language-f-tree">// 1. Imports
+import "std::actions"
+import "sensors/battery.tree" {
+    check_battery =&gt; is_battery_ok,
+}
+
+// 2. Root Entry Point
+root main sequence {
+    // Check battery or charge
+    fallback {
+        is_battery_ok()
+        charge_robot()
+    }
+    
+    // Execute target action with retry decorator
+    retry(3) execute_task(
+        target = {"x": 10, "y": 20},
+        sub_action = place_item([100])
+    )
+}
+
+// 3. Higher-Order Tree Definition
+sequence execute_task(target: object, sub_action: tree) {
+    fallback {
+        is_target_reachable(target)
+        approach_target(target)
+    }
+    sequence {
+        savepoint()
+        sub_action(..) // Delegate invocation of passed sub_action
+    }
+}
+
+// 4. Sub-tree Definition
+sequence place_item(location: array) {
+    validate_location(location)
+    info_wrapper(drop_payload({"speed": "slow"}))
+}
+
+// 5. Decorator Wrapper Pattern
+sequence info_wrapper(action: tree) {
+    log("Starting action execution")
+    action(..)
+    log("Action execution completed")
+}
+
+// 6. Action Signatures (linking to runtime implementation)
+impl charge_robot();
+impl approach_target(pos: object);
+impl validate_location(coords: array);
+impl drop_payload(config: object);
+impl log(message: string);
+</code></pre>
+<hr>
+<h2 id="core-constructs-quick-reference"><a class="header" href="#core-constructs-quick-reference">Core Constructs Quick Reference</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Element</th><th>Example Syntax</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Root Tree</strong></td><td><code>root main sequence { ... }</code></td><td>Mandatory entry point for execution.</td></tr>
+<tr><td><strong>Sequence Node</strong></td><td><code>sequence name(params) { ... }</code></td><td>Executes children in order until one fails.</td></tr>
+<tr><td><strong>Fallback Node</strong></td><td><code>fallback name(params) { ... }</code></td><td>Executes children in order until one succeeds.</td></tr>
+<tr><td><strong>Action Definition</strong></td><td><code>impl action_name(arg: type);</code></td><td>Defines an action implemented in Rust/Python.</td></tr>
+<tr><td><strong>Tree Parameter</strong></td><td><code>sub_tree: tree</code></td><td>Pass a sub-tree as a parameter (Higher-Order Tree).</td></tr>
+<tr><td><strong>Tree Delegate</strong></td><td><code>sub_tree(..)</code></td><td>Invoke a passed sub-tree parameter.</td></tr>
+<tr><td><strong>Decorator</strong></td><td><code>retry(3) node(...)</code></td><td>Wraps execution with retry/inverter/timeout logic.</td></tr>
+<tr><td><strong>Blackboard Pointer</strong></td><td><code>&amp;key_name</code></td><td>Pass live reference to shared Blackboard memory.</td></tr>
+</tbody>
+</table>
+</div>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="imports--modularity"><a class="header" href="#imports--modularity">Imports &amp; Modularity</a></h1>
+<p>Forester allows behavior tree definitions to be split across multiple files and organized into logical sub-modules. Imports make trees modular, reusable, and easy to maintain across large projects.</p>
+<p>Imports are typically declared at the top of <code>.tree</code> files.</p>
+<hr>
+<h2 id="1-import-syntax"><a class="header" href="#1-import-syntax">1. Import Syntax</a></h2>
+<h3 id="complete-file-import"><a class="header" href="#complete-file-import">Complete File Import</a></h3>
+<p>Imports all tree definitions and action signatures from the target file:</p>
+<pre><code class="language-f-tree">import "std::actions"
+import "navigation/nav.tree"
+import "sensors/battery.tree"
+</code></pre>
+<h3 id="selective-import-with-aliasing"><a class="header" href="#selective-import-with-aliasing">Selective Import with Aliasing</a></h3>
+<p>Imports specific definitions from a file and renames them using aliases to prevent naming conflicts:</p>
+<pre><code class="language-f-tree">import "robot_a/vision.tree" {
+    detect_object =&gt; detect_robot_a_object,
+}
+
+import "robot_b/vision.tree" {
+    detect_object =&gt; detect_robot_b_object,
+}
+</code></pre>
+<hr>
+<h2 id="2-import-paths"><a class="header" href="#2-import-paths">2. Import Paths</a></h2>
+<p>Forester supports three types of import paths:</p>
+<h3 id="relative-paths-recommended"><a class="header" href="#relative-paths-recommended">Relative Paths (Recommended)</a></h3>
+<p>Relative paths are evaluated relative to the project root directory:</p>
+<p>Given the project directory structure:</p>
+<pre><code class="language-text">my_project/
+├── main.tree
+└── modules/
+    └── navigation/
+        └── move.tree
+</code></pre>
+<p>In <code>main.tree</code>, import <code>move.tree</code> using:</p>
+<pre><code class="language-f-tree">import "modules/navigation/move.tree"
+</code></pre>
+<h3 id="standard-library-imports"><a class="header" href="#standard-library-imports">Standard Library Imports</a></h3>
+<p>Built-in standard library actions and decorators can be imported using standard package specifiers:</p>
+<pre><code class="language-f-tree">import "std::actions"
+</code></pre>
+<h3 id="absolute-paths"><a class="header" href="#absolute-paths">Absolute Paths</a></h3>
+<p>Absolute file paths can be used (primarily for global system modules):</p>
+<pre><code class="language-f-tree">import "/opt/forester/std/common.tree"
+</code></pre>
+<hr>
+<h2 id="3-resolving-name-conflicts-with-aliases"><a class="header" href="#3-resolving-name-conflicts-with-aliases">3. Resolving Name Conflicts with Aliases</a></h2>
+<p>When two separate <code>.tree</code> files define sub-trees with identical names, use alias mappings inside curly braces <code>{ }</code> to assign unique local names:</p>
+<pre><code class="language-f-tree">// Import 'check_status' from hardware module
+import "hardware/status.tree" {
+    check_status =&gt; check_hardware_status,
+}
+
+// Import 'check_status' from LLM agent module
+import "agent/status.tree" {
+    check_status =&gt; check_agent_status,
+}
+
+root main sequence {
+    check_hardware_status()
+    check_agent_status()
+}
+</code></pre>
+<hr>
+<h2 id="4-circular-import-handling"><a class="header" href="#4-circular-import-handling">4. Circular Import Handling</a></h2>
+<p>The Forester compiler automatically detects and resolves circular dependency graphs during compilation, raising a clear static compilation error if unresolvable recursive imports occur.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="tree-definitions-overview"><a class="header" href="#tree-definitions-overview">Tree Definitions Overview</a></h1>
+<p>A <strong>Tree Definition</strong> declares a reusable sub-tree or node contract in Forester. Definitions isolate control logic into modular components that can accept typed parameters, store state on the Blackboard, or wrap child trees.</p>
+<p>Forester classifies tree definitions into four main categories:</p>
+<hr>
+<h2 id="categories-of-definitions"><a class="header" href="#categories-of-definitions">Categories of Definitions</a></h2>
+<h3 id="1-control-flow-nodes"><a class="header" href="#1-control-flow-nodes">1. Control Flow Nodes</a></h3>
+<p>Control flow nodes govern how child nodes are scheduled and executed:</p>
+<ul>
+<li><strong><code>sequence</code></strong>: Ticks children sequentially until one returns <code>Failure</code> or <code>Running</code>. Returns <code>Success</code> if all children succeed.</li>
+<li><strong><code>fallback</code></strong>: Ticks children sequentially until one returns <code>Success</code> or <code>Running</code>. Returns <code>Failure</code> if all children fail (often used for fallbacks and recovery).</li>
+<li><strong><code>parallel</code></strong>: Ticks children concurrently based on a specified synchronization policy (e.g. success threshold).</li>
+</ul>
+<p><em>Read more in <a href="#control-flow-nodes-overview">Control Flow Nodes</a>.</em></p>
+<hr>
+<h3 id="2-root-entry-point-root"><a class="header" href="#2-root-entry-point-root">2. Root Entry Point (<code>root</code>)</a></h3>
+<p>The <code>root</code> definition declares the top-level starting point of the behavior tree. A Forester script must contain at least one <code>root</code> definition:</p>
+<pre><code class="language-f-tree">root main sequence {
+    check_preconditions()
+    execute_agent_task()
+}
+</code></pre>
+<hr>
+<h3 id="3-decorator-nodes"><a class="header" href="#3-decorator-nodes">3. Decorator Nodes</a></h3>
+<p>Decorators are single-child nodes that modify or control the execution behavior of their child:</p>
+<ul>
+<li><strong><code>retry(N)</code></strong>: Automatically re-ticks its child up to <strong>N</strong> times upon failure.</li>
+<li><strong><code>inverter</code></strong>: Flips child <code>Success</code> to <code>Failure</code> and vice versa.</li>
+<li><strong><code>timeout(ms)</code></strong>: Limits child execution time.</li>
+<li><strong><code>repeat(N)</code></strong>: Executes child <strong>N</strong> times sequentially.</li>
+</ul>
+<p><em>Read more in <a href="#decorators">Decorators</a>.</em></p>
+<hr>
+<h3 id="4-action-nodes-impl"><a class="header" href="#4-action-nodes-impl">4. Action Nodes (<code>impl</code>)</a></h3>
+<p>Actions represent the leaves of the behavior tree where actual work gets executed (e.g. motor movement, REST calls, LLM prompt generation). Action contracts are defined using <code>impl</code>:</p>
+<pre><code class="language-f-tree">impl call_llm_tool(prompt: string, model: string);
+impl execute_motor_step(velocity: number);
+</code></pre>
+<p><em>Read more in <a href="#actions-impl">Actions</a>.</em></p>
+<hr>
+<h3 id="5-lambdas--higher-order-trees"><a class="header" href="#5-lambdas--higher-order-trees">5. Lambdas &amp; Higher-Order Trees</a></h3>
+<ul>
+<li><strong>Higher-Order Trees (HOT)</strong>: Definitions that accept other sub-trees as parameters (<code>sub_tree: tree</code>).</li>
+<li><strong>Lambdas</strong>: Anonymous inline sub-tree definitions created and executed at the point of invocation.</li>
+</ul>
+<p><em>Read more in <a href="#invocations--higher-order-composition">Higher-Order Trees &amp; Lambdas</a>.</em></p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="control-flow-nodes-overview"><a class="header" href="#control-flow-nodes-overview">Control Flow Nodes Overview</a></h1>
+<p>Control flow nodes direct the execution path of a behavior tree. They manage how child nodes are scheduled, evaluated, and short-circuited based on child tick results (<code>Success</code>, <code>Failure</code>, or <code>Running</code>).</p>
+<p>Forester supports three fundamental control flow nodes:</p>
+<hr>
+<h2 id="1-sequence-nodes-sequence"><a class="header" href="#1-sequence-nodes-sequence">1. Sequence Nodes (<code>sequence</code>)</a></h2>
+<ul>
+<li><strong>Behavior</strong>: Evaluates children sequentially from left to right.</li>
+<li><strong>Short-circuiting</strong>:
+<ul>
+<li>Returns <code>Failure</code> immediately if any child returns <code>Failure</code>.</li>
+<li>Returns <code>Running</code> if a child returns <code>Running</code> (halting further evaluation during that tick).</li>
+<li>Returns <code>Success</code> only when <strong>all</strong> children return <code>Success</code>.</li>
+</ul>
+</li>
+<li><strong>Use Case</strong>: Step-by-step procedures (e.g. <code>[Check Precondition -&gt; Execute Step 1 -&gt; Execute Step 2]</code>).</li>
+</ul>
+<p><em>Detailed documentation: <a href="#sequence-nodes">Sequence Nodes</a>.</em></p>
+<hr>
+<h2 id="2-fallback--selector-nodes-fallback"><a class="header" href="#2-fallback--selector-nodes-fallback">2. Fallback / Selector Nodes (<code>fallback</code>)</a></h2>
+<ul>
+<li><strong>Behavior</strong>: Evaluates children sequentially from left to right to find a successful path.</li>
+<li><strong>Short-circuiting</strong>:
+<ul>
+<li>Returns <code>Success</code> immediately if any child returns <code>Success</code>.</li>
+<li>Returns <code>Running</code> if a child returns <code>Running</code>.</li>
+<li>Returns <code>Failure</code> only when <strong>all</strong> children return <code>Failure</code>.</li>
+</ul>
+</li>
+<li><strong>Use Case</strong>: Error handling, recovery strategies, and fallback routines (e.g. <code>[Primary Action -&gt; Secondary Fallback Action -&gt; Alert Operator]</code>).</li>
+</ul>
+<p><em>Detailed documentation: <a href="#fallback-selector-nodes">Fallback Nodes</a>.</em></p>
+<hr>
+<h2 id="3-parallel-nodes-parallel"><a class="header" href="#3-parallel-nodes-parallel">3. Parallel Nodes (<code>parallel</code>)</a></h2>
+<ul>
+<li><strong>Behavior</strong>: Ticks children concurrently during each engine tick.</li>
+<li><strong>Completion Policy</strong>: Evaluates overall status based on child results and configured threshold policies (e.g., success threshold or fail-fast rules).</li>
+<li><strong>Use Case</strong>: Concurrent tasks (e.g. <code>[Maintain Balance while Navigating to Goal]</code>).</li>
+</ul>
+<p><em>Detailed documentation: <a href="#parallel-nodes">Parallel Nodes</a>.</em></p>
+<hr>
+<h2 id="summary-of-return-states"><a class="header" href="#summary-of-return-states">Summary of Return States</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Node Type</th><th>Succeeds When</th><th>Fails When</th><th>Short-Circuits On</th></tr>
+</thead>
+<tbody>
+<tr><td><strong><code>sequence</code></strong></td><td>All children return <code>Success</code></td><td>Any child returns <code>Failure</code></td><td>First <code>Failure</code> or <code>Running</code></td></tr>
+<tr><td><strong><code>fallback</code></strong></td><td>Any child returns <code>Success</code></td><td>All children return <code>Failure</code></td><td>First <code>Success</code> or <code>Running</code></td></tr>
+<tr><td><strong><code>parallel</code></strong></td><td>Reaches success threshold</td><td>Reaches failure threshold</td><td>Policy dependant</td></tr>
+</tbody>
+</table>
+</div>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="sequence-nodes"><a class="header" href="#sequence-nodes">Sequence Nodes</a></h1>
+<p>A <strong>Sequence</strong> node executes its child nodes in order from left to right as long as each child returns <code>Success</code>. If any child returns <code>Failure</code> or <code>Running</code>, the sequence halts further evaluation and immediately propagates that status up the tree.</p>
+<p>In the Forester DSL, sequence nodes are declared using the <code>sequence</code> keyword (or its memory/reactive variants <code>m_sequence</code> and <code>r_sequence</code>).</p>
+<hr>
+<h2 id="standard-sequence-sequence"><a class="header" href="#standard-sequence-sequence">Standard Sequence (<code>sequence</code>)</a></h2>
+<h3 id="execution-flow--rules"><a class="header" href="#execution-flow--rules">Execution Flow &amp; Rules</a></h3>
+<ol>
+<li><strong>Initial Tick</strong>: Starts at the first child node.</li>
+<li><strong>Child Success</strong>: Moves to the next child. If the last child succeeds, the sequence returns <code>Success</code>.</li>
+<li><strong>Child Running</strong>: Halts evaluation and returns <code>Running</code>. On the next tick, execution resumes at the running child.</li>
+<li><strong>Child Failure</strong>: Immediately aborts remaining children and returns <code>Failure</code>.</li>
+<li><strong>Reset / Halt</strong>: If restarted or aborted, execution starts back from the first child.</li>
+</ol>
+<h3 id="example"><a class="header" href="#example">Example</a></h3>
+<pre><code class="language-f-tree">import "std::actions"
+
+root main sequence {
+    store("key_a", "1")  // Tick 1: proceed if Success
+    store("key_b", "2")  // Tick 2: proceed if Success
+    store("key_c", "3")  // Tick 3: finish with Success
+}
+
+impl store(key: string, value: string);
+</code></pre>
+<h3 id="flow-diagram"><a class="header" href="#flow-diagram">Flow Diagram</a></h3>
+<pre class="mermaid">graph TD
+    Root["root main"] --&gt; Seq["sequence"]
+    Seq --&gt; A["store (key_a)"]
+    Seq --&gt; B["store (key_b)"]
+    Seq --&gt; C["store (key_c)"]
+</pre>
+
+<hr>
+<h2 id="sequence-variants"><a class="header" href="#sequence-variants">Sequence Variants</a></h2>
+<p>Forester provides two specialized sequence variants for state persistence and real-time reactive control loops:</p>
+<h3 id="1-memory-sequence-m_sequence"><a class="header" href="#1-memory-sequence-m_sequence">1. Memory Sequence (<code>m_sequence</code>)</a></h3>
+<p>An <code>m_sequence</code> <strong>remembers</strong> which child nodes have already succeeded. When re-ticked (e.g. after a decorator retry or on subsequent ticks), it skips previously succeeded children and resumes execution at the first non-successful child.</p>
+<pre><code class="language-f-tree">root main sequence {
+    retry(5) m_sequence {
+        check_preconditions()  // Returns Success once
+        execute_task()         // Returns Failure -&gt; retry triggers m_sequence
+        finish_and_cleanup()   // Execution resumes here without re-checking preconditions
+    }
+}
+</code></pre>
+<ul>
+<li><strong>Memory Reset</strong>: Memory persists until the entire sequence finishes with <code>Success</code> or is explicitly reset.</li>
+</ul>
+<hr>
+<h3 id="2-reactive-sequence-r_sequence"><a class="header" href="#2-reactive-sequence-r_sequence">2. Reactive Sequence (<code>r_sequence</code>)</a></h3>
+<p>An <code>r_sequence</code> <strong>re-evaluates all preceding children on every tick</strong>, even if they succeeded on prior ticks. This ensures that preconditions remain valid while long-running lower nodes execute.</p>
+<pre><code class="language-f-tree">root main r_sequence {
+    is_battery_ok()       // Re-checked on EVERY tick
+    navigate_to_target()  // Returns Running for multiple ticks
+    perform_docking()
+}
+</code></pre>
+<ul>
+<li><strong>Preemption &amp; Halting</strong>: If <code>is_battery_ok()</code> changes from <code>Success</code> to <code>Failure</code> while <code>navigate_to_target()</code> is <code>Running</code>, the <code>r_sequence</code> immediately halts <code>navigate_to_target()</code> and returns <code>Failure</code>.</li>
+<li><strong>Halting behavior</strong>: Halting ensures graceful teardown of active synchronous and flow nodes before propagating state changes.</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="fallback-selector-nodes"><a class="header" href="#fallback-selector-nodes">Fallback (Selector) Nodes</a></h1>
+<p>A <strong>Fallback</strong> (also known as a Selector) node executes its child nodes in order from left to right until one child returns <code>Success</code>. If all children return <code>Failure</code>, the Fallback node returns <code>Failure</code>.</p>
+<p>In the Forester DSL, fallback nodes are declared using the <code>fallback</code> keyword (or its reactive variant <code>r_fallback</code>).</p>
+<hr>
+<h2 id="standard-fallback-fallback"><a class="header" href="#standard-fallback-fallback">Standard Fallback (<code>fallback</code>)</a></h2>
+<h3 id="execution-flow--rules-1"><a class="header" href="#execution-flow--rules-1">Execution Flow &amp; Rules</a></h3>
+<ol>
+<li><strong>Initial Tick</strong>: Starts at the first child node.</li>
+<li><strong>Child Failure</strong>: Moves to the next child. If the last child fails, the fallback returns <code>Failure</code>.</li>
+<li><strong>Child Success</strong>: Immediately short-circuits remaining children and returns <code>Success</code>.</li>
+<li><strong>Child Running</strong>: Halts evaluation and returns <code>Running</code>. On the next tick, execution resumes at the running child.</li>
+<li><strong>Reset / Halt</strong>: If restarted or aborted, evaluation resets back to the first child.</li>
+</ol>
+<h3 id="precondition-check-pattern"><a class="header" href="#precondition-check-pattern">Precondition Check Pattern</a></h3>
+<p>Fallbacks are commonly used to enforce preconditions before running an action (i.e. <code>[Precondition OR Action]</code>):</p>
+<pre><code class="language-f-tree">import "std::actions"
+
+root main sequence {
+    // If item is already held, skip move_to_item()
+    fallback {
+        is_item_in_hand(item = "battery_pack")
+        move_to_item(item = "battery_pack")
+    }
+    
+    pickup_item(item = "battery_pack")
+}
+
+impl is_item_in_hand(item: string);
+impl move_to_item(item: string);
+impl pickup_item(item: string);
+</code></pre>
+<h3 id="llm-fallback-pattern-ai-agents"><a class="header" href="#llm-fallback-pattern-ai-agents">LLM Fallback Pattern (AI Agents)</a></h3>
+<p>Fallbacks provide a clean mechanism for multi-model LLM fallbacks without nested <code>try/except</code> blocks:</p>
+<pre><code class="language-f-tree">root main fallback {
+    call_primary_llm({"model": "gpt-4o"})
+    call_fallback_llm({"model": "claude-3-5-sonnet"})
+    alert_human_operator({"reason": "All LLM APIs failed"})
+}
+
+impl call_primary_llm(config: object);
+impl call_fallback_llm(config: object);
+impl alert_human_operator(config: object);
+</code></pre>
+<h3 id="flow-diagram-1"><a class="header" href="#flow-diagram-1">Flow Diagram</a></h3>
+<pre class="mermaid">graph TD
+    Root["root main"] --&gt; Fall["fallback"]
+    Fall --&gt; A["call_primary_llm"]
+    Fall --&gt; B["call_fallback_llm"]
+    Fall --&gt; C["alert_human_operator"]
+</pre>
+
+<hr>
+<h2 id="reactive-fallback-r_fallback"><a class="header" href="#reactive-fallback-r_fallback">Reactive Fallback (<code>r_fallback</code>)</a></h2>
+<p>An <code>r_fallback</code> <strong>re-evaluates all preceding children on every tick</strong>, even while a lower child is currently <code>Running</code>.</p>
+<pre><code class="language-f-tree">root main r_fallback {
+    emergency_battery_low()    // Checked on EVERY tick
+    perform_long_task()        // Returns Running for multiple ticks
+    fallback_idle()
+}
+
+impl emergency_battery_low();
+impl perform_long_task();
+impl fallback_idle();
+</code></pre>
+<h3 id="preemption-behavior"><a class="header" href="#preemption-behavior">Preemption Behavior</a></h3>
+<p>If <code>perform_long_task()</code> is <code>Running</code> and <code>emergency_battery_low()</code> evaluates to <code>Success</code> on a subsequent tick:</p>
+<ol>
+<li><code>r_fallback</code> immediately <strong>halts</strong> <code>perform_long_task()</code>.</li>
+<li><code>r_fallback</code> executes <code>emergency_battery_low()</code> and returns <code>Success</code>.</li>
+<li>Lower nodes are safely preempted.</li>
+</ol>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="parallel-nodes"><a class="header" href="#parallel-nodes">Parallel Nodes</a></h1>
+<p>A <strong>Parallel</strong> node provides concurrent execution of its child nodes within a single engine tick. Unlike <code>sequence</code> or <code>fallback</code> nodes (which short-circuit immediately upon receiving a result), a <code>parallel</code> node ticks <strong>all active children</strong> during every tick pass.</p>
+<p>In the Forester DSL, parallel nodes are declared using the <code>parallel</code> keyword.</p>
+<hr>
+<h2 id="execution-flow--rules-2"><a class="header" href="#execution-flow--rules-2">Execution Flow &amp; Rules</a></h2>
+<ol>
+<li><strong>Concurrent Ticking</strong>: During a tick pass, the parallel node iterates through all child nodes and ticks each one sequentially within that single frame.</li>
+<li><strong>Child Processing</strong>:
+<ul>
+<li>If a child returns <code>Success</code> or <code>Failure</code>, its status is stored.</li>
+<li>If a child returns <code>Running</code>, it continues running. On subsequent ticks, already completed children (<code>Success</code> or <code>Failure</code>) are skipped, while <code>Running</code> children are re-ticked.</li>
+</ul>
+</li>
+<li><strong>Overall State Determination</strong>:
+<ul>
+<li><strong><code>Success</code></strong>: Returned when <strong>all</strong> child nodes evaluate to <code>Success</code>.</li>
+<li><strong><code>Failure</code></strong>: Returned if any child node returns <code>Failure</code> (unless a custom threshold policy is configured).</li>
+<li><strong><code>Running</code></strong>: Returned if at least one child node remains <code>Running</code> and no failure threshold has been breached.</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h2 id="code-example"><a class="header" href="#code-example">Code Example</a></h2>
+<pre><code class="language-f-tree">import "std::actions"
+
+root main sequence {
+    // Run concurrent tasks in parallel
+    parallel {
+        clean_current_room()   // Async action (returns Running)
+        inspect_environment()  // Sync or async action
+    }
+    
+    navigate_to_next_room()
+}
+
+impl clean_current_room();
+impl inspect_environment();
+impl navigate_to_next_room();
+</code></pre>
+<hr>
+<h2 id="key-considerations-for-parallel-execution"><a class="header" href="#key-considerations-for-parallel-execution">Key Considerations for Parallel Execution</a></h2>
+<ol>
+<li><strong>Async &amp; Sync Actions</strong>: Parallel nodes are ideal for launching multiple non-blocking async tasks simultaneously (e.g. streaming sensor data while running an LLM tool call).</li>
+<li><strong>Non-Reactive Skipping</strong>: Once a child completes with <code>Success</code> or <code>Failure</code>, the parallel node skips re-ticking it on subsequent frames until the parent parallel node finishes and resets.</li>
+<li><strong>Shared Blackboard Access</strong>: When children running in parallel write to the Blackboard, care should be taken to avoid key collisions or race conditions.</li>
+</ol>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="decorators"><a class="header" href="#decorators">Decorators</a></h1>
+<p>A <strong>Decorator</strong> is a specialized single-child node that wraps a child node and modifies its execution behavior or transforms its return state (<code>Success</code>, <code>Failure</code>, or <code>Running</code>).</p>
+<p>Every decorator accepts <strong>exactly one child node</strong> (which can be a single action, a sub-tree, or a block wrapped in <code>{ }</code>).</p>
+<hr>
+<h2 id="built-in-decorator-reference"><a class="header" href="#built-in-decorator-reference">Built-In Decorator Reference</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Decorator</th><th>Parameters</th><th>Default</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><strong><code>inverter</code></strong></td><td>None</td><td>—</td><td>Inverts child <code>Success</code> to <code>Failure</code>, and <code>Failure</code> to <code>Success</code>. (<code>Running</code> is untouched).</td></tr>
+<tr><td><strong><code>force_success</code></strong></td><td>None</td><td>—</td><td>Always returns <code>Success</code> regardless of whether the child succeeds or fails.</td></tr>
+<tr><td><strong><code>force_fail</code></strong></td><td>None</td><td>—</td><td>Always returns <code>Failure</code> regardless of child outcome.</td></tr>
+<tr><td><strong><code>repeat(N)</code></strong></td><td><code>count: number</code></td><td><code>0</code> (Infinite)</td><td>Repeats execution of the child $N$ times. If count is <code>0</code>, repeats infinitely.</td></tr>
+<tr><td><strong><code>retry(N)</code></strong></td><td><code>attempts: number</code></td><td><code>0</code> (Infinite)</td><td>Re-ticks the child up to $N$ times if it returns <code>Failure</code>. If attempts is <code>0</code>, retries indefinitely.</td></tr>
+<tr><td><strong><code>timeout(ms)</code></strong></td><td><code>limit: number</code></td><td><code>1000</code></td><td>Limits child execution time in milliseconds. Halts child and returns <code>Failure</code> if exceeded.</td></tr>
+<tr><td><strong><code>delay(ms)</code></strong></td><td><code>wait: number</code></td><td><code>0</code></td><td>Delays the initial execution of the child for the specified duration in milliseconds.</td></tr>
+</tbody>
+</table>
+</div>
+<hr>
+<h2 id="placement-of-decorators"><a class="header" href="#placement-of-decorators">Placement of Decorators</a></h2>
+<p>Decorators in Forester can be placed in two main ways:</p>
+<h3 id="1-in-tree--root-definitions-header-decorators"><a class="header" href="#1-in-tree--root-definitions-header-decorators">1. In Tree / Root Definitions (Header Decorators)</a></h3>
+<p>Decorators can be placed directly in the declaration header of a <code>root</code> node or sub-tree definition:</p>
+<pre><code class="language-f-tree">// Root node wrapped in a repeat decorator
+root main_fixed repeat(5) {
+    execute_cycle()
+}
+
+// Sub-tree definition wrapped with a retry decorator
+sequence retryable_task retry(3) {
+    perform_step()
+}
+</code></pre>
+<h3 id="2-at-invocation-sites"><a class="header" href="#2-at-invocation-sites">2. At Invocation Sites</a></h3>
+<p>Decorators can be placed directly before an action invocation, sub-tree call, or inline lambda:</p>
+<pre><code class="language-f-tree">root main sequence {
+    // Decorator on an action invocation
+    retry(3) perform_task()
+    
+    // Decorator on a sequence block
+    timeout(1000) sequence {
+        fetch_data()
+    }
+    
+    // Decorator on an inline lambda
+    retry(5) lambda sequence {
+        fetch_sensor_data()
+        validate_reading()
+    }
+}
+</code></pre>
+<hr>
+<h2 id="detailed-examples"><a class="header" href="#detailed-examples">Detailed Examples</a></h2>
+<h3 id="1-inverter-inverter"><a class="header" href="#1-inverter-inverter">1. Inverter (<code>inverter</code>)</a></h3>
+<p>Inverts the result of condition checks or actions:</p>
+<pre><code class="language-f-tree">import "std::actions"
+
+root main sequence {
+    // Succeeds if obstacle_detected() fails
+    inverter obstacle_detected()
+    move_forward()
+}
+
+impl obstacle_detected();
+impl move_forward();
+</code></pre>
+<hr>
+<h3 id="2-result-overrides-force_success--force_fail"><a class="header" href="#2-result-overrides-force_success--force_fail">2. Result Overrides (<code>force_success</code> &amp; <code>force_fail</code>)</a></h3>
+<p>Enforce specific outcome states regardless of child execution:</p>
+<pre><code class="language-f-tree">root main sequence {
+    // Attempt cleanup; continue even if cleanup returns Failure
+    force_success cleanup_temp_files()
+    proceed_main_task()
+}
+
+impl cleanup_temp_files();
+impl proceed_main_task();
+</code></pre>
+<hr>
+<h3 id="3-repeat-repeat"><a class="header" href="#3-repeat-repeat">3. Repeat (<code>repeat</code>)</a></h3>
+<p>Executes a child multiple times (or infinitely for continuous control loops):</p>
+<pre><code class="language-f-tree">// Infinite execution loop
+root main_idle repeat {
+    background_health_check()
+}
+
+// Fixed 5-cycle loop
+root main_fixed repeat(5) {
+    execute_cycle()
+}
+
+impl background_health_check();
+impl execute_cycle();
+</code></pre>
+<hr>
+<h3 id="4-retry-retry"><a class="header" href="#4-retry-retry">4. Retry (<code>retry</code>)</a></h3>
+<p>Automatically retries failing actions (ideal for network calls or LLM tool invocations):</p>
+<pre><code class="language-f-tree">root main sequence {
+    // Retry up to 5 times if call_llm returns Failure
+    retry(5) call_llm({"prompt": "analyze_image"})
+}
+
+impl call_llm(params: object);
+</code></pre>
+<hr>
+<h3 id="5-timeout-timeout--delay-delay"><a class="header" href="#5-timeout-timeout--delay-delay">5. Timeout (<code>timeout</code>) &amp; Delay (<code>delay</code>)</a></h3>
+<p>Controls timing for async actions:</p>
+<pre><code class="language-f-tree">root main sequence {
+    // Wait 500ms before starting initial tick
+    delay(500) initialize_sensors()
+    
+    // Shut down async action if it runs longer than 3000ms
+    timeout(3000) fetch_remote_data()
+}
+
+impl initialize_sensors();
+impl fetch_remote_data();
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="actions-impl"><a class="header" href="#actions-impl">Actions (<code>impl</code>)</a></h1>
+<p><strong>Actions</strong> form the leaf nodes of a behavior tree. They represent the actual work performed by external code—such as controlling hardware motors, querying databases, making REST calls, or invoking LLM tools.</p>
+<p>In the Forester DSL, actions are declared using the <code>impl</code> keyword.</p>
+<hr>
+<h2 id="action-signatures-impl"><a class="header" href="#action-signatures-impl">Action Signatures (<code>impl</code>)</a></h2>
+<p>An action contract defines the action name, input parameters, and expected parameter types:</p>
+<pre><code class="language-f-tree">// Action signature declarations
+impl navigate_to_pose(target: object);
+impl check_battery_level(min_voltage: number);
+impl call_llm_tool(prompt: string, model: string);
+impl reset_system_state(){}
+</code></pre>
+<ul>
+<li><strong>Semicolons</strong>: A trailing semicolon <code>;</code> or empty block <code>{}</code> is required after an <code>impl</code> declaration.</li>
+</ul>
+<hr>
+<h2 id="action-execution-modes"><a class="header" href="#action-execution-modes">Action Execution Modes</a></h2>
+<p>The Forester runtime supports two primary execution mechanisms:</p>
+<h3 id="1-local-actions-rust-engine"><a class="header" href="#1-local-actions-rust-engine">1. Local Actions (Rust Engine)</a></h3>
+<p>Implemented directly in Rust using the <code>Action</code> trait and registered with <code>ForesterBuilder</code>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use forester_rs::runtime::action::{Action, ActionArgs, TickResult};
+
+struct NavigateToPose;
+
+impl Action for NavigateToPose {
+    fn tick(&amp;self, args: ActionArgs) -&gt; TickResult {
+        // Perform navigation logic
+        TickResult::Success
+    }
+}
+<span class="boring">}</span></code></pre>
+<ul>
+<li><strong>Synchronous Actions</strong>: Block until execution completes during the current tick.</li>
+<li><strong>Asynchronous Actions</strong>: Return <code>TickResult::Running</code> immediately for non-blocking operations, completing on subsequent ticks.</li>
+</ul>
+<hr>
+<h3 id="2-remote-actions-python--microservices"><a class="header" href="#2-remote-actions-python--microservices">2. Remote Actions (Python / Microservices)</a></h3>
+<p>Actions executed in external processes (e.g. Python AI agents using <code>forester-http-ra-py</code>). The Forester engine sends an RPC/HTTP request to the remote action server and handles the response.</p>
+<hr>
+<h2 id="strict-contract-enforcement"><a class="header" href="#strict-contract-enforcement">Strict Contract Enforcement</a></h2>
+<p>The Forester compiler enforces strict type checking and argument count matching between <code>impl</code> signatures and invocation sites:</p>
+<pre><code class="language-f-tree">impl calculate_route(destination: object, max_speed: number);
+
+root main sequence {
+    // ❌ COMPILE ERROR: Missing required 'max_speed' argument
+    calculate_route(destination = {"x": 10, "y": 20})
+}
+</code></pre>
+<hr>
+<h2 id="passing-blackboard-references-pointer"><a class="header" href="#passing-blackboard-references-pointer">Passing Blackboard References (<code>&amp;pointer</code>)</a></h2>
+<p>Actions can accept live Blackboard references using the <code>&amp;</code> pointer prefix. This allows nodes to read dynamically updated state without hardcoding values at definition time:</p>
+<pre><code class="language-f-tree">impl analyze_sensor_data(data_ref: string);
+
+root main sequence {
+    // Pass live Blackboard reference &amp;sensor_reading
+    analyze_sensor_data(data_ref = &amp;sensor_reading)
+}
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="built-in-standard-library-actions-stdactions"><a class="header" href="#built-in-standard-library-actions-stdactions">Built-In Standard Library Actions (<code>std::actions</code>)</a></h1>
+<p>Forester provides a built-in standard library of common utility actions, Blackboard operations, and state helpers.</p>
+<p>To use standard library actions, import <code>std::actions</code> at the top of your <code>.tree</code> file:</p>
+<pre><code class="language-f-tree">import "std::actions"
+
+root main sequence {
+    store("session_id", "12345")
+    equal("session_id", "12345")
+}
+</code></pre>
+<p>Selective imports with aliasing can also be used:</p>
+<pre><code class="language-f-tree">import "std::actions" {
+    store =&gt; set_blackboard_key,
+    fail =&gt; throw_failure,
+}
+</code></pre>
+<hr>
+<h2 id="standard-action-reference"><a class="header" href="#standard-action-reference">Standard Action Reference</a></h2>
+<h3 id="1-terminal--flow-control-actions"><a class="header" href="#1-terminal--flow-control-actions">1. Terminal / Flow Control Actions</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Action</th><th>Arguments</th><th>Return State</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><strong><code>success()</code></strong></td><td>None</td><td><code>Success</code></td><td>Instantly returns <code>Success</code>. Useful as stub or default branch.</td></tr>
+<tr><td><strong><code>fail(reason)</code></strong></td><td><code>reason: string</code></td><td><code>Failure</code></td><td>Instantly fails execution with an explicit error reason.</td></tr>
+<tr><td><strong><code>fail_empty()</code></strong></td><td>None</td><td><code>Failure</code></td><td>Instantly fails execution without a reason message.</td></tr>
+<tr><td><strong><code>running()</code></strong></td><td>None</td><td><code>Running</code></td><td>Returns <code>Running</code>. Keeps node active on subsequent ticks.</td></tr>
+<tr><td><strong><code>sleep(duration)</code></strong></td><td><code>duration: number</code></td><td><code>Success</code></td><td>Non-blocking sleep for $N$ milliseconds before returning <code>Success</code>.</td></tr>
+</tbody>
+</table>
+</div>
+<hr>
+<h3 id="2-blackboard-memory-actions"><a class="header" href="#2-blackboard-memory-actions">2. Blackboard Memory Actions</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Action</th><th>Arguments</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><strong><code>store(key, value)</code></strong></td><td><code>key: string, value: string</code></td><td>Stores a value into the Blackboard under <code>key</code>.</td></tr>
+<tr><td><strong><code>equal(key, expected)</code></strong></td><td><code>key: string, expected: string</code></td><td>Compares Blackboard value under <code>key</code> to <code>expected</code>. Returns <code>Success</code> if equal, <code>Failure</code> otherwise.</td></tr>
+<tr><td><strong><code>store_tick(key)</code></strong></td><td><code>key: string</code></td><td>Stores the current engine tick number into <code>key</code>.</td></tr>
+<tr><td><strong><code>lock(key)</code></strong></td><td><code>key: string</code></td><td>Locks a Blackboard key to prevent modifications by other nodes.</td></tr>
+<tr><td><strong><code>unlock(key)</code></strong></td><td><code>key: string</code></td><td>Unlocks a previously locked Blackboard key.</td></tr>
+</tbody>
+</table>
+</div>
+<hr>
+<h3 id="3-io--network-actions"><a class="header" href="#3-io--network-actions">3. I/O &amp; Network Actions</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Action</th><th>Arguments</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><strong><code>http_get(url, bb_key)</code></strong></td><td><code>url: string, bb_key: string</code></td><td>Performs an HTTP GET request to <code>url</code> and stores the response payload into <code>bb_key</code>.</td></tr>
+</tbody>
+</table>
+</div>
+<hr>
+<h2 id="code-example-1"><a class="header" href="#code-example-1">Code Example</a></h2>
+<pre><code class="language-f-tree">import "std::actions"
+
+root main sequence {
+    // 1. Initialize Blackboard state
+    store("agent_status", "initializing")
+    
+    // 2. Perform work
+    fallback {
+        http_get("https://api.example.com/health", "health_response")
+        fail("Health check API unreachable")
+    }
+    
+    // 3. Verify status
+    equal("agent_status", "initializing")
+    
+    // 4. Update status to active
+    store("agent_status", "active")
+}
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="invocations--higher-order-composition"><a class="header" href="#invocations--higher-order-composition">Invocations &amp; Higher-Order Composition</a></h1>
+<p>In Forester, an <strong>Invocation</strong> calls a declared sub-tree definition, built-in decorator, action, or inline lambda within another tree definition.</p>
+<p>Invocations are the primary mechanism for composing complex behavior trees out of smaller, modular building blocks.</p>
+<hr>
+<h2 id="basic-invocation-syntax"><a class="header" href="#basic-invocation-syntax">Basic Invocation Syntax</a></h2>
+<p>Invocations support both <strong>positional</strong> and <strong>named</strong> argument syntax:</p>
+<pre><code class="language-f-tree">import "std::actions"
+
+// Sub-tree definition with parameters
+sequence check_distance(item: object, threshold: number) {
+    store("target_item", item)
+    handle_distance(item, threshold)
+}
+
+root main sequence {
+    // Positional argument invocation
+    check_distance({"x": 10, "y": 20}, 50)
+    
+    // Named argument invocation
+    check_distance(
+        item = {"x": 30, "y": 40},
+        threshold = 100
+    )
+}
+
+impl handle_distance(item: object, limit: number);
+</code></pre>
+<hr>
+<h2 id="functional-composition-capabilities"><a class="header" href="#functional-composition-capabilities">Functional Composition Capabilities</a></h2>
+<p>Forester extends standard behavior tree semantics by offering advanced functional composition primitives:</p>
+<h3 id="1-higher-order-trees-hot"><a class="header" href="#1-higher-order-trees-hot">1. Higher-Order Trees (HOT)</a></h3>
+<p>Pass sub-trees as parameters (<code>t: tree</code>) to higher-order tree definitions and delegate execution using the <code>t(..)</code> syntax. This allows developers to write generic retry, fallback, or logging wrappers once and reuse them across the codebase.</p>
+<p><em>Read more in <a href="#higher-order-trees-hot">Higher-Order Trees</a>.</em></p>
+<hr>
+<h3 id="2-lambdas-anonymous-inline-sub-trees"><a class="header" href="#2-lambdas-anonymous-inline-sub-trees">2. Lambdas (Anonymous Inline Sub-Trees)</a></h3>
+<p>Define and instantly invoke inline, anonymous sub-trees (<code>lambda sequence { ... }</code>) without creating throwaway named definitions.</p>
+<p><em>Read more in <a href="#lambdas-anonymous-inline-sub-trees">Lambdas</a>.</em></p>
+<hr>
+<h2 id="summary-of-invocation-types"><a class="header" href="#summary-of-invocation-types">Summary of Invocation Types</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Invocation Type</th><th>Example Syntax</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Standard Sub-Tree</strong></td><td><code>navigate_to(target)</code></td><td>Invokes a named sub-tree definition.</td></tr>
+<tr><td><strong>Action Invocation</strong></td><td><code>call_llm(prompt)</code></td><td>Invokes an external <code>impl</code> action.</td></tr>
+<tr><td><strong>Delegated Tree (HOT)</strong></td><td><code>sub_action(..)</code></td><td>Invokes a sub-tree passed as a parameter.</td></tr>
+<tr><td><strong>Inline Lambda</strong></td><td><code>lambda sequence { ... }</code></td><td>Creates and executes an anonymous sub-tree inline.</td></tr>
+</tbody>
+</table>
+</div>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="higher-order-trees-hot"><a class="header" href="#higher-order-trees-hot">Higher-Order Trees (HOT)</a></h1>
+<p>A <strong>Higher-Order Tree</strong> is a tree definition that accepts other sub-trees as typed parameters (<code>param: tree</code>) and delegates execution to them using the <code>param(..)</code> syntax.</p>
+<p>This is Forester’s most powerful functional abstraction. It eliminates repetitive copy-pasted retry/fallback/logging patterns by letting you write a pattern once and inject the varying behavior as a parameter.</p>
+<hr>
+<h2 id="motivation"><a class="header" href="#motivation">Motivation</a></h2>
+<p>Consider a common robotics pattern: check a precondition, and if it fails, run a corrective task. Without HOTs you repeat this <code>fallback</code> structure for every step:</p>
+<pre><code class="language-f-tree">sequence handle(item: object) {
+    fallback { close_enough(item)  approach(item) }
+    fallback { is_graspable(item)  grasp(item) }
+    fallback { enough_space(item)  sequence { move(item) save(item) } }
+}
+</code></pre>
+<p>With a Higher-Order Tree you name the pattern once and inject the steps:</p>
+<pre><code class="language-f-tree">// Define the pattern once
+fallback precond_or_fix(condition: tree, fix: tree) {
+    condition(..)
+    fix(..)
+}
+
+// Reuse it without duplication
+sequence handle(item: object) {
+    precond_or_fix(close_enough(item),  approach(item))
+    precond_or_fix(is_graspable(item),  grasp(item))
+    precond_or_fix(enough_space(item),  sequence { move(item) save(item) })
+}
+</code></pre>
+<hr>
+<h2 id="syntax"><a class="header" href="#syntax">Syntax</a></h2>
+<p>Declare a <code>tree</code>-typed parameter in the definition signature. Invoke it inside the body using <code>param_name(..)</code>:</p>
+<pre><code class="language-f-tree">// Generic retry-with-fallback wrapper
+fallback retryer(action: tree, on_fail: tree) {
+    retry(3) action(..)
+    on_fail(..)
+}
+
+root main sequence {
+    // Pass any tree as action or on_fail
+    retryer(
+        call_llm({"model": "gpt-4o"}),
+        alert_operator()
+    )
+}
+
+impl call_llm(config: object);
+impl alert_operator();
+</code></pre>
+<hr>
+<h2 id="lambdas-as-hot-arguments"><a class="header" href="#lambdas-as-hot-arguments">Lambdas as HOT Arguments</a></h2>
+<p>Inline lambdas can be passed directly as <code>tree</code> arguments, avoiding throwaway named definitions:</p>
+<pre><code class="language-f-tree">root main sequence {
+    retryer(
+        lambda sequence {
+            fetch_data()
+            validate_data()
+        },
+        notify_failure()
+    )
+}
+</code></pre>
+<hr>
+<h2 id="parameter-scoping-rules"><a class="header" href="#parameter-scoping-rules">Parameter Scoping Rules</a></h2>
+<p>Forester does <strong>not</strong> perform closure-style parameter capturing. The semantics are:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Argument type</th><th>Resolved when?</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Static constants</strong> (strings, numbers, objects)</td><td>Captured at definition site and passed as-is</td></tr>
+<tr><td><strong>Blackboard pointers</strong> (<code>&amp;key</code>)</td><td>Resolved at the moment of invocation</td></tr>
+</tbody>
+</table>
+</div>
+<p>This means Blackboard pointer arguments always reflect the <strong>live state</strong> of the Blackboard at invocation time, not at the point where the HOT definition was written.</p>
+<hr>
+<h2 id="common-reusable-patterns"><a class="header" href="#common-reusable-patterns">Common Reusable Patterns</a></h2>
+<pre><code class="language-f-tree">// Retry-or-notify
+fallback retry_or_notify(action: tree, notify: tree) {
+    retry(3) action(..)
+    notify(..)
+}
+
+// Timed action with fallback
+fallback timed(action: tree, limit_ms: number, on_timeout: tree) {
+    timeout(limit_ms) action(..)
+    on_timeout(..)
+}
+
+// Logged execution
+sequence logged(label: string, action: tree) {
+    log(label)
+    action(..)
+}
+
+impl log(message: string);
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="lambdas-anonymous-inline-sub-trees"><a class="header" href="#lambdas-anonymous-inline-sub-trees">Lambdas (Anonymous Inline Sub-Trees)</a></h1>
+<p>A <strong>Lambda</strong> is an anonymous, inline sub-tree that is defined and executed at the point of invocation — no named definition required.</p>
+<p>Lambdas are ideal for one-off logic that is too simple to justify a named definition, or for passing inline behavior directly as a Higher-Order Tree argument.</p>
+<hr>
+<h2 id="key-properties"><a class="header" href="#key-properties">Key Properties</a></h2>
+<ul>
+<li><strong>No name</strong>: Lambdas are anonymous — they cannot be referenced from elsewhere.</li>
+<li><strong>No parameters</strong>: Lambdas do not accept arguments. They operate on Blackboard state directly.</li>
+<li><strong>Flow nodes only</strong>: Lambdas can only contain flow control nodes (<code>sequence</code>, <code>fallback</code>, <code>parallel</code>, decorators) and action invocations. Action signatures must still be declared with <code>impl</code> elsewhere.</li>
+<li><strong>Unique instances</strong>: Each lambda definition creates a distinct node in the compiled tree.</li>
+</ul>
+<hr>
+<h2 id="basic-syntax"><a class="header" href="#basic-syntax">Basic Syntax</a></h2>
+<p>Any inline <code>sequence</code>, <code>fallback</code>, or <code>parallel</code> block without a name is a lambda:</p>
+<pre><code class="language-f-tree">import "std::actions"
+
+impl job();
+
+root main sequence {
+    // Lambda: unnamed inline sequence
+    sequence {
+        job()
+        job()
+        job()
+    }
+    
+    // Lambda: unnamed fallback with nested lambdas
+    fallback {
+        sequence {
+            job()
+            job()
+        }
+        // Decorator on a single-child lambda (brackets omitted)
+        retry(3) job()
+    }
+}
+</code></pre>
+<hr>
+<h2 id="lambdas-as-higher-order-tree-arguments"><a class="header" href="#lambdas-as-higher-order-tree-arguments">Lambdas as Higher-Order Tree Arguments</a></h2>
+<p>Lambdas can be passed directly as <code>tree</code>-typed arguments to Higher-Order Tree definitions. This avoids the need to create throwaway named definitions just to pass a block of logic:</p>
+<pre><code class="language-f-tree">impl savepoint();
+impl fetch_data();
+impl validate();
+impl store_result();
+
+sequence bookmarked(action: tree) {
+    savepoint()
+    action(..)
+    savepoint()
+}
+
+root main sequence {
+    // Pass an inline lambda as the 'action' argument
+    bookmarked(
+        sequence {
+            fetch_data()
+            validate()
+            store_result()
+        }
+    )
+    
+    // Named argument syntax
+    bookmarked(
+        action = fallback {
+            fetch_data()
+            store_result()
+        }
+    )
+}
+</code></pre>
+<hr>
+<h2 id="when-to-use-a-lambda-vs-a-named-definition"><a class="header" href="#when-to-use-a-lambda-vs-a-named-definition">When to Use a Lambda vs. a Named Definition</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Situation</th><th>Recommendation</th></tr>
+</thead>
+<tbody>
+<tr><td>One-off logic used in a single place</td><td><strong>Lambda</strong></td></tr>
+<tr><td>Logic reused in 2+ places</td><td><strong>Named sub-tree definition</strong></td></tr>
+<tr><td>Passed as a HOT argument inline</td><td><strong>Lambda</strong></td></tr>
+<tr><td>Needs its own parameters</td><td><strong>Named sub-tree definition</strong></td></tr>
+</tbody>
+</table>
+</div>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="parameters"><a class="header" href="#parameters">Parameters</a></h1>
+<h2 id="terminology"><a class="header" href="#terminology">Terminology</a></h2>
+<ul>
+<li>Parameters are elements of tree definitions.</li>
+<li>Arguments are elements of tree invocations.</li>
+</ul>
+<pre><code class="language-f-tree">// parameters 'a' and 'b'
+sequence tree(a:string,b:num){
+    // arguments 'c', 'd'
+    job(c = 1, d = "d")
+}
+</code></pre>
+<h2 id="arguments"><a class="header" href="#arguments">Arguments</a></h2>
+<p>Therefore, the arguments represent the attachments of the real value to the parameters.
+The Argument can be one of two types:</p>
+<ul>
+<li>Named argument</li>
+<li>Unnamed argument</li>
+</ul>
+<pre><code class="language-f-tree">impl action(a:string, b:num)
+
+root main sequnce {
+    // Named Arguments
+    action(a="a",b:1)
+    
+    // Unnamed Arguments
+    action("a",1)
+}
+</code></pre>
+<p><strong>There is impossible to mix named and unnamed arguments</strong>
+The following code will have an error during the compilation process.</p>
+<pre><code class="language-f-tree">impl action(a:string, b:num)
+root main sequnce {
+    action("a",b=1 )
+}
+</code></pre>
+<h2 id="types"><a class="header" href="#types">Types</a></h2>
+<h3 id="number"><a class="header" href="#number">Number</a></h3>
+<p>The numbers are defined with a keyword <code>num</code>
+There are 4 possible types of numbers presented:</p>
+<ul>
+<li>Integers(64)</li>
+<li>Floats(64)</li>
+<li>Hex</li>
+<li>Binary</li>
+</ul>
+<p><strong>In case of exceeding the maximum value, the error will be raised on the compile time.</strong></p>
+<pre><code class="language-f-tree">impl action(param:num)
+
+root main sequence {
+    // Integers
+    action(1)
+    action(10e2)
+    action(-1)
+    action(0)
+    
+    // Floats
+    action(0.0)
+    action(100.0e1)
+    action(-100.0)
+    
+    // Hex
+    action(0x123)
+    
+    // Binary
+    action(0b010101)
+}
+</code></pre>
+<h3 id="string"><a class="header" href="#string">String</a></h3>
+<p>The strings are defined with <code>string</code></p>
+<pre><code class="language-f-tree">impl action(param:string)
+root main action(param = "X")
+</code></pre>
+<h3 id="boolean"><a class="header" href="#boolean">Boolean</a></h3>
+<p>The booleans are defined with a keyword <code>bool</code> and has the following parameters:</p>
+<ul>
+<li><code>true</code> for the positive statement</li>
+<li><code>false</code> for the negative statement</li>
+</ul>
+<pre><code class="language-f-tree">impl action(param:bool);
+root main action(true)
+</code></pre>
+<h3 id="arrays"><a class="header" href="#arrays">Arrays</a></h3>
+<p>The arrays are defined with keyword <code>array</code>
+Arrays can have several aforementioned elements encompassed in one entity.</p>
+<p>The arrays have the following syntax:</p>
+<ul>
+<li><code>[</code> defines the start of array</li>
+<li><code>]</code> defines the end of array</li>
+<li><code>,</code> defines the separator between elements</li>
+<li>the rest is defined by the particular elements</li>
+</ul>
+<p><strong>It is expected, the arrays are homogeneous and have all elements only one type</strong></p>
+<p><strong>The arrays can have a trailing comma as well, <code>[1,]</code></strong></p>
+<pre><code class="language-f-tree">impl action(elems:array);
+root main sequence {
+    action([1,2,3,4])
+    action([1.1,0.1])
+    action(["a","b"])
+}
+</code></pre>
+<h3 id="objects"><a class="header" href="#objects">Objects</a></h3>
+<p>The objects are defined with keyword <code>object</code>
+Objects can have several aforementioned elements encompassed
+in one entity with the unique key attached to the every entity</p>
+<p>The objects have the following syntax:</p>
+<ul>
+<li><code>{</code> defines the start of object</li>
+<li><code>}</code> defines the end of object</li>
+<li><code>,</code> defines the separator between elements</li>
+<li>“key” defines the name of the element key</li>
+<li>the rest is defined by the particular elements</li>
+</ul>
+<p><strong>The objects can have a trailing comma as well, <code>{"a":1,}</code></strong></p>
+<pre><code class="language-f-tree">impl action(elems:object);
+root main sequence {
+    action({"key":1, "key2":"key"})
+    action(
+        {
+            "array": [1,2,3,4,],
+            "string":"string",
+            "num":1,
+            "pointer": pointer
+        }
+    )
+}
+</code></pre>
+<h3 id="tree"><a class="header" href="#tree">Tree</a></h3>
+<p>The other tree definitions are defined with a keyword <code>tree</code>
+**The parameters of this type can be added and defined only in the <a href="#control-flow-nodes-overview">flow</a> definitions.</p>
+<pre><code class="language-f-tree">impl log(id:string,info:string);
+cond check();
+cond task();
+
+fallback checked_task(check:tree, task:tree){
+    check(..)
+    task(..)
+}
+
+sequence logged_task(id:string, task:tree){
+    log(id,"start task")
+    task(..)
+    log(id,"end task")
+}
+
+root main sequence {
+    // invoke the task parameter, passing the invokations with parameters 
+    logged_task(
+        "1",
+        // invoke the task, passing the invokations with parameters
+        checked_task(check = check(), task())
+    )
+}
+</code></pre>
+<h3 id="pointers"><a class="header" href="#pointers">Pointers</a></h3>
+<p>Pointers are identifiers of the objects in the <a href="#blackboard">BlackBoard</a>
+Therefore, they can be used to obtain the value of the cell from bb, in argument invoking.</p>
+<p>In the example below, the system expects to find a string value in the cell with a name <code>bb_key</code>.</p>
+<pre><code class="language-f-tree">impl action(value:string);
+
+root main sequence {
+    // this is a pointer to a cell in bb with an id 'bb_key'
+    action(bb_key) 
+}
+</code></pre>
+<h3 id="any"><a class="header" href="#any">Any</a></h3>
+<p>The <code>any</code> type is a special type that can be used to pass any type of value to the parameter.</p>
+<p><strong>The type any can take any message type except call</strong></p>
+<p>The intention to provide a simple way to generalize the parameters and pass any type of value to the parameter.</p>
+<pre><code class="language-f-tree">// can take anything except call
+impl action(value:any);
+
+root main sequence {
+    
+    action(1) 
+    action("a") 
+    action([1]) 
+}
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="antlr-grammar"><a class="header" href="#antlr-grammar">Antlr grammar</a></h1>
+<p>The grammar bears an introducing character (means it is not used straight in the code for now)</p>
+<h2 id="parser"><a class="header" href="#parser">Parser</a></h2>
+<pre><code class="language-antlrv4">parser grammar TreeParser;
+
+file
+    : (definition | importSt)* EOF
+    ;
+
+import_name
+    : id (EQ_A id)?
+    ;
+
+importCalls
+    : LBC (import_name (COMMA import_name)* COMMA?)? RBC
+    ;
+
+importSt
+    : IMPORT string importCalls?
+    ;
+
+definition
+    : tree_type id params? (calls? | SEMI)
+    ;
+
+call
+    : invocation
+    | lambda
+    ;
+
+invocation
+    : id (args | LPR DOT_DOT RPR)
+    ;
+
+
+lambda
+    : tree_type args? calls
+    ;
+
+calls
+    : LBC call* RBC
+    | call
+    ;
+
+
+arg
+    : id (EQ (message | id | call))?
+    | message
+    | call
+    ;
+
+args
+    : LPR (arg (COMMA arg)* COMMA?)? RPR
+    ;
+
+params
+    : LPR (param (COMMA param)*)? COMMA? RPR
+    ;
+
+param
+    : id COLON mes_type
+    ;
+
+message
+    : string
+    | num
+    | bool
+    | array
+    | object
+    ;
+
+mes_type
+    : NUM_T
+    | ARRAY_T
+    | OBJECT_T
+    | STRING_T
+    | BOOL_T
+    | TREE_T
+    ;
+
+tree_type
+    : ROOT
+    | PARALLEL
+    | SEQUENCE
+    | MSEQUENCE
+    | RSEQUENCE
+    | FALLBACK
+    | RFALLBACK
+    | id          // ambigulty
+    ;
+
+
+object
+    : LBC (objectPair (COMMA objectPair)* COMMA? )? RBC
+    ;
+
+objectPair
+    : string COLON message
+    ;
+
+
+array
+    : LBR (message (COMMA message)* COMMA? )? RBR
+    ;
+
+bool
+    : TRUE
+    | FALSE
+    ;
+
+num
+    : NUMBER
+    ;
+
+string
+    : STRING
+    ;
+id
+    : ID
+    ;
+</code></pre>
+<h2 id="lexer"><a class="header" href="#lexer">Lexer</a></h2>
+<pre><code class="language-antlrv4">lexer grammar TreeLexer;
+
+ROOT: 'ROOT';
+PARALLEL : 'parallel';
+
+SEQUENCE : 'sequence';
+MSEQUENCE : 'm_sequence';
+RSEQUENCE : 'r_sequence';
+
+FALLBACK: 'fallback';
+RFALLBACK : 'r_fallback';
+
+ARRAY_T: 'array';
+NUM_T: 'num';
+OBJECT_T: 'object';
+STRING_T: 'string';
+BOOL_T: 'bool';
+TREE_T: 'tree';
+IMPORT: 'import';
+
+ID : [-_a-zA-Z]+ (INT | [-_a-zA-Z]+)*  ;
+
+COMMA : ',';
+COLON : ':';
+SEMI : ';';
+DOT_DOT : '..';
+
+EQ  : '=';
+EQ_A  : '=&gt;';
+
+LPR  : '(';
+RPR  : ')';
+
+LBC  : '{';
+RBC  : '}';
+
+LBR  : '[';
+RBR  : ']';
+
+TRUE : 'TRUE';
+
+FALSE : 'FALSE';
+
+STRING  : '"' (ESC | SAFECODEPOINT)* '"' ;
+
+NUMBER  : '-'? INT ('.' [0-9] +)? EXP? ;
+
+Whitespace: [ \t]+ -&gt; skip ;
+
+Newline :   (   '\r' '\n'? | '\n') -&gt; skip ;
+
+BlockComment :   '/*' .*? '*/' -&gt; skip ;
+
+LineComment :   '//' ~[\r\n]* -&gt; skip ;
+
+fragment ESC : '\\' (["\\/bfnrt] | UNICODE) ;
+
+fragment UNICODE : 'u' HEX HEX HEX HEX ;
+fragment HEX : [0-9a-fA-F] ;
+
+fragment SAFECODEPOINT : ~ ["\\\u0000-\u001F] ;
+fragment INT : '0' | [1-9] [0-9]* ;
+fragment EXP : [Ee] [+\-]? [0-9]+ ;
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="runtime-engine-overview"><a class="header" href="#runtime-engine-overview">Runtime Engine Overview</a></h1>
+<p>The Forester runtime is the execution core that compiles <code>.tree</code> files, builds the behavior tree node graph, and drives the tick-by-tick evaluation loop.</p>
+<p>It is built in Rust and is designed for both high-throughput robotics control loops and AI agent orchestration workflows.</p>
+<hr>
+<h2 id="core-subsystems"><a class="header" href="#core-subsystems">Core Subsystems</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Component</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Engine (<code>Forester</code>)</strong></td><td>Orchestrates the tick loop, manages node state transitions, and schedules sync/async action execution.</td></tr>
+<tr><td><strong>Blackboard</strong></td><td>In-memory shared key-value store for passing state between tree nodes across ticks.</td></tr>
+<tr><td><strong>ActionKeeper</strong></td><td>Registry that maps action names declared with <code>impl</code> in <code>.tree</code> files to Rust handlers or remote action clients.</td></tr>
+</tbody>
+</table>
+</div>
+<hr>
+<h2 id="execution-model"><a class="header" href="#execution-model">Execution Model</a></h2>
+<ul>
+<li><strong>Synchronous by default</strong>: The engine drives a deterministic tick loop. Synchronous actions block until they return <code>Success</code>, <code>Failure</code>, or <code>Running</code>.</li>
+<li><strong>Async environment</strong>: Async actions return <code>Running</code> immediately and are polled on subsequent ticks without blocking the tick loop.</li>
+<li><strong>Parallelism</strong>: <code>parallel</code> nodes tick multiple children in a single pass; async actions allow true concurrent I/O within a tick cycle.</li>
+</ul>
+<hr>
+<h2 id="entry-point-foresterbuilder"><a class="header" href="#entry-point-foresterbuilder">Entry Point: <code>ForesterBuilder</code></a></h2>
+<p>The <code>ForesterBuilder</code> is the primary API for constructing and configuring a Forester runtime instance. It provides a safe, fluent interface for:</p>
+<ul>
+<li>Pointing to <code>.tree</code> source files or inline scripts</li>
+<li>Registering action implementations</li>
+<li>Pre-loading Blackboard state from JSON</li>
+<li>Enabling execution tracing</li>
+</ul>
+<pre class="playground"><code class="language-rust">use forester_rs::runtime::builder::ForesterBuilder;
+use forester_rs::runtime::action::{Action, ActionArgs, TickResult};
+use forester_rs::runtime::action::builtin::data::StoreData;
+use forester_rs::tracer::Tracer;
+
+fn main() {
+    let mut fb = ForesterBuilder::from_file_system();
+    
+    // Point to the tree entry file
+    fb.main_file("main.tree".to_string());
+    
+    // Register built-in and custom actions
+    fb.register_action("store", Action::sync(StoreData));
+    fb.register_sync_action("my_action", MyAction);
+    
+    // Enable execution tracing
+    fb.tracer(Tracer::default());
+    
+    // Pre-load Blackboard initial state from JSON
+    fb.bb_load("db/initial_state.json".to_string());
+    
+    // Build and run
+    let mut forester = fb.build().unwrap();
+    let result = forester.run().unwrap();
+    
+    println!("Execution result: {:?}", result);
+}</code></pre>
+<hr>
+<h2 id="detailed-subsystem-documentation"><a class="header" href="#detailed-subsystem-documentation">Detailed Subsystem Documentation</a></h2>
+<ul>
+<li><a href="#engine-internals">Engine internals</a> — tick loop, node lifecycle, and state machine details</li>
+<li><a href="#runtime-arguments-rtvalue">Runtime arguments</a> — configuring engine behavior at startup</li>
+<li><a href="#blackboard">Blackboard</a> — shared memory API and locking semantics</li>
+<li><a href="#runtime-actions">Actions</a> — registering sync, async, and remote actions</li>
+<li><a href="#trimming-live-tree-modification">Trimming</a> — modifying the running tree on the fly</li>
+<li><a href="#daemons-background-processes">Daemons</a> — background tasks running alongside the tree</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="engine-internals"><a class="header" href="#engine-internals">Engine Internals</a></h1>
+<p>The <code>Forester</code> engine is the central execution runtime. It drives the tick loop, manages node state, dispatches actions, and coordinates the Blackboard, ActionKeeper, and optional tracer.</p>
+<hr>
+<h2 id="internal-components"><a class="header" href="#internal-components">Internal Components</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Component</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Engine Core</strong></td><td>Manages the tree node graph, drives the tick loop, and handles state transitions (<code>Running</code>, <code>Success</code>, <code>Failure</code>).</td></tr>
+<tr><td><strong>Blackboard</strong></td><td>In-memory shared key-value store for passing state between nodes.</td></tr>
+<tr><td><strong>ActionKeeper</strong></td><td>Registry mapping <code>impl</code> action names to Rust handlers or remote action clients.</td></tr>
+<tr><td><strong>Tracer</strong></td><td>Optional execution logger that records tick-by-tick node evaluations for debugging and replay.</td></tr>
+</tbody>
+</table>
+</div>
+<hr>
+<h2 id="tick-loop"><a class="header" href="#tick-loop">Tick Loop</a></h2>
+<p>On each tick, the engine traverses the tree from the root node down, evaluating each node according to its type (sequence, fallback, parallel, decorator, or action). The tick loop continues until the root node returns <code>Success</code> or <code>Failure</code>.</p>
+<h3 id="bounded-execution"><a class="header" href="#bounded-execution">Bounded Execution</a></h3>
+<p>To prevent infinite loops and enable time-boxed execution (useful for simulation or testing), the tick count can be capped:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Run for a maximum of 100 ticks
+forester.run_until(Some(100)).unwrap();
+
+// Run until the root returns Success or Failure (unbounded)
+forester.run().unwrap();
+<span class="boring">}</span></code></pre>
+<hr>
+<h2 id="runtime-environment"><a class="header" href="#runtime-environment">Runtime Environment</a></h2>
+<p>The engine uses <a href="https://tokio.rs/">Tokio</a> as its async runtime to schedule and parallelize async action execution.</p>
+<p>By default, the engine creates its own Tokio runtime. If the engine is embedded in an application that already has a Tokio runtime, it can be provided via <code>ForesterBuilder</code>:</p>
+<pre class="playground"><code class="language-rust">use forester_rs::runtime::builder::ForesterBuilder;
+use forester_rs::tracer::Tracer;
+use forester_rs::runtime::action::Action;
+use forester_rs::runtime::action::builtin::data::StoreData;
+
+fn main() {
+    let mut fb = ForesterBuilder::from_file_system();
+    fb.main_file("main.tree".to_string());
+    fb.register_action("store", Action::sync(StoreData));
+    fb.tracer(Tracer::default());
+    fb.bb_load("db/initial_state.json".to_string());
+
+    let mut forester = fb.build().unwrap();
+
+    // Unbounded run
+    let result = forester.run().unwrap();
+    println!("Result: {:?}", result);
+}</code></pre>
+<hr>
+<h2 id="built-in-http-server"><a class="header" href="#built-in-http-server">Built-In HTTP Server</a></h2>
+<p>The engine optionally exposes an HTTP server during tree execution. This enables external processes — including remote action servers and monitoring tools — to interact with the Blackboard and tracer at runtime.</p>
+<p>Enable it by specifying a port in <code>ForesterBuilder</code>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fb.http_serv(10000);
+<span class="boring">}</span></code></pre>
+<blockquote>
+<p><strong>Note</strong>: The HTTP server shuts down automatically when the root tree finishes execution.</p>
+</blockquote>
+<h3 id="http-api-endpoints"><a class="header" href="#http-api-endpoints">HTTP API Endpoints</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>GET</code></td><td><code>/</code></td><td>Health check. Returns <code>Ok</code>.</td></tr>
+<tr><td><code>GET</code></td><td><code>/tracer/print</code></td><td>Prints current tracer output.</td></tr>
+<tr><td><code>POST</code></td><td><code>/tracer/custom</code></td><td>Appends a custom event to the tracer log (body: <code>CustomEvent</code> JSON).</td></tr>
+<tr><td><code>GET</code></td><td><code>/bb/:key</code></td><td>Reads value at <code>key</code> from the Blackboard.</td></tr>
+<tr><td><code>POST</code></td><td><code>/bb/:key</code></td><td>Writes a value to <code>key</code> in the Blackboard (body: <code>RtValue</code> JSON).</td></tr>
+<tr><td><code>GET</code></td><td><code>/bb/:key/take</code></td><td>Reads and removes <code>key</code> from the Blackboard.</td></tr>
+<tr><td><code>GET</code></td><td><code>/bb/:key/lock</code></td><td>Locks <code>key</code> to prevent concurrent writes.</td></tr>
+<tr><td><code>GET</code></td><td><code>/bb/:key/unlock</code></td><td>Unlocks <code>key</code>.</td></tr>
+<tr><td><code>GET</code></td><td><code>/bb/:key/locked</code></td><td>Returns whether <code>key</code> is currently locked.</td></tr>
+<tr><td><code>GET</code></td><td><code>/bb/:key/contains</code></td><td>Returns whether <code>key</code> exists in the Blackboard.</td></tr>
+</tbody>
+</table>
+</div>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="runtime-arguments-rtvalue"><a class="header" href="#runtime-arguments-rtvalue">Runtime Arguments (<code>RtValue</code>)</a></h1>
+<p>When a behavior tree action is ticked, its parameters are passed to the Rust handler as <strong>runtime argument values</strong> (<code>RtValue</code>). These are the runtime representations of the typed static arguments declared in the <code>.tree</code> DSL.</p>
+<hr>
+<h2 id="the-rtvalue-enum"><a class="header" href="#the-rtvalue-enum">The <code>RtValue</code> Enum</a></h2>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+pub enum RtValue {
+    String(String),
+    Bool(bool),
+    Number(RtValueNumber),
+    Array(Vec&lt;RtValue&gt;),
+    Object(HashMap&lt;String, RtValue&gt;),
+    Pointer(BBKey),
+}
+<span class="boring">}</span></code></pre>
+<h3 id="primitive-types"><a class="header" href="#primitive-types">Primitive Types</a></h3>
+<ul>
+<li><strong><code>String</code></strong>, <strong><code>Bool</code></strong>, <strong><code>Number</code></strong>: Direct value types, equivalent to their counterparts in standard languages.</li>
+</ul>
+<h3 id="complex-types"><a class="header" href="#complex-types">Complex Types</a></h3>
+<ul>
+<li><strong><code>Array</code></strong>: An ordered list of <code>RtValue</code> elements.</li>
+<li><strong><code>Object</code></strong>: A JSON-style key-value map (<code>HashMap&lt;String, RtValue&gt;</code>), useful for structured action configuration.</li>
+</ul>
+<h3 id="pointer-blackboard-reference"><a class="header" href="#pointer-blackboard-reference">Pointer (Blackboard Reference)</a></h3>
+<ul>
+<li><strong><code>Pointer(BBKey)</code></strong>: A live reference to a Blackboard key. When resolved, the action fetches the current value stored at that Blackboard cell rather than using a static literal.</li>
+</ul>
+<hr>
+<h2 id="pointer-resolution"><a class="header" href="#pointer-resolution">Pointer Resolution</a></h2>
+<p>A <strong>Pointer</strong> allows passing dynamic, live Blackboard state into an action without hardcoding the value at call time.</p>
+<pre><code class="language-f-tree">import "std::actions"
+
+root main r_sequence {
+    // Stores the current tick count into bb["tick"]
+    store_tick("tick")
+    
+    // equal() receives a Pointer to bb["tick"], not the literal string "tick"
+    r_fallback {
+        equal(tick, 10)
+        running()
+    }
+}
+</code></pre>
+<blockquote>
+<p><strong>Note</strong>: <code>store_tick("tick")</code> receives <code>"tick"</code> as a <code>String</code> (the cell name to write into). In contrast, <code>equal(tick, 10)</code> receives <code>tick</code> as a <code>Pointer</code> (meaning: resolve the value stored at Blackboard key <code>"tick"</code> and compare it to <code>10</code>).</p>
+</blockquote>
+<h3 id="pointer-indirection-example"><a class="header" href="#pointer-indirection-example">Pointer Indirection Example</a></h3>
+<p>Pointers can also point to cells that themselves contain key names (double indirection):</p>
+<pre><code class="language-f-tree">import "std::actions"
+
+root main sequence {
+    store("x", "tick")      // bb["x"] = "tick"
+    store_tick(x)           // x is a Pointer -&gt; writes to bb["x"] which is tick and resolves to bb["tick"]
+    equal(tick, 10)         // tick is a Pointer -&gt; reads bb["tick"] and compares to 10
+}
+</code></pre>
+<hr>
+<h2 id="extracting-argument-values-in-rust"><a class="header" href="#extracting-argument-values-in-rust">Extracting Argument Values in Rust</a></h2>
+<p>Forester provides two methods for reading action arguments in Rust action implementations:</p>
+<h3 id="1-direct-cast-as_type"><a class="header" href="#1-direct-cast-as_type">1. Direct Cast: <code>as_&lt;type&gt;()</code></a></h3>
+<p>The fastest approach — directly converts the <code>RtValue</code> to a primitive or complex type. Does <strong>not</strong> resolve Pointers, so use only when you are certain no Blackboard references will be passed:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn handle(v: RtValue) {
+    let val: Option&lt;String&gt; = v.as_string();
+    let num: Option&lt;f64&gt;    = v.as_float();
+}
+<span class="boring">}</span></code></pre>
+<h3 id="2-context-aware-cast-castctx"><a class="header" href="#2-context-aware-cast-castctx">2. Context-Aware Cast: <code>cast(ctx)</code></a></h3>
+<p>Resolves Pointers by looking up the referenced Blackboard key at invocation time. Use this when your action may receive either a literal or a Blackboard reference:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use forester_rs::runtime::action::{Impl, RtArgs, Tick};
+use forester_rs::runtime::context::TreeContextRef;
+use forester_rs::runtime::RuntimeError;
+
+impl Impl for CheckEqual {
+    fn tick(&amp;self, args: RtArgs, ctx: TreeContextRef) -&gt; Tick {
+        let key = args
+            .find_or_ith("key".to_string(), 0)
+            .ok_or(RuntimeError::fail("the 'key' argument is required".to_string()))?;
+        
+        // cast(ctx) resolves Pointer values against the live Blackboard
+        let resolved: String = key.cast(ctx.clone()).str()?;
+        
+        Ok(TickResult::success())
+    }
+}
+<span class="boring">}</span></code></pre>
+<blockquote>
+<p><strong>Recommendation</strong>: Prefer <code>cast(ctx)</code> in most action implementations. It handles both literal values and Blackboard pointers transparently.</p>
+</blockquote>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="blackboard"><a class="header" href="#blackboard">Blackboard</a></h1>
+<p>The <strong>Blackboard</strong> is Forester’s shared in-memory state store — a key-value store that nodes read from and write to across ticks. It is the primary mechanism for passing data between actions and tree nodes without tight coupling.</p>
+<p>In AI agent workflows, the Blackboard acts as the <strong>agent’s working context</strong>: LLM responses, tool call results, and session state are written here and read by downstream nodes.</p>
+<hr>
+<h2 id="data-format"><a class="header" href="#data-format">Data Format</a></h2>
+<p>The Blackboard stores pairs of <code>String</code> keys and <code>BBValue</code> values:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[derive(Debug, PartialEq, Serialize, Deserialize)]
+pub enum BBValue {
+    Locked(RtValue),    // Key exists and is locked: read-only, no further writes
+    Unlocked(RtValue),  // Key exists and is freely readable and writable
+    Taken,              // Key slot exists but value has been consumed (taken)
+}
+<span class="boring">}</span></code></pre>
+<h3 id="key-states"><a class="header" href="#key-states">Key States</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>State</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><strong><code>Unlocked(RtValue)</code></strong></td><td>Normal state. The value can be read, overwritten, or taken by any node.</td></tr>
+<tr><td><strong><code>Locked(RtValue)</code></strong></td><td>The value is protected from modification. Other nodes can still read it, but cannot overwrite or take it.</td></tr>
+<tr><td><strong><code>Taken</code></strong></td><td>The key slot exists but its value has been consumed by a <code>take</code> operation.</td></tr>
+</tbody>
+</table>
+</div>
+<hr>
+<h2 id="accessing-the-blackboard-from-dsl"><a class="header" href="#accessing-the-blackboard-from-dsl">Accessing the Blackboard from DSL</a></h2>
+<p>Use the built-in <code>std::actions</code> to interact with the Blackboard directly from <code>.tree</code> files:</p>
+<pre><code class="language-f-tree">import "std::actions"
+
+root main sequence {
+    // Write a value
+    store("agent_mode", "active")
+    
+    // Lock a key to prevent modification during critical section
+    lock("agent_mode")
+    
+    // Read and compare
+    equal("agent_mode", "active")
+    
+    // Unlock when done
+    unlock("agent_mode")
+}
+</code></pre>
+<hr>
+<h2 id="accessing-the-blackboard-from-rust"><a class="header" href="#accessing-the-blackboard-from-rust">Accessing the Blackboard from Rust</a></h2>
+<p>In Rust action implementations, the Blackboard is accessed through the <code>TreeContextRef</code>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use forester_rs::runtime::context::TreeContextRef;
+use forester_rs::runtime::action::{Impl, RtArgs, Tick, TickResult};
+
+impl Impl for MyAction {
+    fn tick(&amp;self, args: RtArgs, ctx: TreeContextRef) -&gt; Tick {
+        let mut ctx = ctx.lock()?;
+        
+        // Read a value from the Blackboard
+        let mode = ctx.bb().get("agent_mode")?.and_then(|v| v.as_string());
+        
+        // Write a value to the Blackboard
+        ctx.bb().put("result", RtValue::String("done".to_string()))?;
+        
+        Ok(TickResult::success())
+    }
+}
+<span class="boring">}</span></code></pre>
+<hr>
+<h2 id="persistence-load--dump"><a class="header" href="#persistence-load--dump">Persistence: Load &amp; Dump</a></h2>
+<p>The Blackboard supports JSON serialization for pre-loading initial state and dumping snapshots:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Method</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>bb_load(path)</code></td><td>Loads initial Blackboard state from a JSON file at engine startup (via <code>ForesterBuilder</code>).</td></tr>
+<tr><td><code>dump(path)</code></td><td>Saves a snapshot of the full Blackboard to a JSON file.</td></tr>
+<tr><td><code>print_dump()</code></td><td>Prints the current Blackboard snapshot to stdout in JSON format.</td></tr>
+<tr><td><code>text_dump()</code></td><td>Returns the Blackboard snapshot as a JSON string.</td></tr>
+</tbody>
+</table>
+</div>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Pre-load state at startup
+fb.bb_load("db/initial_state.json".to_string());
+<span class="boring">}</span></code></pre>
+<hr>
+<h2 id="http-access"><a class="header" href="#http-access">HTTP Access</a></h2>
+<p>When the engine’s built-in HTTP server is enabled, the Blackboard is also accessible over HTTP at runtime. See the <a href="#http-api-endpoints">Engine HTTP API</a> for endpoint details.</p>
+<hr>
+<h2 id="utilities"><a class="header" href="#utilities">Utilities</a></h2>
+<p>A set of helper utilities for common Blackboard operations is available in the <code>blackboard::utils</code> module, for example:</p>
+<ul>
+<li><code>blackboard::utils::push_to_arr(key, value, ctx)</code> — Appends a value to an array stored at a given key.</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="runtime-actions"><a class="header" href="#runtime-actions">Runtime Actions</a></h1>
+<p>Actions are the leaf nodes of the behavior tree — the points where actual work gets done. Every action declared with <code>impl</code> in a <code>.tree</code> file must be bound to a Rust handler (or a remote client) via <code>ForesterBuilder</code> before the tree can run.</p>
+<hr>
+<h2 id="action-types"><a class="header" href="#action-types">Action Types</a></h2>
+<p>Forester supports three execution modes for actions:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Type</th><th>Blocking?</th><th>Use Case</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Sync</strong></td><td>Yes — blocks the tick until done</td><td>Fast, CPU-bound, or deterministic operations</td></tr>
+<tr><td><strong>Async</strong></td><td>No — returns <code>Running</code> immediately</td><td>I/O-bound operations, LLM calls, network requests</td></tr>
+<tr><td><strong>Remote</strong></td><td>Yes — sends an HTTP request and waits</td><td>External processes (Python agents, microservices)</td></tr>
+</tbody>
+</table>
+</div>
+<blockquote>
+<p>For heavy or slow operations, prefer <strong>async actions</strong> to avoid blocking the tick loop.</p>
+</blockquote>
+<hr>
+<h2 id="action-traits"><a class="header" href="#action-traits">Action Traits</a></h2>
+<h3 id="1-sync-actions-impl"><a class="header" href="#1-sync-actions-impl">1. Sync Actions (<code>Impl</code>)</a></h3>
+<p>Sync actions block the tick loop until they return a result. They are the only action type that currently supports the <code>halt()</code> callback:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use forester_rs::runtime::action::{RtArgs, Tick, RtOk};
+use forester_rs::runtime::context::TreeContextRef;
+
+pub trait Impl {
+    fn tick(&amp;self, args: RtArgs, ctx: TreeContextRef) -&gt; Tick;
+
+    // Called when a reactive flow node (r_sequence, r_fallback) preempts this action.
+    // Implement this to clean up resources gracefully.
+    // Default is a no-op.
+    fn halt(&amp;self, args: RtArgs, ctx: TreeContextRef) -&gt; RtOk {
+        Ok(())
+    }
+}
+<span class="boring">}</span></code></pre>
+<blockquote>
+<p><strong>Important</strong>: <code>halt()</code> must return as quickly as possible — it must not block execution.</p>
+</blockquote>
+<hr>
+<h3 id="2-async-actions-implasync"><a class="header" href="#2-async-actions-implasync">2. Async Actions (<code>ImplAsync</code>)</a></h3>
+<p>Async actions are spawned in a separate Tokio task and return <code>Running</code> on the first tick. The engine re-polls them on subsequent ticks until they resolve:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use forester_rs::runtime::action::{RtArgs, Tick};
+use forester_rs::runtime::context::TreeContextRef;
+
+pub trait ImplAsync: Sync + Send {
+    fn tick(&amp;self, args: RtArgs, ctx: TreeContextRef) -&gt; Tick;
+}
+<span class="boring">}</span></code></pre>
+<blockquote>
+<p><strong>Note</strong>: When the engine runs with a tick limit (<code>run_until(Some(N))</code>), async actions consume ticks while <code>Running</code>. Account for this when setting tick budgets.</p>
+</blockquote>
+<hr>
+<h3 id="3-remote-actions-implremote"><a class="header" href="#3-remote-actions-implremote">3. Remote Actions (<code>ImplRemote</code>)</a></h3>
+<p>Remote actions send an HTTP POST request to an external server and wait for the response. This is the mechanism for Python AI tool integration via <code>forester-http-ra-py</code>.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub trait ImplRemote: Sync + Send {
+    fn tick(&amp;self, args: RtArgs, ctx: TreeRemoteContextRef) -&gt; Tick;
+}
+
+pub struct TreeRemoteContextRef&lt;'a&gt; {
+    pub curr_ts: Timestamp, // Current tick timestamp
+    pub port: u16,          // Port of the engine HTTP server (for Blackboard access)
+    pub env: &amp;'a mut RtEnv, // Runtime env for making HTTP requests
+}
+<span class="boring">}</span></code></pre>
+<p>The default remote action implementation (<code>RemoteHttpAction</code>) handles the HTTP protocol automatically:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use forester_rs::runtime::action::builtin::remote::RemoteHttpAction;
+
+// Register a remote action pointing to an external Python action server
+fb.register_remote_action(
+    "call_llm_tool",
+    RemoteHttpAction::new("http://localhost:9000/call_llm", None)
+);
+<span class="boring">}</span></code></pre>
+<p>The engine sends each tick as a <code>RemoteActionRequest</code>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct RemoteActionRequest {
+    pub tick: usize,           // Current tick number
+    pub args: Vec&lt;RtArgument&gt;, // Action arguments from the tree
+    pub serv_url: String,      // Engine HTTP server URL (for Blackboard access)
+}
+<span class="boring">}</span></code></pre>
+<p>The remote server responds with a <code>TickResult</code> (<code>Success</code>, <code>Failure</code>, or <code>Running</code>).</p>
+<p><em>See <a href="#library-to-create-remote-actions-using-rust">Remote Action Clients</a> for how to implement the server side in Python or Rust.</em></p>
+<hr>
+<h2 id="registering-actions"><a class="header" href="#registering-actions">Registering Actions</a></h2>
+<p>Register sync, async, and remote actions with <code>ForesterBuilder</code> before running the tree:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use forester_rs::runtime::builder::ForesterBuilder;
+use forester_rs::runtime::action::Action;
+use forester_rs::runtime::action::builtin::data::StoreData;
+use forester_rs::runtime::action::builtin::remote::RemoteHttpAction;
+
+let mut fb = ForesterBuilder::from_file_system();
+fb.main_file("main.tree".to_string());
+
+// Sync action (built-in)
+fb.register_action("store", Action::sync(StoreData));
+
+// Custom sync action
+fb.register_sync_action("my_sensor_check", MySensorCheck);
+
+// Async action
+fb.register_async_action("fetch_data", FetchData);
+
+// Remote action (Python server)
+fb.register_remote_action(
+    "call_llm",
+    RemoteHttpAction::new("http://localhost:9000/call_llm", None)
+);
+<span class="boring">}</span></code></pre>
+<hr>
+<h2 id="action-statefulness"><a class="header" href="#action-statefulness">Action Statefulness</a></h2>
+<p>Actions are intentionally <strong>stateless</strong> — they cannot hold mutable state between ticks. Persist any inter-tick state on the Blackboard instead:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>impl Impl for CounterAction {
+    fn tick(&amp;self, args: RtArgs, ctx: TreeContextRef) -&gt; Tick {
+        let mut ctx = ctx.lock()?;
+        
+        // Read current count from Blackboard
+        let count: i64 = ctx.bb().get("count")
+            .and_then(|v| v.as_int())
+            .unwrap_or(0);
+        
+        // Write incremented count back to Blackboard
+        ctx.bb().put("count", RtValue::Number(RtValueNumber::Int(count + 1)))?;
+        
+        Ok(TickResult::success())
+    }
+}
+<span class="boring">}</span></code></pre>
+<hr>
+<h2 id="built-in-actions"><a class="header" href="#built-in-actions">Built-In Actions</a></h2>
+<p>A set of ready-made action implementations for Blackboard operations and HTTP requests is available in:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use forester_rs::runtime::action::builtin::*;
+<span class="boring">}</span></code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="trimming-live-tree-modification"><a class="header" href="#trimming-live-tree-modification">Trimming (Live Tree Modification)</a></h1>
+<p><strong>Trimming</strong> is Forester’s mechanism for modifying a running behavior tree at runtime — replacing, removing, or substituting nodes in the live execution graph without stopping the engine.</p>
+<hr>
+<h2 id="use-cases"><a class="header" href="#use-cases">Use Cases</a></h2>
+<h3 id="performance--jit-optimization"><a class="header" href="#performance--jit-optimization">Performance &amp; JIT Optimization</a></h3>
+<p>Cache or fold static subtrees that have already completed, reducing redundant evaluation on subsequent ticks. Analogous to JIT compiler transformations in virtual machines.</p>
+<h3 id="adaptive-logic"><a class="header" href="#adaptive-logic">Adaptive Logic</a></h3>
+<p>Dynamically swap decision branches based on runtime signals — Blackboard state, sensor readings, or LLM responses. Enables online reinforcement learning workflows where policy branches update as the tree runs.</p>
+<h3 id="research--experimentation"><a class="header" href="#research--experimentation">Research &amp; Experimentation</a></h3>
+<p>Replace specific nodes mid-execution to compare behavioral outcomes under the same environmental conditions without restarting the engine.</p>
+<hr>
+<h2 id="core-components"><a class="header" href="#core-components">Core Components</a></h2>
+<h3 id="1-trimtask"><a class="header" href="#1-trimtask">1. <code>TrimTask</code></a></h3>
+<p>A <code>TrimTask</code> encapsulates a single runtime modification. When registered with the engine, it is invoked on each tick with a snapshot of the current tree state. The task decides whether to apply, skip, or reject itself:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub enum TrimTask {
+    RtTree(Box&lt;dyn RtTreeTrimTask&gt;),
+}
+<span class="boring">}</span></code></pre>
+<p>Register a trim task before running the tree:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>forester.add_trim_task(TrimTask::rt_tree(MyTrimTask));
+forester.run_until(Some(100)).unwrap();
+<span class="boring">}</span></code></pre>
+<hr>
+<h3 id="2-trimrequest--task-decision-states"><a class="header" href="#2-trimrequest--task-decision-states">2. <code>TrimRequest</code> — Task Decision States</a></h3>
+<p>Each invocation of <code>RtTreeTrimTask::process()</code> returns a <code>TrimRequest</code> indicating how the engine should proceed:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub enum TrimRequest {
+    Reject, // Permanently cancel this task (another task already made the change,
+            // or the tree is no longer a valid target)
+    Skip,   // Defer to the next tick (conditions not yet met)
+    Attempt(RequestBody), // Proceed with the modification
+}
+<span class="boring">}</span></code></pre>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>State</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><strong><code>Reject</code></strong></td><td>Permanently cancels this task. Use when the modification is no longer valid or applicable.</td></tr>
+<tr><td><strong><code>Skip</code></strong></td><td>Defers the task to the next tick. Use when waiting for a specific Blackboard value, tick number, or tree state.</td></tr>
+<tr><td><strong><code>Attempt(body)</code></strong></td><td>Submits the modification for validation and application by the engine.</td></tr>
+</tbody>
+</table>
+</div>
+<hr>
+<h3 id="3-validation"><a class="header" href="#3-validation">3. Validation</a></h3>
+<p>Before applying a <code>TrimRequest::Attempt</code>, the engine validates that the nodes targeted for replacement are <strong>not currently in a <code>Running</code> state</strong>. If they are, the attempt is automatically deferred.</p>
+<hr>
+<h2 id="constraints--best-practices"><a class="header" href="#constraints--best-practices">Constraints &amp; Best Practices</a></h2>
+<blockquote>
+<p><strong>No ordering guarantees</strong>: There is no guarantee of the order in which multiple trim tasks execute, or the exact tick at which any task will be applied.</p>
+</blockquote>
+<ul>
+<li>Design trim tasks to be <strong>idempotent</strong> — safe to apply multiple times without side effects.</li>
+<li>Always <strong>validate the incoming tree snapshot</strong> inside <code>process()</code> before constructing the <code>RequestBody</code>.</li>
+<li>Use <code>TrimRequest::Reject</code> when another task has already made the intended change.</li>
+</ul>
+<hr>
+<h2 id="example-replace-a-node-after-tick-90"><a class="header" href="#example-replace-a-node-after-tick-90">Example: Replace a Node After Tick 90</a></h2>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use forester_rs::runtime::trimmer::task::{RtTreeTrimTask, TrimTask};
+use forester_rs::runtime::trimmer::{RequestBody, TreeSnapshot, TrimRequest};
+use forester_rs::runtime::rtree::builder::{RtNodeBuilder, RtTreeBuilder};
+use forester_rs::runtime::rtree::rnode::RNodeName;
+use forester_rs::runtime::args::RtArgs;
+use forester_rs::runtime::RtResult;
+
+struct ReplaceFailWithSuccess;
+
+impl RtTreeTrimTask for ReplaceFailWithSuccess {
+    fn process(&amp;self, snapshot: TreeSnapshot&lt;'_&gt;) -&gt; RtResult&lt;TrimRequest&gt; {
+        // Wait until tick 90 before applying this modification
+        if snapshot.tick &lt; 90 {
+            return Ok(TrimRequest::Skip);
+        }
+
+        let tree = snapshot.tree;
+
+        // Find the node named "fail_empty" in the running tree
+        let target_id = tree
+            .nodes
+            .iter()
+            .find(|(_, node)| {
+                node.name()
+                    .and_then(|n| n.name().ok())
+                    .filter(|n| n.as_str() == "fail_empty")
+                    .is_some()
+            })
+            .map(|(id, _)| id)
+            .unwrap();
+
+        // Build a replacement node: swap fail_empty -&gt; success()
+        let mut builder = RtTreeBuilder::new_from(tree.max_id() + 1);
+        builder.set_as_root(action!(node_name!("success")), target_id.clone());
+
+        Ok(TrimRequest::attempt(RequestBody::new(
+            builder,
+            Default::default(),
+        )))
+    }
+}
+
+fn run(mut forester: Forester) {
+    forester.add_trim_task(TrimTask::rt_tree(ReplaceFailWithSuccess));
+    let result = forester.run_until(Some(100)).unwrap();
+    println!("Result: {}", result);
+}
+<span class="boring">}</span></code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="daemons-background-processes"><a class="header" href="#daemons-background-processes">Daemons (Background Processes)</a></h1>
+<p><strong>Daemons</strong> are long-running background tasks that execute concurrently alongside the behavior tree. They share the same Tokio runtime environment as the engine and have direct access to the Blackboard.</p>
+<p>Common uses:</p>
+<ul>
+<li><strong>Sensor polling</strong>: Continuously reading hardware or network sensor streams and writing values to the Blackboard.</li>
+<li><strong>Message publishing</strong>: Sending telemetry or heartbeat events to external systems.</li>
+<li><strong>AI context maintenance</strong>: Streaming LLM token output or monitoring API rate limits in the background.</li>
+<li><strong>Watchdogs</strong>: Monitoring tree health or enforcing resource constraints.</li>
+</ul>
+<blockquote>
+<p><strong>Performance note</strong>: Daemons run in the same async runtime as the tree. Heavy daemon workloads can directly impact tick loop performance. Keep daemon logic lightweight, or offload expensive work to separate processes.</p>
+</blockquote>
+<hr>
+<h2 id="daemon-types"><a class="header" href="#daemon-types">Daemon Types</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Type</th><th>Trait</th><th>Stop Mechanism</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Sync</strong></td><td><code>DaemonFn</code></td><td><code>StopFlag</code> — an <code>AtomicBool</code> that flips to <code>true</code> when the engine requests shutdown</td></tr>
+<tr><td><strong>Async</strong></td><td><code>AsyncDaemonFn</code></td><td><code>CancellationToken</code> — a Tokio one-shot cancellation channel</td></tr>
+</tbody>
+</table>
+</div>
+<hr>
+<h2 id="implementing-daemons"><a class="header" href="#implementing-daemons">Implementing Daemons</a></h2>
+<h3 id="sync-daemon"><a class="header" href="#sync-daemon">Sync Daemon</a></h3>
+<p>Poll the <code>StopFlag</code> in a loop. When it becomes <code>true</code>, the daemon should exit promptly:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use forester_rs::runtime::env::daemon::{DaemonFn, DaemonContext, StopFlag};
+use std::sync::atomic::Ordering::Relaxed;
+
+struct SensorPollerDaemon;
+
+impl DaemonFn for SensorPollerDaemon {
+    fn perform(&amp;mut self, ctx: DaemonContext, signal: StopFlag) {
+        while !signal.load(Relaxed) {
+            std::thread::sleep(std::time::Duration::from_millis(50));
+            
+            let mut bb = ctx.bb.lock().unwrap();
+            let reading = read_sensor(); // your sensor read logic
+            bb.put("sensor_value".to_string(), RtValue::int(reading)).unwrap();
+        }
+    }
+}
+<span class="boring">}</span></code></pre>
+<hr>
+<h3 id="async-daemon"><a class="header" href="#async-daemon">Async Daemon</a></h3>
+<p>Use <code>tokio::select!</code> to respond to cancellation alongside your periodic work:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use forester_rs::runtime::env::daemon::{AsyncDaemonFn, DaemonContext};
+use tokio_util::sync::CancellationToken;
+use std::pin::Pin;
+use std::future::Future;
+
+struct AsyncSensorPollerDaemon;
+
+impl AsyncDaemonFn for AsyncSensorPollerDaemon {
+    fn prepare(&amp;mut self, ctx: DaemonContext, signal: CancellationToken) -&gt; Pin&lt;Box&lt;dyn Future&lt;Output = ()&gt; + Send&gt;&gt; {
+        Box::pin(async move {
+            loop {
+                tokio::select! {
+                    _ = signal.cancelled() =&gt; {
+                        // Gracefully shut down
+                        return;
+                    }
+                    _ = tokio::time::sleep(std::time::Duration::from_millis(10)) =&gt; {
+                        let mut bb = ctx.bb.lock().unwrap();
+                        let reading = fetch_remote_sensor().await;
+                        bb.put("sensor_value".to_string(), RtValue::int(reading)).unwrap();
+                    }
+                }
+            }
+        })
+    }
+}
+<span class="boring">}</span></code></pre>
+<hr>
+<h2 id="registering-daemons"><a class="header" href="#registering-daemons">Registering Daemons</a></h2>
+<h3 id="at-startup-via-foresterbuilder"><a class="header" href="#at-startup-via-foresterbuilder">At Startup via <code>ForesterBuilder</code></a></h3>
+<p>Register daemons before building the engine. Named daemons can be controlled from within the tree using built-in actions:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use forester_rs::runtime::env::daemon::Daemon;
+
+// Named daemon (controllable from the tree via stop_daemon / daemon_alive)
+fb.register_named_daemon("sensor_poller".to_string(), Daemon::sync(SensorPollerDaemon));
+
+// Anonymous daemon (runs for the lifetime of the engine, no tree control)
+fb.register_daemon(Daemon::a_sync(AsyncSensorPollerDaemon));
+<span class="boring">}</span></code></pre>
+<h3 id="at-runtime-from-inside-an-action"><a class="header" href="#at-runtime-from-inside-an-action">At Runtime from Inside an Action</a></h3>
+<p>Daemons can also be started dynamically during tree execution from within a sync action:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use forester_rs::runtime::action::{Impl, RtArgs, Tick, TickResult};
+use forester_rs::runtime::context::TreeContextRef;
+use forester_rs::runtime::env::daemon::Daemon;
+
+impl Impl for StartPollerAction {
+    fn tick(&amp;self, args: RtArgs, ctx: TreeContextRef) -&gt; Tick {
+        let env = ctx.env().lock()?;
+        env.start_daemon(Daemon::a_sync(AsyncSensorPollerDaemon), ctx.into());
+        Ok(TickResult::success())
+    }
+}
+<span class="boring">}</span></code></pre>
+<hr>
+<h2 id="controlling-daemons-from-the-tree"><a class="header" href="#controlling-daemons-from-the-tree">Controlling Daemons from the Tree</a></h2>
+<p>Two built-in standard library actions are available to control named daemons from <code>.tree</code> files:</p>
+<pre><code class="language-f-tree">import "std::actions"
+
+root main sequence {
+    // Start the main task
+    execute_mission()
+    
+    // Check if background poller is still running
+    daemon_alive("sensor_poller")
+    
+    // Stop the background poller when done
+    stop_daemon("sensor_poller")
+}
+</code></pre>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Action</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><strong><code>daemon_alive(name)</code></strong></td><td>Returns <code>Success</code> if the named daemon is still running, <code>Failure</code> otherwise.</td></tr>
+<tr><td><strong><code>stop_daemon(name)</code></strong></td><td>Sends the stop signal to the named daemon and returns <code>Success</code>.</td></tr>
+</tbody>
+</table>
+</div>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="analysis--observability"><a class="header" href="#analysis--observability">Analysis &amp; Observability</a></h1>
+<p>Forester provides a suite of tools for inspecting, debugging, and validating behavior trees before and during execution. These tools are critical for building confidence in complex orchestration logic before deploying to production hardware or live AI agent workflows.</p>
+<hr>
+<h2 id="1-visualization"><a class="header" href="#1-visualization">1. Visualization</a></h2>
+<p>Generate a visual diagram of any <code>.tree</code> file’s structure using Graphviz. Visualizing the tree makes it easy to review control flow, catch structural mistakes, and communicate logic to stakeholders.</p>
+<pre><code class="language-shell">f-tree vis --input main.tree --output tree_diagram.svg
+</code></pre>
+<p>Output is in <strong>SVG format</strong>, readable in any browser or vector graphics tool.</p>
+<p><em>See <a href="#visualization">Visualization</a> for full usage.</em></p>
+<hr>
+<h2 id="2-execution-tracing"><a class="header" href="#2-execution-tracing">2. Execution Tracing</a></h2>
+<p>Enable step-by-step logging of tick evaluations — recording which nodes were visited, what states they returned, and how Blackboard values changed across ticks.</p>
+<p>Tracing is configured in <code>ForesterBuilder</code>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use forester_rs::tracer::Tracer;
+
+fb.tracer(Tracer::default());
+<span class="boring">}</span></code></pre>
+<p>The trace output can be printed to stdout, written to a file, or queried via the engine’s HTTP API at <code>/tracer/print</code>.</p>
+<p><em>See <a href="#execution-tracing">Tracing</a> for full usage.</em></p>
+<hr>
+<h2 id="3-simulation"><a class="header" href="#3-simulation">3. Simulation</a></h2>
+<p>Run the behavior tree with <strong>stub action implementations</strong> instead of real hardware or external API calls. The simulator lets you define per-action responses (<code>Success</code>, <code>Failure</code>, or <code>Running</code>) and observe how the tree navigates them — without any external dependencies.</p>
+<pre><code class="language-shell">f-tree sim --profile sim_profile.json
+</code></pre>
+<p>This is especially valuable for:</p>
+<ul>
+<li><strong>Robotics</strong>: Validate control flow before connecting to hardware.</li>
+<li><strong>AI agents</strong>: Test fallback chains and retry logic before incurring LLM API costs.</li>
+</ul>
+<p><em>See <a href="#simulation">Simulation</a> for full usage.</em></p>
+<hr>
+<h2 id="4-ros-nav2-export"><a class="header" href="#4-ros-nav2-export">4. ROS Nav2 Export</a></h2>
+<p>Export Forester trees to <strong>ROS Nav2 XML format</strong> for direct use in ROS2 navigation pipelines. This allows Forester-authored trees to be dropped into existing Nav2 workflows as a validated behavior plugin.</p>
+<p><em>See <a href="#export-to-ros-nav2">ROS Nav2 Export</a> for full usage.</em></p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="visualization"><a class="header" href="#visualization">Visualization</a></h1>
+<p>Forester can generate a visual diagram of any behavior tree project, rendering the full node graph as an SVG file. This makes it easy to review control flow, spot structural issues, and communicate tree logic to teammates.</p>
+<hr>
+<h2 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h2>
+<p>Visualization uses <a href="https://graphviz.org/download/">Graphviz</a> under the hood. Install it before running the <code>vis</code> command:</p>
+<pre><code class="language-shell"># macOS
+brew install graphviz
+
+# Ubuntu / Debian
+sudo apt-get install graphviz
+
+# Windows
+winget install graphviz
+</code></pre>
+<hr>
+<h2 id="example-output"><a class="header" href="#example-output">Example Output</a></h2>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="pics/amr_simple.svg" alt="AMR Simple Tree"><span class="img-wrapper"><img src="pics/amr_simple.svg" alt="AMR Simple Tree"></span></label></p>
+<hr>
+<h2 id="usage"><a class="header" href="#usage">Usage</a></h2>
+<h3 id="cli-f-tree-vis"><a class="header" href="#cli-f-tree-vis">CLI (<code>f-tree vis</code>)</a></h3>
+<pre><code class="language-shell">f-tree vis --root project/ --main main.tree --tree main --output viz.svg
+</code></pre>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Flag</th><th>Default</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>--root</code></td><td>Current working directory</td><td>Path to the project root directory containing <code>.tree</code> files.</td></tr>
+<tr><td><code>--main</code></td><td><code>main.tree</code></td><td>The entry <code>.tree</code> file to visualize.</td></tr>
+<tr><td><code>--tree</code></td><td>First <code>root</code> definition found</td><td>Name of the specific <code>root</code> tree to visualize (required if the file has multiple roots).</td></tr>
+<tr><td><code>--output</code></td><td><code>&lt;main-filename&gt;.svg</code></td><td>Output SVG file path.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="from-rust"><a class="header" href="#from-rust">From Rust</a></h3>
+<p>Visualization can also be triggered programmatically from Rust using the <code>ForesterBuilder</code> and <code>Visualizer</code> API:</p>
+<pre class="playground"><code class="language-rust">use forester_rs::tracer::Tracer;
+use forester_rs::visualizer::Visualizer;
+use forester_rs::runtime::builder::ForesterBuilder;
+use std::path::PathBuf;
+
+fn main() {
+    let mut fb = ForesterBuilder::from_file_system();
+    fb.main_file("main.tree".to_string());
+
+    let svg = Visualizer::build_svg(fb).expect("Visualization failed");
+    std::fs::write("output.svg", svg).unwrap();
+}</code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="execution-tracing"><a class="header" href="#execution-tracing">Execution Tracing</a></h1>
+<p>The Forester tracer records a tick-by-tick log of node evaluations as the behavior tree runs. It captures node IDs, tick results, node state parameters, and any custom messages emitted by actions — making it the primary tool for debugging and post-execution analysis.</p>
+<hr>
+<h2 id="reading-trace-output"><a class="header" href="#reading-trace-output">Reading Trace Output</a></h2>
+<p>Each trace line follows the format:</p>
+<pre><code>[tick]  node_id : Status(parameters...)
+</code></pre>
+<ul>
+<li><strong><code>[tick]</code></strong>: The current tick number.</li>
+<li><strong>Indent</strong>: Reflects nesting depth in the tree.</li>
+<li><strong><code>node_id</code></strong>: Unique integer ID of the node being evaluated.</li>
+<li><strong><code>Status(...)</code></strong>: Result state (<code>Running</code>, <code>Success</code>, <code>Failure</code>) with relevant parameters (cursor position, child count, key-value pairs, etc.).</li>
+</ul>
+<h3 id="example-trace"><a class="header" href="#example-trace">Example Trace</a></h3>
+<pre><code class="language-text">[1]  1 : Running(cursor=0,len=1)
+[1]    2 : Running(cursor=0,len=3)
+[1]      3 : Success(key=x,value=tick)
+[1]    2 : Running(cursor=1,len=3)
+[1]      4 : Success(name=tick)
+[1]    2 : Running(cursor=2,len=3)
+[1]      5 : Running(cursor=0,len=2)
+[1]        6 : Success(k=a,i=1)
+[1]      5 : Running(cursor=1,len=2)
+[1]        7 : Running(cursor=0,len=2)
+[1]          8 : Failure(key=x,expected=10,reason=1 != 10)
+[1]        7 : Running(cursor=1,len=2)
+[1]          9 : Running()
+[2]  next tick
+[2]    2 : Running(cursor=0,len=3)
+[2]      3 : Success(key=x,value=tick)
+...
+</code></pre>
+<hr>
+<h2 id="enabling-the-tracer"><a class="header" href="#enabling-the-tracer">Enabling the Tracer</a></h2>
+<p>Enable tracing in <code>ForesterBuilder</code> before running the engine:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use forester_rs::tracer::{Tracer, TracerConfiguration};
+use forester_rs::runtime::builder::ForesterBuilder;
+
+let mut fb = ForesterBuilder::from_file_system();
+fb.main_file("main.tree".to_string());
+
+// Default tracer (stdout output)
+fb.tracer(Tracer::default());
+
+// Configured tracer (output to file, custom indent)
+fb.tracer(Tracer::create(TracerConfiguration {
+    indent: 2,
+    to_file: Some("output/main.trace".to_string()),
+    time_format: None,
+}));
+<span class="boring">}</span></code></pre>
+<h3 id="configuration-options"><a class="header" href="#configuration-options">Configuration Options</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Option</th><th>Type</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>indent</code></td><td><code>usize</code></td><td>Number of spaces per nesting level in the trace output.</td></tr>
+<tr><td><code>to_file</code></td><td><code>Option&lt;String&gt;</code></td><td>If set, writes the trace to the specified file path instead of stdout.</td></tr>
+<tr><td><code>time_format</code></td><td><code>Option&lt;String&gt;</code></td><td>If set, prepends a formatted timestamp to each trace line.</td></tr>
+</tbody>
+</table>
+</div>
+<hr>
+<h2 id="custom-trace-messages"><a class="header" href="#custom-trace-messages">Custom Trace Messages</a></h2>
+<p>Actions can emit custom messages inline within the trace output using <code>ctx.trace()</code>. This is useful for logging intermediate Blackboard values or action-specific diagnostic information:</p>
+<pre><code class="language-f-tree">import "std::actions"
+
+impl tracked_action();
+
+root main repeat(3) {
+    tracked_action()
+}
+</code></pre>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use forester_rs::runtime::action::{Impl, RtArgs, Tick, TickResult};
+use forester_rs::runtime::context::TreeContextRef;
+
+struct TrackedAction;
+
+impl Impl for TrackedAction {
+    fn tick(&amp;self, args: RtArgs, ctx: TreeContextRef) -&gt; Tick {
+        let mut ctx = ctx.lock()?;
+        
+        // Read current counter from Blackboard
+        let i = ctx.bb()
+            .get("counter".to_string())?
+            .and_then(|v| v.clone().as_int())
+            .map(|v| v + 1)
+            .unwrap_or(0);
+        
+        ctx.bb().put("counter".to_string(), RtValue::int(i))?;
+        
+        // Emit a custom trace message
+        ctx.trace(format!("counter = {:?}", i));
+        
+        Ok(TickResult::success())
+    }
+}
+<span class="boring">}</span></code></pre>
+<p>This produces inline messages in the trace output:</p>
+<pre><code class="language-text">[1]    2 : Running(len=1)
+[1]      counter = 0
+[1]      3 : Success()
+[2]  next tick
+[2]      counter = 1
+[2]      3 : Success()
+[3]  next tick
+[3]      counter = 2
+[3]      3 : Success()
+[3]  1 : Success(cursor=0,len=1)
+</code></pre>
+<hr>
+<h2 id="accessing-the-tracer-via-http"><a class="header" href="#accessing-the-tracer-via-http">Accessing the Tracer via HTTP</a></h2>
+<p>When the engine HTTP server is running, the tracer output can be fetched or appended to at runtime:</p>
+<pre><code class="language-shell"># Print current trace
+curl http://localhost:10000/tracer/print
+
+# Append a custom event to the trace
+curl -X POST http://localhost:10000/tracer/custom \
+  -H "Content-Type: application/json" \
+  -d '{"message": "external checkpoint reached"}'
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="simulation"><a class="header" href="#simulation">Simulation</a></h1>
+<p>Forester provides a simulation environment to execute a behavior tree by replacing actual action implementations with stubs. This allows you to validate tree logic and test execution branches under specific conditions without writing the application code.</p>
+<p>Using a simulation profile, you can inject a specific Blackboard state, trace execution changes, and generate visual graphs of the tree.</p>
+<h2 id="preparations"><a class="header" href="#preparations">Preparations</a></h2>
+<h3 id="configuration-profile"><a class="header" href="#configuration-profile">Configuration Profile</a></h3>
+<p><strong>Note: All paths in the configuration file can be either absolute or relative to the root folder.</strong></p>
+<p>The YAML configuration file contains simulation settings and stub definitions for actions.</p>
+<p>Example configuration:</p>
+<pre><code class="language-yaml">config:
+  tracer: 
+    file: gen/main.trace
+    dt_fmt: "%d %H:%M:%S%.3f"
+  graph: gen/main.svg
+  bb:
+    dump: gen/bb.json
+  max_ticks: 10
+
+actions:
+  -
+    name: task
+    stub: failure
+    params:
+      delay: 100
+</code></pre>
+<h4 id="config-section"><a class="header" href="#config-section"><code>config</code> Section</a></h4>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th style="text-align: left">Setting</th><th style="text-align: left">Description</th><th style="text-align: left">Default</th><th style="text-align: left">Example</th></tr>
+</thead>
+<tbody>
+<tr><td style="text-align: left"><code>tracer.file</code></td><td style="text-align: left">File path to write the execution trace.</td><td style="text-align: left">None (disabled)</td><td style="text-align: left"><code>gen/main.trace</code></td></tr>
+<tr><td style="text-align: left"><code>tracer.dt_fmt</code></td><td style="text-align: left">Datetime format for the trace logs.</td><td style="text-align: left">None</td><td style="text-align: left"><code>"%d %H:%M:%S%.3f"</code></td></tr>
+<tr><td style="text-align: left"><code>graph</code></td><td style="text-align: left">File path to output the SVG tree visualization.</td><td style="text-align: left">None (disabled)</td><td style="text-align: left"><code>gen/main.svg</code></td></tr>
+<tr><td style="text-align: left"><code>bb.dump</code></td><td style="text-align: left">File path to dump the final Blackboard state as JSON.</td><td style="text-align: left">None (disabled)</td><td style="text-align: left"><code>gen/bb.json</code></td></tr>
+<tr><td style="text-align: left"><code>bb.load</code></td><td style="text-align: left">File path of a JSON file used to initialize the Blackboard before execution.</td><td style="text-align: left">None (disabled)</td><td style="text-align: left"><code>gen/init_bb.json</code></td></tr>
+<tr><td style="text-align: left"><code>max_ticks</code></td><td style="text-align: left">Maximum number of ticks before the simulation forcefully terminates.</td><td style="text-align: left"><code>0</code> (unlimited)</td><td style="text-align: left"><code>10</code></td></tr>
+<tr><td style="text-align: left"><code>http.port</code></td><td style="text-align: left">Port for the HTTP server to listen for remote action callbacks.</td><td style="text-align: left">None (disabled)</td><td style="text-align: left"><code>8080</code></td></tr>
+</tbody>
+</table>
+</div>
+<h4 id="actions-section"><a class="header" href="#actions-section"><code>actions</code> Section</a></h4>
+<p>The <code>actions</code> section is an array mapping action names to their stubbed behavior.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th style="text-align: left">Setting</th><th style="text-align: left">Description</th><th style="text-align: left">Default</th><th style="text-align: left">Example</th></tr>
+</thead>
+<tbody>
+<tr><td style="text-align: left"><code>name</code></td><td style="text-align: left">Name of the target action.</td><td style="text-align: left"><strong>Required</strong></td><td style="text-align: left"><code>task</code></td></tr>
+<tr><td style="text-align: left"><code>stub</code></td><td style="text-align: left">Stub behavior (<code>success</code>, <code>failure</code>, <code>random</code>, <code>remote</code>).</td><td style="text-align: left"><strong>Required</strong></td><td style="text-align: left"><code>success</code></td></tr>
+<tr><td style="text-align: left"><code>params.delay</code></td><td style="text-align: left">Execution delay in milliseconds.</td><td style="text-align: left"><code>0</code></td><td style="text-align: left"><code>100</code></td></tr>
+<tr><td style="text-align: left"><code>params.url</code></td><td style="text-align: left"><em>(Remote stub)</em> URL of the remote server.</td><td style="text-align: left"><strong>Required</strong> for <code>remote</code></td><td style="text-align: left"><code>http://localhost:10000/action</code></td></tr>
+<tr><td style="text-align: left"><code>params.server</code></td><td style="text-align: left"><em>(Remote stub)</em> Callback URL the remote action uses to access the Blackboard.</td><td style="text-align: left"><code>http://localhost</code></td><td style="text-align: left"><code>http://localhost:8080</code></td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="default-profile"><a class="header" href="#default-profile">Default Profile</a></h3>
+<p>A simulation can run without a specific profile. In this case, Forester replaces all unimplemented actions with a <code>success</code> stub. No traces, graphs, or dumps are generated.</p>
+<h3 id="stubs"><a class="header" href="#stubs">Stubs</a></h3>
+<ul>
+<li><code>success</code>: Always returns <code>Success</code>.</li>
+<li><code>failure</code>: Always returns <code>Failure</code>.</li>
+<li><code>random</code>: Returns <code>Success</code> or <code>Failure</code> randomly.</li>
+<li><code>remote</code>: Connects to a remote server and returns the result. Details are in the <a href="#remote-actions">Remote actions</a> documentation.</li>
+</ul>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li>The <code>success</code>, <code>failure</code>, and <code>random</code> stubs accept a <code>delay</code> parameter (in milliseconds).</li>
+<li>The <code>remote</code> stub requires a <code>url</code> parameter and accepts an optional <code>server</code> parameter for Blackboard access.</li>
+</ul>
+<h2 id="process"><a class="header" href="#process">Process</a></h2>
+<p>You can perform a simulation via the CLI or directly in Rust code.</p>
+<h3 id="in-the-console"><a class="header" href="#in-the-console">In the Console</a></h3>
+<p>Use the <code>f-tree</code> CLI to run a simulation:</p>
+<pre><code class="language-shell">f-tree sim --root tree/tests/simulator/smoke/ --profile sim.yaml
+</code></pre>
+<p><strong>CLI Defaults:</strong></p>
+<ul>
+<li><code>--root</code>: If omitted, defaults to the current working directory (<code>&lt;pwd&gt;</code>).</li>
+<li><code>--main</code>: If omitted, defaults to <code>main.tree</code>.</li>
+<li><code>--tree</code>: Can be omitted if there is only one root definition in the file.</li>
+<li><code>--profile</code>: If omitted, the default success-stub profile is used.</li>
+</ul>
+<h3 id="in-the-code"><a class="header" href="#in-the-code">In the Code</a></h3>
+<p>Use <code>SimulatorBuilder</code> from the <code>simulator</code> module to configure and run the simulation programmatically.</p>
+<p><strong>From the file system:</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn smoke() {
+    let mut sb = SimulatorBuilder::new();
+    let root = PathBuf::from("simulator/smoke");
+
+    sb.root(root.clone());
+    sb.profile(PathBuf::from("sim.yaml"));
+     
+    let mut fb = ForesterBuilder::from_file_system();
+    fb.main_file("main.tree".to_string());
+    fb.root(root);
+
+    sb.forester_builder(fb);
+     
+    let mut sim = sb.build().unwrap();
+    sim.run().unwrap();
+}
+<span class="boring">}</span></code></pre>
+<p><strong>From raw text:</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn smoke_from_text() {
+    let mut sb = SimulatorBuilder::new();
+    let sim = PathBuf::from("simulator/smoke/sim.yaml");
+    
+    sb.profile(sim);
+     
+    let mut fb = ForesterBuilder::from_text();
+    fb.text(r#"
+        import "std::actions"
+
+        root main sequence {
+            store("info1", "initial")
+            retryer(task(config = obj), success())
+            store("info2", "finish")
+        }
+
+        fallback retryer(t: tree, default: tree) {
+            retry(5) t(..)
+            fail("just should fail")
+            default(..)
+        }
+
+        impl task(config: object);
+    "#.to_string());    
+    
+    sb.forester_builder(fb);
+    
+    let mut sim = sb.build().unwrap();
+    sim.run().unwrap();
+}
+<span class="boring">}</span></code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="export-to-ros-nav2"><a class="header" href="#export-to-ros-nav2">Export to ROS Nav2</a></h1>
+<p><a href="https://www.ros.org/">ROS</a> in general and <a href="https://navigation.ros.org/">ROS Nav2</a> in particular are highly popular in robotics. They manage critical aspects of robot control, including navigation, localization, mapping, and more.</p>
+<p>Forester provides native support for exporting a tree directly to ROS Nav2. The intermediate format is the <a href="https://navigation.ros.org/behavior_trees/index.html#">Nav2 XML format</a>.</p>
+<p>The transformation process is straightforward.</p>
+<h2 id="control-nodes"><a class="header" href="#control-nodes">Control Nodes</a></h2>
+<p>Forester control nodes map directly to Nav2 control nodes:</p>
+<ul>
+<li><code>sequence</code> becomes <code>PipelineSequence</code></li>
+<li><code>fallback</code> becomes <code>RoundRobin</code></li>
+<li><code>r_fallback</code> becomes <code>ReactiveFallback</code></li>
+</ul>
+<p>If a Forester control node is explicitly named, that name is applied to the resulting Nav2 XML element.</p>
+<p>For example:</p>
+<pre><code class="language-forester">sequence FollowPathWithFallback {
+    // ... 
+}
+</code></pre>
+<p>Becomes:</p>
+<pre><code class="language-xml">&lt;PipelineSequence name="FollowPathWithFallback"&gt;
+&lt;/PipelineSequence&gt;
+</code></pre>
+<h2 id="actions"><a class="header" href="#actions">Actions</a></h2>
+<p>Forester actions map directly to Nav2 actions.</p>
+<p>Every action accepts an implicit <code>name</code> parameter, which dictates the name of the action in the Nav2 tree. This parameter is optional and can be omitted.</p>
+<p>For actions that take a subtree as a parameter (like decorators), the parameter must be named <code>sub</code>.</p>
+<h3 id="retry"><a class="header" href="#retry">Retry</a></h3>
+<p>Retry logic can be represented in two ways, depending on whether you need to name the node in Nav2:</p>
+<ul>
+<li><strong>The <code>retry</code> decorator:</strong> The number of retries is specified compactly (e.g., <code>retry(3)</code>), but you cannot assign a name to the node.</li>
+<li><strong>The <code>RecoveryNode</code> action:</strong> The number of retries is passed as an argument. This is the only way to explicitly assign a <code>name</code> parameter to the retry node.</li>
+</ul>
+<pre><code class="language-forester">    // Allows you to convey the name to Nav2
+    RecoveryNode(
+        number_of_retries = 1,
+        name = "ComputePathToPose", 
+        sub = ComputePathWithFallback()
+    )
+    
+    // Cannot convey a name to Nav2
+    retry(1) ComputePathWithFallback() 
+    
+    // Everything else functions exactly the same
+</code></pre>
+<h2 id="example-1"><a class="header" href="#example-1">Example</a></h2>
+<p><strong>Forester Tree:</strong></p>
+<pre><code class="language-f-tree">import "ros::nav2"
+
+root MainTree RecoveryNode(number_of_retries = 6, name = "NavigateRecovery", sub = NavigateWithReplanning())
+
+sequence NavigateWithReplanning {
+    RateController(
+        hz = 1.0,
+        sub = RecoveryNode(
+            number_of_retries = 1,
+            name = "ComputePathToPose",
+            sub = retry(1) ComputePathWithFallback()
+        )
+    )
+    retry(1) FollowPathWithFallback()
+}
+
+sequence ComputePathWithFallback {
+    ComputePathToPose(goal = goal, path = path, planner_id = "GridBased")
+    ComputePathToPoseRecoveryFallback()
+}
+
+sequence FollowPathWithFallback {
+    FollowPath(path = path, controller_id = "FollowPath")
+    FollowPathRecoveryFallback()
+}
+
+r_fallback ComputePathToPoseRecoveryFallback {
+    GoalUpdated()
+    ClearEntireCostmap(name = "ClearGlobalCostmap-Context", service_name = "global_costmap/clear_entirely_global_costmap")
+}
+
+r_fallback FollowPathRecoveryFallback {
+    GoalUpdated()
+    ClearEntireCostmap(name = "ClearLocalCostmap-Context", service_name = "local_costmap/clear_entirely_local_costmap")
+}
+</code></pre>
+<p><strong>Transformed Nav2 XML:</strong></p>
+<pre><code class="language-xml">&lt;root main_tree_to_execute="MainTree"&gt;
+  &lt;BehaviorTree ID="MainTree"&gt;
+    &lt;RecoveryNode name="NavigateRecovery" number_of_retries="6"&gt;
+      &lt;PipelineSequence name="NavigateWithReplanning"&gt;
+        &lt;RateController hz="1"&gt;
+          &lt;RecoveryNode name="ComputePathToPose" number_of_retries="1"&gt;
+            &lt;RecoveryNode number_of_retries="1"&gt;
+              &lt;PipelineSequence name="ComputePathWithFallback"&gt;
+                &lt;ComputePathToPose goal="{goal}" path="{path}" planner_id="GridBased"/&gt;
+                &lt;ReactiveFallback name="ComputePathToPoseRecoveryFallback"&gt;
+                  &lt;GoalUpdated/&gt;
+                  &lt;ClearEntireCostmap name="ClearGlobalCostmap-Context" service_name="global_costmap/clear_entirely_global_costmap"/&gt;
+                &lt;/ReactiveFallback&gt;
+              &lt;/PipelineSequence&gt;
+            &lt;/RecoveryNode&gt;
+          &lt;/RecoveryNode&gt;
+        &lt;/RateController&gt;
+        &lt;RecoveryNode number_of_retries="1"&gt;
+          &lt;PipelineSequence name="FollowPathWithFallback"&gt;
+            &lt;FollowPath controller_id="FollowPath" path="{path}"/&gt;
+            &lt;ReactiveFallback name="FollowPathRecoveryFallback"&gt;
+              &lt;GoalUpdated/&gt;
+              &lt;ClearEntireCostmap name="ClearLocalCostmap-Context" service_name="local_costmap/clear_entirely_local_costmap"/&gt;
+            &lt;/ReactiveFallback&gt;
+          &lt;/PipelineSequence&gt;
+        &lt;/RecoveryNode&gt;
+      &lt;/PipelineSequence&gt;
+    &lt;/RecoveryNode&gt;
+  &lt;/BehaviorTree&gt;
+&lt;/root&gt;
+</code></pre>
+<h2 id="tools"><a class="header" href="#tools">Tools</a></h2>
+<p>Ensure you are running the latest version of the CLI to use these features:</p>
+<pre><code class="language-shell">cargo install f-tree 
+</code></pre>
+<h3 id="headers"><a class="header" href="#headers">Headers</a></h3>
+<p>To use Nav2 actions with the correct signatures, you must import the <code>ros::nav2</code> module in your Forester project.</p>
+<p>To view the contents and available actions in this file, run:</p>
+<pre><code class="language-shell">f-tree -d print-ros-nav2
+</code></pre>
+<h3 id="exporting-via-the-console"><a class="header" href="#exporting-via-the-console">Exporting via the Console</a></h3>
+<p>To export the tree from the command line, run:</p>
+<pre><code class="language-shell">f-tree nav2 
+</code></pre>
+<h3 id="exporting-via-the-intellij-plugin"><a class="header" href="#exporting-via-the-intellij-plugin">Exporting via the IntelliJ Plugin</a></h3>
+<p>Run the task <code>Export to ROS Nav2</code> directly within your IDE.</p>
+<h3 id="exporting-via-code"><a class="header" href="#exporting-via-code">Exporting via Code</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[test]
+fn smoke() {
+    let mut root_path = test_folder("ros/nav/smoke");
+
+    let project = Project::build("main.tree".to_string(), root_path.clone()).unwrap();
+    let tree = RuntimeTree::build(project).unwrap().tree;
+
+    // Define the output file
+    root_path.push("test.xml");
+
+    // Export the tree
+    tree.to_ros_nav(root_path).unwrap();
+}
+<span class="boring">}</span></code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="examples-1"><a href="#examples-1" class="header">Examples</a></h1>
+<h2 id="examples"><a class="header" href="#examples">Examples</a></h2>
+<p>To help you get started quickly, we maintain a dedicated repository containing fully functional examples that demonstrate Forester in action across different domains.</p>
+<p>You can find the repository here: <strong><a href="https://github.com/forester-bt/examples">forester-bt/examples</a></strong></p>
+<h3 id="implemented-examples"><a class="header" href="#implemented-examples">Implemented Examples</a></h3>
+<ul>
+<li><strong>Basic Simulation:</strong> Demonstrates how to set up a tree, define a profile, and run it using the built-in simulator with stubbed actions.</li>
+<li><strong>ROS Nav2 Integration:</strong> A robotics orchestration example showing how to structure a tree for navigation and export it to ROS Nav2 XML.</li>
+<li><strong>Webots Robot Control:</strong> Demonstrates how to use the Forester-Webots integration layer to control a simulated robot using reactive ticks.</li>
+<li><strong>Remote Actions (Python &amp; Rust):</strong> Shows how to connect external logic—such as LLM agent tools or external APIs—using the HTTP remote action clients, keeping the orchestration in Rust while executing logic in Python.</li>
+<li><strong>Higher-Order Trees:</strong> Examples of passing subtrees as arguments to create reusable patterns like <code>retryer</code> and fallback wrappers.</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="tools-1"><a class="header" href="#tools-1">Tools</a></h1>
+<p>The Forester ecosystem includes several auxiliary tools and libraries to help you write, analyze, and execute behavior trees.</p>
+<h2 id="intellij-plugin"><a class="header" href="#intellij-plugin">IntelliJ Plugin</a></h2>
+<p>The <a href="https://github.com/forester-bt/forester-intellij-plugin">Forester IntelliJ Plugin</a> provides native IDE support for the <code>.tree</code> language. Features include:</p>
+<ul>
+<li>Syntax highlighting</li>
+<li>Code folding</li>
+<li>Code navigation</li>
+<li>Code formatting</li>
+<li>Code inspections and error highlighting</li>
+<li>Structure view</li>
+<li>Built-in tasks to visualize and simulate the tree directly from the IDE</li>
+</ul>
+<h2 id="remote-action-libraries"><a class="header" href="#remote-action-libraries">Remote Action Libraries</a></h2>
+<p>Remote action clients allow you to decouple the orchestration engine from the execution of individual actions. This is particularly useful for AI agents where the orchestrator is in Rust, but the tool execution is in Python. Features include:</p>
+<ul>
+<li>The ability to execute specific actions on a remote machine or in a separate process via HTTP, returning the <code>TickResult</code> to the Forester runtime.</li>
+<li>Bidirectional access, allowing the remote action to read from and write to the shared Blackboard.</li>
+</ul>
+<p><strong>Available Clients:</strong></p>
+<ul>
+<li><a href="https://github.com/forester-bt/forester-http-ra-py">Python Client (<code>forester-http-ra-py</code>)</a></li>
+<li><a href="https://github.com/forester-bt/forester-rs">Rust Client (<code>forester-rs</code>)</a></li>
+</ul>
+<h2 id="cli-f-tree"><a class="header" href="#cli-f-tree">CLI (<code>f-tree</code>)</a></h2>
+<p>The <code>f-tree</code> command-line interface is the primary utility for testing and manipulating trees without writing boilerplate application code. It supports:</p>
+<ul>
+<li>Simulating trees with stubbed actions using YAML profiles.</li>
+<li>Generating SVG visualizations of the tree structure.</li>
+<li>Exporting trees to the ROS Nav2 XML format.</li>
+<li>Printing built-in standard library headers (e.g., <code>ros::nav2</code>, <code>std::actions</code>).</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="intellij-plugin-1"><a class="header" href="#intellij-plugin-1">IntelliJ Plugin</a></h1>
+<h2 id="introduction"><a class="header" href="#introduction">Introduction</a></h2>
+<p>The Forester IntelliJ Plugin provides native IDE support for writing and testing behavior trees in the <code>.tree</code> language. It does not orchestrate tasks itself; rather, it bridges the IDE environment with the Forester runtime and CLI tools.</p>
+<p>This allows you to write type-checked behavior trees, navigate complex hierarchical logic, and run simulations with visual SVG outputs directly from your editor, accelerating the development cycle for robotics and AI agent orchestration.</p>
+<h2 id="installation"><a class="header" href="#installation">Installation</a></h2>
+<ol>
+<li>Open your IntelliJ IDE (IDEA, CLion, PyCharm, etc.).</li>
+<li>Go to <strong>Settings</strong> (or <strong>Preferences</strong> on macOS) from the main menu.</li>
+<li>Select <strong>Plugins</strong> from the left-hand menu.</li>
+<li>Click on the <strong>Marketplace</strong> tab.</li>
+<li>Search for “Forester”.</li>
+<li>Click <strong>Install</strong> and restart the IDE to activate the plugin.</li>
+</ol>
+<h2 id="features"><a class="header" href="#features">Features</a></h2>
+<h3 id="syntax-highlighting"><a class="header" href="#syntax-highlighting">Syntax Highlighting</a></h3>
+<p>Provides specialized syntax highlighting for the <code>.tree</code> language, making keywords, higher-order trees, decorators, and actions easily distinguishable.</p>
+<h3 id="code-folding"><a class="header" href="#code-folding">Code Folding</a></h3>
+<p>Allows you to collapse sections of your behavior trees (such as large sequences or fallbacks), making complex task structures readable and easier to navigate.</p>
+<h3 id="structure-view"><a class="header" href="#structure-view">Structure View</a></h3>
+<p>Displays the hierarchical organization of your behavior trees in the IDE’s Structure tool window. You can quickly see parent-child relationships and jump to specific node definitions.</p>
+<h3 id="task-visualization"><a class="header" href="#task-visualization">Task Visualization</a></h3>
+<p>Integrates with Forester’s graph generation to visually map out your behavior trees. This outputs interactive or static graphical representations (SVGs) of your execution flows.</p>
+<h3 id="task-simulation"><a class="header" href="#task-simulation">Task Simulation</a></h3>
+<p>Run and test your behavior trees directly within the IDE using simulation profiles. You can execute stubbed runs to verify the logic and fallback routing without needing the actual application runtime to be active.</p>
+<h2 id="usage-1"><a class="header" href="#usage-1">Usage</a></h2>
+<h3 id="creating-a-run-configuration"><a class="header" href="#creating-a-run-configuration">Creating a Run Configuration</a></h3>
+<ol>
+<li>Open the <strong>Run/Debug Configurations</strong> dialog in your IDE.</li>
+<li>Click the <strong>+</strong> (Add New Configuration) button and select the Forester configuration type.</li>
+<li>Specify your root folder, main tree file, and simulation profile (if applicable).</li>
+</ol>
+<h3 id="running-a-simulation-via-the-editor"><a class="header" href="#running-a-simulation-via-the-editor">Running a Simulation via the Editor</a></h3>
+<ol>
+<li>Open the <code>.tree</code> file containing your root node.</li>
+<li>Click the green <strong>Run</strong> icon located in the editor gutter next to the <code>root</code> keyword.</li>
+<li>The IDE will execute the tree simulation and output the trace logs and visual graphs to your configured output directories.</li>
+</ol>
+<h2 id="links"><a class="header" href="#links">Links</a></h2>
+<ul>
+<li><a href="https://github.com/forester-bt/forester-intellij-plugin">Repository</a></li>
+<li><a href="https://plugins.jetbrains.com/plugin/22387-forester">JetBrains Marketplace Plugin Page</a></li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="library-to-create-remote-actions-using-rust"><a class="header" href="#library-to-create-remote-actions-using-rust">Library to create Remote Actions using Rust</a></h1>
+<p>The Forester provides a http library that alleviates writing the remote http actions.
+For now, the libraries are available for Rust and Python.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="library-to-create-remote-actions-using-rust-1"><a class="header" href="#library-to-create-remote-actions-using-rust-1">Library to create Remote Actions using Rust</a></h1>
+<p>The Forester provides an http library that alleviates writing the remote http actions.</p>
+<h2 id="usage-2"><a class="header" href="#usage-2">Usage</a></h2>
+<pre><code class="language-toml">forester-http = { version = "0.1.0" }
+</code></pre>
+<p>The contract is defined in the following way:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub trait ForesterRemoteAction {
+    fn tick(&amp;self, request: RemoteActionRequest) -&gt; TickResult;
+}
+<span class="boring">}</span></code></pre>
+<p>where RemoteActionRequest is defined as:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct RemoteActionRequest {
+    /// current tick
+    pub tick: usize,
+    /// the list of arguments from the tree invocation
+    pub args: Vec&lt;RtArgument&gt;,
+    /// the address of the server to access to blackboard and other services
+    pub serv_url: String,
+}
+<span class="boring">}</span></code></pre>
+<p>On the other hand, the library provides a helper API <code>ForesterHttpApi</code> and Client <code>ForesterHttpClient</code> (async reqwest) to access the server.</p>
+<h2 id="example-2"><a class="header" href="#example-2">Example</a></h2>
+<p>The code is available in the <a href="https://github.com/besok/forester-examples/tree/main/remote_action/simple_action">forester-examples</a> repository.</p>
+<p>The gist is the following:</p>
+<pre class="playground"><code class="language-rust">
+#[tokio::main]
+async fn main() {
+    let routing = Router::new()
+        .route("/", get(|| async { "OK" }))
+        .route("/action", post(handler))
+        .into_make_service_with_connect_info::&lt;SocketAddr&gt;();
+
+    axum::Server::bind(&amp;SocketAddr::from(([127, 0, 0, 1], 10000)))
+        .serve(routing)
+        .await
+        .unwrap();
+}
+
+
+/// RemoteActionRequest defines the request from the tree
+async fn handler(Json(req): Json&lt;RemoteActionRequest&gt;) -&gt; impl IntoResponse {
+    let url = req.clone().serv_url;
+    /// the client to access the server
+    let client = ForesterHttpClient::new(url);
+    let trace = client .print_trace(); /// print the trace of the tree
+
+    let result = client.put("test".to_string(), json!({"f1":1, "f2":2, "f3":3})).await;
+    println!("result of putting {:?}", result);
+    
+    client.lock("test".to_string()).await.unwrap();
+
+    (StatusCode::OK, Json::from(RemoteAction.tick(req)))
+}
+
+struct RemoteAction;
+
+impl ForesterRemoteAction for RemoteAction {
+    fn tick(&amp;self, request: RemoteActionRequest) -&gt; TickResult {
+        println!("tick: {:?}", request);
+        TickResult::Success
+    }
+}
+
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="library-to-create-remote-actions-using-python"><a class="header" href="#library-to-create-remote-actions-using-python">Library to create Remote Actions using Python</a></h1>
+<p>The Forester provides an http library that alleviates writing the remote http actions.</p>
+<h2 id="usage-3"><a class="header" href="#usage-3">Usage</a></h2>
+<p>The latest version can be obtained from the <a href="https://test.pypi.org/project/forester-http/">test.pypi.org</a></p>
+<pre><code class="language-shell">pip install -i https://test.pypi.org/simple/ forester-http==0.0.5
+</code></pre>
+<p>The contract is defined in the following way:</p>
+<pre><code class="language-python">from typing import List
+
+class RtArgument:
+    """The argument that is sent from the Forester instance
+
+    * The name of the argument
+    * The value of the argument is a json
+    """
+
+    def __init__(self, name: str, value: str) -&gt; None:
+        self.name = name
+        self.value = value
+
+
+class RemoteActionRequest:
+    """The request that is sent from the Forester instance
+
+    * It has the current tick and the arguments in the action from tree
+    """
+
+    def __init__(self, tick: int, args: List[RtArgument], serv_url: str) -&gt; None:
+        self.tick = tick
+        self.args = args
+        self.serv_url = serv_url
+
+
+</code></pre>
+<p>On the other hand, the library provides a helper API <code>ForesterHttpApi</code> and Client <code>ForesterHttpClient</code>  to access the server.</p>
+<h2 id="example-3"><a class="header" href="#example-3">Example</a></h2>
+<p>The code is available in the <a href="https://github.com/besok/forester-examples/tree/main/remote_action/simple_action_py">forester-examples</a> repository.</p>
+<p>The gist is the following:</p>
+<pre><code class="language-python">
+import json
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
+from forester_http.client import *
+
+class MyServer(BaseHTTPRequestHandler):
+    def do_POST(self):
+    
+        if self.path == "/action":
+            content_length = int(self.headers["Content-Length"])
+            # get body as json and deserialize it to RemoteActionRequest
+            body = json.loads(self.rfile.read(content_length))
+            req = RemoteActionRequest.from_bytes(body.encode("utf-8"))
+    
+            client = ForesterHttpClient(req.serv_url)
+            client.put("test", "test")
+    
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json;charset=UTF-8")
+            self.end_headers()
+    
+            self.wfile.write(json.dumps("Success").encode("utf-8"))
+    
+        else:
+            self.send_error(404)
+
+
+if __name__ == "__main__":
+    webServer = HTTPServer((hostName, serverPort), MyServer)
+    print("Server started http://%s:%s" % (hostName, serverPort))
+
+    try:
+        webServer.serve_forever()
+    except KeyboardInterrupt:
+        pass
+
+    webServer.server_close()
+    print("Server stopped.")
+
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="console-f-tree"><a class="header" href="#console-f-tree">Console f-tree</a></h1>
+<p>The console utility <code>f-tree</code> can be installed using <code>cargo</code> and can be used to simulate and visualize the tree.</p>
+<p>The <a href="#intellij-plugin-1">Intellij plugin</a> basically wraps this utility and provides the same functionality.</p>
+<pre><code class="language-shell">cargo install f-tree
+</code></pre>
+<p>and then be used with</p>
+<pre><code class="language-shell">~ f-tree --help
+Usage: f-tree [OPTIONS] &lt;COMMAND&gt;
+
+Commands:
+  print-std-actions  Print the list of std actions from 'import std::actions'
+  print-ros-nav2     Print the list of ros actions from 'import ros::nav2'
+  sim                Runs simulation. Expects a simulation profile
+  vis                Runs visualization. Output is in svg format.
+  nav2               Convert to the xml compatable format of nav ros2.
+  help               Print this message or the help of the given subcommand(s)
+
+Options:
+  -d, --debug    Print debug logs
+  -h, --help     Print help
+  -V, --version  Print version
+
+
+</code></pre>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+
+            </nav>
+
+        </div>
+
+        <template id=fa-eye><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM432 256c0 79.5-64.5 144-144 144s-144-64.5-144-144s64.5-144 144-144s144 64.5 144 144zM288 192c0 35.3-28.7 64-64 64c-11.5 0-22.3-3-31.6-8.4c-.2 2.8-.4 5.5-.4 8.4c0 53 43 96 96 96s96-43 96-96s-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6z"/></svg></span></template>
+        <template id=fa-eye-slash><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7L525.6 386.7c39.6-40.6 66.4-86.1 79.9-118.4c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C465.5 68.8 400.8 32 320 32c-68.2 0-125 26.3-169.3 60.8L38.8 5.1zM223.1 149.5C248.6 126.2 282.7 112 320 112c79.5 0 144 64.5 144 144c0 24.9-6.3 48.3-17.4 68.7L408 294.5c5.2-11.8 8-24.8 8-38.5c0-53-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6c0 10.2-2.4 19.8-6.6 28.3l-90.3-70.8zm223.1 298L373 389.9c-16.4 6.5-34.3 10.1-53 10.1c-79.5 0-144-64.5-144-144c0-6.9 .5-13.6 1.4-20.2L83.1 161.5C60.3 191.2 44 220.8 34.5 243.7c-3.3 7.9-3.3 16.7 0 24.6c14.9 35.7 46.2 87.7 93 131.1C174.5 443.2 239.2 480 320 480c47.8 0 89.9-12.9 126.2-32.5z"/></svg></span></template>
+        <template id=fa-copy><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M502.6 70.63l-61.25-61.25C435.4 3.371 427.2 0 418.7 0H255.1c-35.35 0-64 28.66-64 64l.0195 256C192 355.4 220.7 384 256 384h192c35.2 0 64-28.8 64-64V93.25C512 84.77 508.6 76.63 502.6 70.63zM464 320c0 8.836-7.164 16-16 16H255.1c-8.838 0-16-7.164-16-16L239.1 64.13c0-8.836 7.164-16 16-16h128L384 96c0 17.67 14.33 32 32 32h47.1V320zM272 448c0 8.836-7.164 16-16 16H63.1c-8.838 0-16-7.164-16-16L47.98 192.1c0-8.836 7.164-16 16-16H160V128H63.99c-35.35 0-64 28.65-64 64l.0098 256C.002 483.3 28.66 512 64 512h192c35.2 0 64-28.8 64-64v-32h-47.1L272 448z"/></svg></span></template>
+        <template id=fa-play><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/></svg></span></template>
+        <template id=fa-clock-rotate-left><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M75 75L41 41C25.9 25.9 0 36.6 0 57.9V168c0 13.3 10.7 24 24 24H134.1c21.4 0 32.1-25.9 17-41l-30.8-30.8C155 85.5 203 64 256 64c106 0 192 86 192 192s-86 192-192 192c-40.8 0-78.6-12.7-109.7-34.4c-14.5-10.1-34.4-6.6-44.6 7.9s-6.6 34.4 7.9 44.6C151.2 495 201.7 512 256 512c141.4 0 256-114.6 256-256S397.4 0 256 0C185.3 0 121.3 28.7 75 75zm181 53c-13.3 0-24 10.7-24 24V256c0 6.4 2.5 12.5 7 17l72 72c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-65-65V152c0-13.3-10.7-24-24-24z"/></svg></span></template>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr-ef4e11c1.min.js"></script>
+        <script src="mark-09e88c2c.min.js"></script>
+        <script src="searcher-09f2665d.js"></script>
+
+        <script src="clipboard-1626706a.min.js"></script>
+        <script src="highlight-3188690c.js"></script>
+        <script src="book-609e4cb8.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="mermaid-init-1508de64.js"></script>
+        <script src="mermaid-69e1d02a.min.js"></script>
+
+        <script>
+        window.addEventListener('load', function() {
+            window.setTimeout(window.print, 100);
+        });
+        </script>
+
+
+    </div>
+    </body>
+</html>
