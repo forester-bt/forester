@@ -1,12 +1,12 @@
 <p align="center">
-    <img width="255" alt="Logo" src="docs/src/pics/logo.png">
+    <img width="255" alt="Logo" src="assets/logo.png">
 </p>
 
 <h1 align="center">Forester</h1>
 <p align="center"><b>A functionally-oriented language and a fast, typed runtime for behavior trees — built to orchestrate robots and AI agents alike.</b></p>
 
 <p align="center">
-  <img alt="Visualization of the tree" src="docs/src/pics/main.svg">
+  <img alt="Visualization of the tree" src="assets/main.svg">
 </p>
 
 ## What is Forester
@@ -130,7 +130,7 @@ fn main() {
 
 ## Documentation
 
-The full book lives at [forester-bt.github.io/forester](https://forester-bt.github.io/forester/) — language reference, runtime internals, analysis tools, and integrations.
+The full book lives at [forester-bt.github.io/learn](https://forester-bt.github.io/learn/) — language reference, runtime internals, analysis tools, and integrations.
 
 If you are new to behavior trees:
 - [Chris Simpson — Behavior trees for AI: how they work](https://outforafight.wordpress.com/2014/07/15/behaviour-behavior-trees-for-ai-dudes-part-1/)
