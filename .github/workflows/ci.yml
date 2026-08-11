@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      toolchains: ${{ steps.matrix.outputs.toolchains }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Determine build matrix
+        id: matrix
+        run: |
+          echo 'toolchains=["stable", "beta"]' >> $GITHUB_OUTPUT
+
+  build:
+    needs: matrix
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        toolchain: ${{ fromJSON(needs.matrix.outputs.toolchains) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.toolchain }}
+      - run: cargo build --verbose
+      - run: cargo test --verbose
+
+  clippy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - run: cargo clippy
+
+  msrv:
+    needs: clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read MSRV from Cargo.toml
+        id: msrv
+        run: |
+          version=$(python3 -c "
+          import tomllib
+          with open('Cargo.toml', 'rb') as f:
+              pkg = tomllib.load(f)['package']
+          print(pkg.get('rust-version', ''))
+          ")
+          echo "version=$version" >> $GITHUB_OUTPUT
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ steps.msrv.outputs.version }}
+      - run: cargo check --all-targets
