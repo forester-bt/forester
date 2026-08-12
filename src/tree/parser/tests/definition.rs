@@ -6,7 +6,6 @@ use crate::tree::parser::Parser;
 
 use parsit::test::parser_test::*;
 
-
 #[test]
 fn definition() {
     let parser = Parser::new(r#"root name {}"#).unwrap();

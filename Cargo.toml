@@ -4,15 +4,15 @@ description = "Workflow framework based on the behavior trees"
 authors = ["BorisZhguchev <zhguchev@hotmail.com>"]
 homepage = "https://github.com/besok/forester"
 repository = "https://github.com/besok/forester"
-version = "0.4.1"
+version = "0.5.1"
 edition = "2021"
 license-file = "LICENSE"
 rust-version = "1.71"
 
 [dependencies]
-parsit = "0.2.0"
+parsit = "0.2.1"
 graphviz-rust = "0.9.8"
-logos = "0.14.4"
+logos = "0.16.1"
 itertools = "0.15.0"
 strum = { version = "0.28.0", features = [] }
 strum_macros = "0.28.0"
@@ -26,13 +26,13 @@ tracing = "0.1"
 axum = "0.7.9"
 tokio = { version = "1.53.1", features = ["full"] }
 tokio-util = "0.7.19"
-hyper = "1.11.0"
 chrono = "0.4.45"
 quick-xml = "0.39.4"
 
-tungstenite = "0.29.0"
+tungstenite = { version = "0.29.0", features = ["url"] }
 url = "2.5.8"
 
 [dev-dependencies]
 wiremock = "0.6.5"
 forester-http = "0.1.0"
+pretty_assertions = "1.4.1"

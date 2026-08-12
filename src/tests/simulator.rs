@@ -163,7 +163,7 @@ fn smoke() {
 #[test]
 fn smoke_remote() {
     let env = RtEnv::try_new().unwrap();
-    let _ = env.runtime.spawn_blocking(|| async {
+    let _ = env.runtime.spawn(async move {
         async fn handler(Json(req): Json<RemoteActionRequest>) -> impl IntoResponse {
             let url = req.clone().serv_url;
 
@@ -178,10 +178,11 @@ fn smoke_remote() {
             .route("/action", post(handler))
             .into_make_service();
 
-        axum::Server::bind(&SocketAddr::from(([127, 0, 0, 1], 10000)))
-            .serve(routing)
+        let listener = tokio::net::TcpListener::bind(SocketAddr::from(([127, 0, 0, 1], 10000)))
             .await
             .unwrap();
+
+        axum::serve(listener, routing).await.unwrap();
     });
 
     turn_on_logs();

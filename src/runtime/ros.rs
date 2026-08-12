@@ -2,21 +2,14 @@
 // ros2 launch rosbridge_server rosbridge_websocket_launch.xml
 pub mod client;
 
-
-
-
-
-
-
-
 use crate::runtime::action::{Impl, Tick};
 use crate::runtime::args::{RtArgs, RtValue};
-use crate::runtime::context::TreeContextRef;
-use crate::runtime::{RtResult, RuntimeError, TickResult};
 use crate::runtime::blackboard::BBKey;
+use crate::runtime::context::TreeContextRef;
 use crate::runtime::env::daemon::context::DaemonContext;
 use crate::runtime::env::daemon::{Daemon, DaemonFn, StopFlag};
 use crate::runtime::ros::client::{SubscribeCfg, WS};
+use crate::runtime::{RtResult, RuntimeError, TickResult};
 
 /// abilities
 /// - subscribe to topics - > get data and put it to bb.
@@ -35,7 +28,8 @@ impl Impl for OneTimeSender {
         match self {
             OneTimeSender::Publish => {
                 let topic = param_as_str("topic", 0, &args, ctx.clone())?;
-                let mes = args.find_or_ith("value".to_string(), 1)
+                let mes = args
+                    .find_or_ith("value".to_string(), 1)
                     .ok_or(RuntimeError::fail(format!("the value is not found")))?;
                 let url = param_as_str("url", 2, &args, ctx)?;
                 client::publish(topic, mes, url)
@@ -82,7 +76,6 @@ pub enum SubscriberDaemon {
     Last(WS, BBKey),
     All(WS, BBKey),
 }
-
 
 impl SubscriberDaemon {
     pub fn new(cfg: TargetCfg, ws: WS) -> Self {
@@ -145,16 +138,22 @@ pub struct TargetCfg {
 
 impl TargetCfg {
     pub fn from(v: RtValue) -> RtResult<TargetCfg> {
-        let elems = v.as_map(|(k, v)| (k, v))
-            .ok_or(RuntimeError::fail(format!("the target_cfg should be an object")))?;
+        let elems = v.as_map(|(k, v)| (k, v)).ok_or(RuntimeError::fail(format!(
+            "the target_cfg should be an object"
+        )))?;
 
-        let tp = elems.get("tp").and_then(|v| v.clone().as_string())
+        let tp = elems
+            .get("tp")
+            .and_then(|v| v.clone().as_string())
             .ok_or(RuntimeError::fail(format!("the tp is not found")))?;
 
-        let buf_size = elems.get("buf_size")
+        let buf_size = elems
+            .get("buf_size")
             .and_then(|v| v.clone().as_int().map(|v| v as usize));
 
-        let dst = elems.get("dst").and_then(|v| v.clone().as_string())
+        let dst = elems
+            .get("dst")
+            .and_then(|v| v.clone().as_string())
             .ok_or(RuntimeError::fail(format!("the dst should be a string")))?;
 
         Ok(TargetCfg { tp, buf_size, dst })
@@ -167,20 +166,18 @@ pub struct ForesterRosMessage {
     msg: String,
 }
 
-
 fn param_as_str(key: &str, i: usize, args: &RtArgs, ctx: TreeContextRef) -> RtResult<String> {
-    args
-        .find_or_ith(key.to_string(), i)
+    args.find_or_ith(key.to_string(), i)
         .ok_or(RuntimeError::fail(format!("the {key} is not found")))
         .and_then(|v| v.cast(ctx).str())
         .and_then(|v| v.ok_or(RuntimeError::fail(format!("the {key} should be a string"))))
 }
 
 fn param_as<T, V>(key: &str, i: usize, args: &RtArgs, m: T) -> RtResult<V>
-    where T: Fn(RtValue) -> RtResult<V>
+where
+    T: Fn(RtValue) -> RtResult<V>,
 {
-    args
-        .find_or_ith(key.to_string(), i)
+    args.find_or_ith(key.to_string(), i)
         .ok_or(RuntimeError::fail(format!("the {key} is not found")))
         .and_then(|v| m(v))
 }

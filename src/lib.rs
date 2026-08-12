@@ -6,17 +6,17 @@
 #[macro_use]
 extern crate log;
 
+use crate::runtime::rtree::{RuntimeTree, RuntimeTreeStarter};
 use crate::runtime::RtResult;
 use std::fs;
 use std::path::PathBuf;
-use crate::runtime::rtree::{RuntimeTree, RuntimeTreeStarter};
 
+pub mod converter;
 pub mod runtime;
 pub mod simulator;
 pub mod tracer;
 pub mod tree;
 pub mod visualizer;
-pub mod converter;
 
 use crate::runtime::RuntimeError;
 use crate::tree::project::Project;
@@ -35,8 +35,8 @@ pub fn runtime_tree_default(
     file: Option<&String>,
     tree: Option<&String>,
     output: Option<&String>,
-    output_ext:String
-) -> Result<(RuntimeTreeStarter,PathBuf), TreeError> {
+    output_ext: String,
+) -> Result<(RuntimeTreeStarter, PathBuf), TreeError> {
     let project = match (file, tree) {
         (Some(file), Some(tree)) => {
             Project::build_with_root(file.to_string(), tree.to_string(), root)

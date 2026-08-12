@@ -1,10 +1,6 @@
-
-
-
 use crate::runtime::action::{Action, ActionName};
-use crate::runtime::{RtResult, RuntimeError};
 use crate::runtime::ros::OneTimeSender;
-
+use crate::runtime::{RtResult, RuntimeError};
 
 pub(crate) fn action_impl(action: &ActionName) -> RtResult<Action> {
     match action.as_str() {
@@ -12,12 +8,16 @@ pub(crate) fn action_impl(action: &ActionName) -> RtResult<Action> {
         "advertise" => Ok(Action::sync(OneTimeSender::Advertise)),
         "unsubscribe" => Ok(Action::sync(OneTimeSender::Unsubscribe)),
         "subscribe" => Ok(Action::sync(OneTimeSender::Subscribe)),
-        _ => Err(RuntimeError::UnImplementedAction(format!("the action is not found {}", action)))
+        _ => Err(RuntimeError::UnImplementedAction(format!(
+            "the action is not found {}",
+            action
+        ))),
     }
 }
 
 pub fn ros_actions_file() -> String {
-    format!(r#"// Ros2 Core specific actions and decorators.
+    format!(
+        r#"// Ros2 Core specific actions and decorators.
 // The actions are accessible using the import 'import "ros::core"'
 
 // Publish message to the topic
@@ -46,5 +46,6 @@ impl subscribe(
     url:string
 );
 
-"#)
+"#
+    )
 }

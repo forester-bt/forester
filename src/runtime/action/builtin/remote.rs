@@ -1,10 +1,9 @@
-use crate::runtime::action::{ ImplRemote, Tick};
+use crate::runtime::action::{ImplRemote, Tick};
 use crate::runtime::args::{RtArgs, RtArgument};
-use crate::runtime::context::{TreeRemoteContextRef};
+use crate::runtime::context::TreeRemoteContextRef;
 use crate::runtime::{to_fail, TickResult};
 
-use hyper::client::HttpConnector;
-use hyper::{body, Body, Client, Method, Request};
+use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
 
 /// The struct defines the remote action that can be executed on the remote server.
@@ -58,26 +57,14 @@ impl ImplRemote for RemoteHttpAction {
 
         debug!(target:"remote_action", "remote request {:?} to {}",&request, &self.url.clone());
 
-        let env = ctx.env.lock()?;
-        let resp = env.runtime.block_on(async {
-            let client: Client<HttpConnector, Body> =
-                hyper::Client::builder().build(HttpConnector::new());
-            // todo with vec is slow. Bytes?
-            let body_js = serde_json::to_vec(&request).unwrap();
-
-            let request = Request::builder()
-                .method(Method::POST)
+        let resp = to_fail(
+            Client::new()
+                .post(self.url.clone())
                 .header("Content-Type", "application/json")
-                .uri(self.url.clone())
-                .body(Body::from(body_js))
-                .expect("flawless request");
-
-            match to_fail(client.request(request).await) {
-                Ok(r) => to_fail(body::to_bytes(r.into_body()).await)
-                    .and_then(|bytes| to_fail(serde_json::from_slice::<TickResult>(&bytes))),
-                Err(e) => Err(e),
-            }
-        });
+                .json(&request)
+                .send(),
+        )
+        .and_then(|r| to_fail(r.json::<TickResult>()));
 
         debug!(target:"http_serv_proxy", "remote_action: {:?}", resp);
 
@@ -155,7 +142,10 @@ mod tests {
         let action = RemoteHttpAction::new(format!("http://localhost:{}/action", port));
 
         let _bb = Arc::new(Mutex::new(BlackBoard::default()));
-        let r = action.tick(RtArgs(vec![]), TreeRemoteContextRef::new(1, port, Arc::new(Mutex::new(env))));
+        let r = action.tick(
+            RtArgs(vec![]),
+            TreeRemoteContextRef::new(1, port, Arc::new(Mutex::new(env))),
+        );
 
         assert_eq!(r, Ok(TickResult::success()));
     }

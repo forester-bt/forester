@@ -1,18 +1,17 @@
 #[cfg(test)]
 mod tests {
-    
+
     use crate::runtime::args::{RtArgs, RtArgument, RtValue};
-    
+
     use crate::runtime::rtree::rnode::FlowType::{RSequence, Root, Sequence};
     use crate::runtime::rtree::rnode::RNodeName::Name;
     use crate::runtime::rtree::rnode::{FlowType, RNode, RNodeName};
     use crate::runtime::rtree::RuntimeTree;
-    
+
     use crate::tree::parser::ast::call::{Call, Calls};
     use crate::tree::parser::ast::TreeType;
     use crate::tree::project::Project;
-    
-    
+
     use std::collections::HashMap;
     use std::path::PathBuf;
     use std::vec;
@@ -33,8 +32,18 @@ mod tests {
             RuntimeTree {
                 root: 1,
                 nodes: HashMap::from_iter(vec![
-                    (4, RNode::action("say_hi".to_string(), "main.tree".to_string(),RtArgs::default())),
-                    (1, RNode::root("main".to_string(), "main.tree".to_string(),vec![2])),
+                    (
+                        4,
+                        RNode::action(
+                            "say_hi".to_string(),
+                            "main.tree".to_string(),
+                            RtArgs::default()
+                        )
+                    ),
+                    (
+                        1,
+                        RNode::root("main".to_string(), "main.tree".to_string(), vec![2])
+                    ),
                     (
                         3,
                         RNode::flow(
@@ -74,7 +83,13 @@ mod tests {
             nodes: HashMap::from_iter(vec![
                 (
                     1,
-                    RNode::flow(Root, "main".to_string(), "main.tree".to_string(),RtArgs::default(), vec![2]),
+                    RNode::flow(
+                        Root,
+                        "main".to_string(),
+                        "main.tree".to_string(),
+                        RtArgs::default(),
+                        vec![2],
+                    ),
                 ),
                 (
                     2,
@@ -97,7 +112,10 @@ mod tests {
                 (3, RNode::lambda(Sequence, vec![4])),
                 (
                     4,
-                    RNode::Leaf(Name("success".to_string(),"std::actions".to_string()), Default::default()),
+                    RNode::Leaf(
+                        Name("success".to_string(), "std::actions".to_string()),
+                        Default::default(),
+                    ),
                 ),
             ]),
         };
@@ -112,12 +130,18 @@ mod tests {
             nodes: HashMap::from_iter(vec![
                 (
                     1,
-                    RNode::flow(Root, "main".to_string(), "std_actions.tree".to_string(),RtArgs::default(), vec![2]),
+                    RNode::flow(
+                        Root,
+                        "main".to_string(),
+                        "std_actions.tree".to_string(),
+                        RtArgs::default(),
+                        vec![2],
+                    ),
                 ),
                 (
                     2,
                     RNode::Leaf(
-                        RNodeName::Name("fail".to_string(),"std::actions".to_string()),
+                        RNodeName::Name("fail".to_string(), "std::actions".to_string()),
                         RtArgs(vec![RtArgument::new(
                             "reason".to_string(),
                             RtValue::String("test".to_string()),

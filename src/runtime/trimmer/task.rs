@@ -1,7 +1,6 @@
 use crate::runtime::trimmer::{TreeSnapshot, TrimRequest};
 use crate::runtime::RtResult;
 
-
 /// The task to trim the tree.
 pub enum TrimTask {
     RtTree(Box<dyn RtTreeTrimTask>),

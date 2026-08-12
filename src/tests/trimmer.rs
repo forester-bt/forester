@@ -1,5 +1,5 @@
 use crate::action;
-use crate::runtime::action::{Impl};
+use crate::runtime::action::Impl;
 use crate::runtime::args::RtArgs;
 use crate::runtime::builder::ForesterBuilder;
 
@@ -14,7 +14,6 @@ use crate::tests::{test_folder, turn_on_logs};
 use crate::tracer::{Tracer, TracerConfig};
 
 use crate::*;
-
 
 #[test]
 fn smoke() {

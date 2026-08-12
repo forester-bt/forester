@@ -157,7 +157,6 @@ pub enum ArgumentsType {
 }
 
 impl Arguments {
-
     pub fn get_type(&self) -> Result<ArgumentsType, TreeError> {
         let mut curr = None;
 
@@ -168,9 +167,10 @@ impl Arguments {
                 (Argument::Assigned(_, _), Some(Named)) => {}
                 (Argument::Unassigned(_), Some(Unnamed)) => {}
                 _ => {
-                    return Err(cerr(
-                        format!("the arguments ({}) should be either named ot unnamed but not a mix",self)
-                    ))
+                    return Err(cerr(format!(
+                        "the arguments ({}) should be either named ot unnamed but not a mix",
+                        self
+                    )))
                 }
             }
         }

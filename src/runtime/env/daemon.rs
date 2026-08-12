@@ -3,11 +3,11 @@ pub mod task;
 
 use std::future::Future;
 use std::pin::Pin;
-use std::sync::{Arc};
-use std::sync::atomic::{AtomicBool};
+use std::sync::atomic::AtomicBool;
+use std::sync::Arc;
 
-use tokio_util::sync::CancellationToken;
 use crate::runtime::env::daemon::context::DaemonContext;
+use tokio_util::sync::CancellationToken;
 
 /// the name of the daemon
 pub type DaemonName = String;
@@ -15,7 +15,6 @@ pub type DaemonName = String;
 /// the signal to stop the daemon. Just a boolean flag
 /// that is initially false and can be set to true to stop the daemon
 pub type StopFlag = Arc<AtomicBool>;
-
 
 /// A trait to implement a daemon function
 /// A daemon is a process that runs in the background
@@ -105,7 +104,11 @@ pub trait DaemonFn: Send + Sync {
 pub trait AsyncDaemonFn: Send + Sync {
     /// Prepare the async function that will be executed in the async environment
     /// it receives the context and the signal to stop the daemon
-    fn prepare(&mut self, ctx: DaemonContext, signal: CancellationToken) -> Pin<Box<dyn Future<Output=()> + Send>>;
+    fn prepare(
+        &mut self,
+        ctx: DaemonContext,
+        signal: CancellationToken,
+    ) -> Pin<Box<dyn Future<Output = ()> + Send>>;
 }
 
 /// The daemon that can be executed in the async environment in the background
@@ -115,14 +118,16 @@ pub enum Daemon {
 }
 
 impl Daemon {
-    pub fn sync<T>(daemon: T) -> Self where T: DaemonFn + 'static {
+    pub fn sync<T>(daemon: T) -> Self
+    where
+        T: DaemonFn + 'static,
+    {
         Self::Sync(Box::new(daemon))
     }
-    pub fn a_sync<T>(daemon: T) -> Self where T: AsyncDaemonFn + 'static {
+    pub fn a_sync<T>(daemon: T) -> Self
+    where
+        T: AsyncDaemonFn + 'static,
+    {
         Self::Async(Box::new(daemon))
     }
 }
-
-
-
-

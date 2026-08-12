@@ -3,7 +3,7 @@ use crate::runtime::action::{Impl, ImplRemote};
 use crate::runtime::args::{RtArgs, RtArgument, RtValue};
 use crate::runtime::blackboard::BlackBoard;
 use crate::runtime::builder::ServerPort;
-use crate::runtime::context::{TreeRemoteContextRef};
+use crate::runtime::context::TreeRemoteContextRef;
 use crate::runtime::env::RtEnv;
 use crate::runtime::forester::serv::start;
 use crate::runtime::TickResult;
@@ -23,10 +23,16 @@ fn smoke_serv() {
 
     let rt = Arc::new(Mutex::new(RtEnv::try_new().unwrap()));
 
-    let info = start(rt.clone(), ServerPort::Static(20000), bb.clone(), tr.clone()).unwrap();
+    let info = start(
+        rt.clone(),
+        ServerPort::Static(20000),
+        bb.clone(),
+        tr.clone(),
+    )
+    .unwrap();
     let stop = info.stop_cmd;
 
-    let runtime =  rt.lock().unwrap();
+    let runtime = rt.lock().unwrap();
     runtime.runtime.spawn(async {
         tokio::time::sleep(Duration::from_secs(1)).await;
         stop.send(()).unwrap();

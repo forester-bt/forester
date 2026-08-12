@@ -25,8 +25,6 @@ fn params() {
     let parser = Parser::new(r#"(a:any)"#).unwrap();
     expect(
         parser.params(0),
-        Params::new(vec![
-            Param::new("a", MesType::Any),
-        ]),
+        Params::new(vec![Param::new("a", MesType::Any)]),
     );
 }

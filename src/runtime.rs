@@ -5,17 +5,17 @@ pub mod builder;
 pub mod context;
 pub mod env;
 pub mod forester;
+pub mod ros;
 pub mod rtree;
 pub mod trimmer;
-pub mod ros;
 
 use crate::tree::TreeError;
+use quick_xml::events::attributes::AttrError;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display, Formatter};
 use std::str::ParseBoolError;
 use std::string::FromUtf8Error;
 use std::sync::{MutexGuard, PoisonError};
-use quick_xml::events::attributes::AttrError;
 
 /// The major type of every result in Forester.
 pub type RtResult<T> = Result<T, RuntimeError>;
@@ -98,7 +98,7 @@ impl Debug for RuntimeError {
             }
             RuntimeError::RecoveryToFailure(e) => {
                 let _ = f.write_str("recovery: ");
-                let _ = f.write_str(format!("{:?}",e).as_str());
+                let _ = f.write_str(format!("{:?}", e).as_str());
             }
             RuntimeError::BlackBoardError(e) => {
                 let _ = f.write_str("bb: ");
@@ -188,7 +188,10 @@ impl From<quick_xml::Error> for RuntimeError {
 
 impl From<AttrError> for RuntimeError {
     fn from(value: AttrError) -> Self {
-        RuntimeError::IOError(format!("export attributes from xml,  error: {}", value.to_string()))
+        RuntimeError::IOError(format!(
+            "export attributes from xml,  error: {}",
+            value.to_string()
+        ))
     }
 }
 
@@ -198,7 +201,6 @@ impl From<FromUtf8Error> for RuntimeError {
     }
 }
 
-
 impl From<ParseBoolError> for RuntimeError {
     fn from(value: ParseBoolError) -> Self {
         RuntimeError::IOError(format!("export attributes,  error: {}", value.to_string()))
@@ -206,14 +208,17 @@ impl From<ParseBoolError> for RuntimeError {
 }
 impl From<tungstenite::Error> for RuntimeError {
     fn from(value: tungstenite::Error) -> Self {
-        RuntimeError::IOError(format!("web socket connection,  error: {}", value.to_string()))
+        RuntimeError::IOError(format!(
+            "web socket connection,  error: {}",
+            value.to_string()
+        ))
     }
 }
 impl From<url::ParseError> for RuntimeError {
     fn from(value: url::ParseError) -> Self {
-        RuntimeError::IOError(format!("web socket url parse error,  error: {}", value.to_string()))
+        RuntimeError::IOError(format!(
+            "web socket url parse error,  error: {}",
+            value.to_string()
+        ))
     }
 }
-
-
-

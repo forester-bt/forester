@@ -1,9 +1,9 @@
+pub mod daemon;
 /// The actions that can help in implemeneting some logic.
 /// Also, they are used in the std::actions
 pub mod data;
 pub mod http;
 pub mod remote;
-pub mod daemon;
 
 use crate::runtime::action::{Impl, Tick};
 use crate::runtime::args::RtArgs;

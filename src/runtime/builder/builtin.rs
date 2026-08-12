@@ -1,20 +1,23 @@
-use crate::runtime::action::builtin::data::{CheckEq, LockUnlockBBKey, Locked, StoreData, StoreTick, TestBool, Less};
+use crate::runtime::action::builtin::daemon::{CheckDaemonAction, StopDaemonAction};
+use crate::runtime::action::builtin::data::{
+    CheckEq, Less, LockUnlockBBKey, Locked, StoreData, StoreTick, TestBool,
+};
 use crate::runtime::action::builtin::http::HttpGet;
 use crate::runtime::action::builtin::ReturnResult;
 use crate::runtime::action::{Action, ActionName};
-use crate::runtime::{RtResult, RuntimeError};
-use crate::runtime::action::builtin::daemon::{CheckDaemonAction, StopDaemonAction};
 use crate::runtime::builder::{ros_core, ros_nav};
+use crate::runtime::{RtResult, RuntimeError};
 use crate::tree::project::FileName;
 
-
 pub(super) fn pick_action(action: &ActionName, file: &FileName) -> RtResult<Action> {
-
     match file.as_str() {
         "std::actions" => action_impl(action),
         "ros::nav2" => ros_nav::action_impl(action),
         "ros::core" => ros_core::action_impl(action),
-        _ => Err(RuntimeError::UnImplementedAction(format!("{}::{}", file, action)))
+        _ => Err(RuntimeError::UnImplementedAction(format!(
+            "{}::{}",
+            file, action
+        ))),
     }
 }
 
@@ -39,10 +42,12 @@ fn action_impl(action: &ActionName) -> RtResult<Action> {
         "locked" => Ok(Action::sync(Locked)),
         "stop_daemon" => Ok(Action::sync(StopDaemonAction)),
         "daemon_alive" => Ok(Action::sync(CheckDaemonAction)),
-        _ => Err(RuntimeError::UnImplementedAction(format!("std::actions::{}", action))),
+        _ => Err(RuntimeError::UnImplementedAction(format!(
+            "std::actions::{}",
+            action
+        ))),
     }
 }
-
 
 pub fn builtin_actions_file() -> String {
     r#"
@@ -115,5 +120,5 @@ impl stop_daemon(name:string);
 impl daemon_alive(name:string);
 
 "#
-        .to_string()
+    .to_string()
 }

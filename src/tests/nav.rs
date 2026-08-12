@@ -1,8 +1,8 @@
-use crate::converter::Converter;
 use crate::converter::from_nav::FromNav2;
+use crate::converter::Converter;
 use crate::read_file;
 use crate::runtime::rtree::RuntimeTree;
-use crate::tests::{test_folder};
+use crate::tests::test_folder;
 use crate::tree::project::Project;
 
 #[test]
@@ -17,7 +17,9 @@ fn export_smoke() {
 
     let result = read_file(&fb).unwrap();
 
-    assert_eq!(result, r#"<root main_tree_to_execute="MainTree">
+    assert_eq!(
+        result,
+        r#"<root main_tree_to_execute="MainTree">
   <BehaviorTree ID="MainTree">
     <RecoveryNode number_of_retries="6" name="NavigateRecovery">
       <PipelineSequence name="NavigateWithReplanning">
@@ -46,14 +48,13 @@ fn export_smoke() {
       </PipelineSequence>
     </RecoveryNode>
   </BehaviorTree>
-</root>"#);
+</root>"#
+    );
 }
 #[test]
 fn import_smoke() {
     let mut fb = test_folder("ros/nav/smoke");
     fb.push("test.xml");
     let project = FromNav2::read_file(&fb).unwrap().convert().unwrap();
-    println!("{:?}",project)
-
-
+    println!("{:?}", project)
 }

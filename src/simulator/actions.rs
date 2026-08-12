@@ -104,12 +104,12 @@ mod tests {
     use crate::runtime::args::RtArgs;
     use crate::runtime::blackboard::BlackBoard;
     use crate::runtime::context::TreeContextRef;
+    use crate::runtime::env::RtEnv;
     use crate::runtime::trimmer::TrimmingQueue;
     use crate::runtime::TickResult;
     use crate::simulator::actions::SimAction;
     use crate::tracer::Tracer;
     use std::sync::{Arc, Mutex};
-    use crate::runtime::env::RtEnv;
 
     #[test]
     fn smoke() {
@@ -121,7 +121,7 @@ mod tests {
                 Arc::new(Mutex::new(Tracer::default())),
                 0,
                 Arc::new(Mutex::new(TrimmingQueue::default())),
-                Arc::new(Mutex::new(RtEnv::try_new().unwrap()))
+                Arc::new(Mutex::new(RtEnv::try_new().unwrap())),
             ),
         );
 

@@ -1,6 +1,5 @@
 use crate::runtime::action::builtin::data::{GenerateData, StoreData};
 
-
 use crate::runtime::args::RtValue;
 use crate::runtime::TickResult;
 use crate::tests::{fb, turn_on_logs};

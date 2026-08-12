@@ -1,24 +1,29 @@
-use std::collections::HashMap;
-use std::fmt::{Display, Formatter};
-use itertools::Itertools;
-use crate::runtime::action::{Action, ActionName};
 use crate::runtime::action::builtin::ReturnResult;
+use crate::runtime::action::{Action, ActionName};
 use crate::runtime::{RtResult, RuntimeError};
 use crate::tree::parser::ast::arg::{MesType, Param};
 use crate::tree::parser::ast::message::Message;
-
+use itertools::Itertools;
+use std::collections::HashMap;
+use std::fmt::{Display, Formatter};
 
 pub(super) fn action_impl(action: &ActionName) -> RtResult<Action> {
     if ros_actions().contains_key(action) {
         Ok(Action::sync(ReturnResult::success()))
     } else {
-        Err(RuntimeError::UnImplementedAction(format!("action {action} is absent in the library")))
+        Err(RuntimeError::UnImplementedAction(format!(
+            "action {action} is absent in the library"
+        )))
     }
 }
 
 pub fn ros_actions_file() -> String {
-    let actions = ros_actions().iter().map(|(_, v)| v.to_string()).join("\n\n");
-    format!(r#"// Ros specific actions and decorators.
+    let actions = ros_actions()
+        .iter()
+        .map(|(_, v)| v.to_string())
+        .join("\n\n");
+    format!(
+        r#"// Ros specific actions and decorators.
 // The actions are accessible using the import 'import "ros::nav2"'
 
 // --- Control nodes ---
@@ -44,9 +49,9 @@ pub fn ros_actions_file() -> String {
 
 {actions}
 
-"#)
+"#
+    )
 }
-
 
 pub fn ros_actions() -> HashMap<String, RosAction> {
     HashMap::from_iter(vec![
@@ -882,7 +887,8 @@ impl Display for RosAction {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let h = self.header();
         let d = self.params_doc();
-        let def = &self.show
+        let def = &self
+            .show
             .replace("|header|", &h)
             .replace("|params_doc|", &d);
         write!(f, "{}", def)
@@ -901,8 +907,10 @@ impl RosAction {
         format!("{name}({params})")
     }
     pub fn params_doc(&self) -> String {
-        let params = &self.params.iter().map(|p| {
-            match p {
+        let params = &self
+            .params
+            .iter()
+            .map(|p| match p {
                 RosParam::Input(param) => {
                     let p = param.to_string();
                     format!("// - input parameter: {p}")
@@ -915,10 +923,12 @@ impl RosAction {
                     let p = param.to_string();
                     format!("// - output parameter: {p}")
                 }
-            }
-        }).join("\n");
-        format!(r#"// Parameters:
-{params}"#)
+            })
+            .join("\n");
+        format!(
+            r#"// Parameters:
+{params}"#
+        )
     }
 }
 
@@ -951,7 +961,7 @@ impl RosParam {
 
 #[cfg(test)]
 mod tests {
-    use crate::runtime::builder::ros_nav::{ros_actions_file};
+    use crate::runtime::builder::ros_nav::ros_actions_file;
 
     #[test]
     fn print() {

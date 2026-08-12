@@ -3,20 +3,19 @@ pub mod daemon;
 use crate::runtime::action::ActionName;
 use crate::runtime::action::Tick;
 use crate::runtime::{RtOk, RtResult, RuntimeError};
+use itertools::Itertools;
 use std::collections::HashMap;
 use std::future::IntoFuture;
-use std::sync::{Arc, Mutex};
 use std::sync::atomic::AtomicBool;
-use itertools::Itertools;
+use std::sync::{Arc, Mutex};
 use tokio::runtime::{Builder, Runtime};
 
+use crate::runtime::env::daemon::context::DaemonContext;
+use crate::runtime::env::daemon::task::{DaemonStopSignal, DaemonTask};
+use crate::runtime::env::daemon::{Daemon, DaemonName};
 use tokio::task::JoinError;
 use tokio::task::JoinHandle;
 use tokio_util::sync::CancellationToken;
-use crate::runtime::env::daemon::{ DaemonName, Daemon};
-use crate::runtime::env::daemon::context::DaemonContext;
-use crate::runtime::env::daemon::task::{DaemonStopSignal, DaemonTask};
-
 
 pub type RtEnvRef = Arc<Mutex<RtEnv>>;
 
@@ -67,28 +66,28 @@ impl RtEnv {
             daemons: Vec::default(),
         })
     }
-    fn start_daemon_impl(&mut self, daemon: Daemon, ctx: DaemonContext) -> RtResult<(JoinHandle<()>, DaemonStopSignal)> {
-        Ok(
-            match daemon {
-                Daemon::Sync(mut f) => {
-                    let signal = Arc::new(AtomicBool::new(false));
-                    let ret_signal = DaemonStopSignal::Sync(signal.clone());
-                    let jh = self.runtime.spawn(async move {
-                        f.perform(ctx.into(), signal);
-                    });
+    fn start_daemon_impl(
+        &mut self,
+        daemon: Daemon,
+        ctx: DaemonContext,
+    ) -> RtResult<(JoinHandle<()>, DaemonStopSignal)> {
+        Ok(match daemon {
+            Daemon::Sync(mut f) => {
+                let signal = Arc::new(AtomicBool::new(false));
+                let ret_signal = DaemonStopSignal::Sync(signal.clone());
+                let jh = self.runtime.spawn(async move {
+                    f.perform(ctx.into(), signal);
+                });
 
-                    (jh, ret_signal)
-                }
-                Daemon::Async(mut f) => {
-                    let token = CancellationToken::new();
-                    let token_rv = token.clone();
-                    let handle = self.runtime.spawn(
-                        f.prepare(ctx.into(), token_rv)
-                    );
-                    (handle, DaemonStopSignal::Async(token))
-                }
+                (jh, ret_signal)
             }
-        )
+            Daemon::Async(mut f) => {
+                let token = CancellationToken::new();
+                let token_rv = token.clone();
+                let handle = self.runtime.spawn(f.prepare(ctx.into(), token_rv));
+                (handle, DaemonStopSignal::Async(token))
+            }
+        })
     }
     /// start a daemon
     /// Params:
@@ -109,7 +108,12 @@ impl RtEnv {
     /// - ctx: the daemon context. Can be obtained from the tree context
     ///
     /// The name is used to stop the daemon
-    pub fn start_named_daemon(&mut self, name: DaemonName, daemon: Daemon, ctx: DaemonContext) -> RtOk {
+    pub fn start_named_daemon(
+        &mut self,
+        name: DaemonName,
+        daemon: Daemon,
+        ctx: DaemonContext,
+    ) -> RtOk {
         let (jh, t) = self.start_daemon_impl(daemon, ctx)?;
         debug!(target:"daemon","start a daemon {}",name);
         let task = DaemonTask::Named(name, jh, t);
@@ -119,10 +123,11 @@ impl RtEnv {
 
     /// tries to stop the demon by name.
     pub fn stop_daemon(&mut self, name: &DaemonName) {
-        let mb_idx =
-            self.daemons.iter()
-                .find_position(|n| n.name().filter(|n| *n == name).is_some())
-                .map(|(i, _)| i);
+        let mb_idx = self
+            .daemons
+            .iter()
+            .find_position(|n| n.name().filter(|n| *n == name).is_some())
+            .map(|(i, _)| i);
         if let Some(idx) = mb_idx {
             debug!(target:"daemon","stop a daemon {}, found at the {}",name,idx);
             let mut task = self.daemons.remove(idx);
@@ -136,10 +141,14 @@ impl RtEnv {
 
     /// check if the daemon is running
     pub fn daemon_is_running(&self, name: &DaemonName) -> RtResult<bool> {
-        self.daemons.iter()
+        self.daemons
+            .iter()
             .find(|d| d.name().filter(|n| *n == name).is_some())
             .map(|t| !t.jh().is_finished())
-            .ok_or(RuntimeError::fail(format!("the daemon {} is not found", name)))
+            .ok_or(RuntimeError::fail(format!(
+                "the daemon {} is not found",
+                name
+            )))
     }
 
     /// stop all daemons
@@ -163,4 +172,3 @@ impl RtEnv {
         }
     }
 }
-

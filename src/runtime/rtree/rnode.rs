@@ -94,15 +94,15 @@ impl RNodeName {
                 "unexpected: lambda is in the unexpected place, the named tree is supposed to be."
                     .to_string(),
             )),
-            RNodeName::Name(n,_) => Ok(n),
+            RNodeName::Name(n, _) => Ok(n),
             RNodeName::Alias(n, _, _) => Ok(n),
         }
     }
     pub fn has_name(&self) -> bool {
         match self {
             RNodeName::Lambda => false,
-            RNodeName::Name(_,_) => true,
-            RNodeName::Alias(_, _,_) => true,
+            RNodeName::Name(_, _) => true,
+            RNodeName::Alias(_, _, _) => true,
         }
     }
 }
@@ -183,27 +183,27 @@ impl RNode {
     pub fn lambda(t: FlowType, children: Vec<RNodeId>) -> Self {
         RNode::Flow(t, RNodeName::Lambda, RtArgs::default(), children)
     }
-    pub fn root(name: Name,p:Path, children: Vec<RNodeId>) -> Self {
+    pub fn root(name: Name, p: Path, children: Vec<RNodeId>) -> Self {
         RNode::Flow(
             FlowType::Root,
-            RNodeName::Name(name,p),
+            RNodeName::Name(name, p),
             RtArgs::default(),
             children,
         )
     }
-    pub fn flow(f: FlowType, name: Name, p:Path, args: RtArgs, children: Vec<RNodeId>) -> Self {
-        RNode::Flow(f, RNodeName::Name(name,p), args, children)
+    pub fn flow(f: FlowType, name: Name, p: Path, args: RtArgs, children: Vec<RNodeId>) -> Self {
+        RNode::Flow(f, RNodeName::Name(name, p), args, children)
     }
-    pub fn action(name: Name,path:Path, args: RtArgs) -> Self {
-        RNode::Leaf(RNodeName::Name(name,path), args)
+    pub fn action(name: Name, path: Path, args: RtArgs) -> Self {
+        RNode::Leaf(RNodeName::Name(name, path), args)
     }
-    pub fn action_alias(name: Name, path:Path, alias: Alias, args: RtArgs) -> Self {
+    pub fn action_alias(name: Name, path: Path, alias: Alias, args: RtArgs) -> Self {
         RNode::Leaf(RNodeName::Alias(name, alias, path), args)
     }
     pub fn flow_alias(
         f: FlowType,
         name: Name,
-        path:Path,
+        path: Path,
         alias: Alias,
         args: RtArgs,
         children: Vec<RNodeId>,

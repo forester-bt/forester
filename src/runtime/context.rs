@@ -13,8 +13,6 @@ use std::fmt::{Display, Formatter};
 use std::sync::Arc;
 use std::sync::Mutex;
 
-use super::rtree::rnode::RNode;
-
 pub type Timestamp = usize;
 pub type TracerRef = Arc<Mutex<Tracer>>;
 

@@ -1,9 +1,9 @@
 pub mod builtin;
 pub mod custom_builder;
 pub mod file_builder;
-pub mod text_builder;
-pub mod ros_nav;
 pub mod ros_core;
+pub mod ros_nav;
+pub mod text_builder;
 
 use crate::get_pb;
 
@@ -23,11 +23,11 @@ use crate::runtime::{RtOk, RtResult, RuntimeError};
 use crate::tracer::Tracer;
 use crate::tree::project::{FileName, TreeName};
 
+use crate::runtime::env::daemon::context::DaemonContext;
+use crate::runtime::env::daemon::{Daemon, DaemonName};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
-use crate::runtime::env::daemon::{DaemonName, Daemon};
-use crate::runtime::env::daemon::context::DaemonContext;
 
 /// The builder to create a Forester instance
 ///
@@ -182,7 +182,6 @@ impl ForesterBuilder {
         }
     }
 
-
     /// Add a daemon
     pub fn register_daemon(&mut self, daemon: Daemon) {
         self.cfb().register_daemon(daemon);
@@ -194,26 +193,25 @@ impl ForesterBuilder {
         self.cfb().register_named_daemon(name, daemon);
     }
 
-
     /// Add a sync action according to the name.
     pub fn register_sync_action<A>(&mut self, name: &str, action: A)
-        where
-            A: Impl + 'static,
+    where
+        A: Impl + 'static,
     {
         self.cfb().register_sync_action(name, action);
     }
     /// Add an async action according to the name.
     pub fn register_async_action<A>(&mut self, name: &str, action: A)
-        where
-            A: ImplAsync + 'static,
+    where
+        A: ImplAsync + 'static,
     {
         self.cfb().register_async_action(name, action);
     }
 
     /// Add an action according to the name but with a promise the action remote.
     pub fn register_remote_action<A>(&mut self, name: &str, action: A)
-        where
-            A: ImplRemote + 'static,
+    where
+        A: ImplRemote + 'static,
     {
         self.cfb().register_remote_action(name, action);
     }
@@ -244,22 +242,12 @@ impl ForesterBuilder {
 
     /// The method to build forester and provide the implementation for the absent actions
     pub fn build_with<T>(self, default_action: T) -> RtResult<Forester>
-        where
-            T: Fn() -> ActionImpl,
+    where
+        T: Fn() -> ActionImpl,
     {
         self.error()?;
 
-        let (
-            tree,
-            actions,
-            action_names,
-            daemons,
-            tr,
-            env,
-            bb_load,
-            root,
-            port
-        ) = match self {
+        let (tree, actions, action_names, daemons, tr, env, bb_load, root, port) = match self {
             ForesterBuilder::Files { delegate, cfb, .. } => {
                 let root = delegate.root.clone();
                 let project = delegate.build()?;
@@ -328,17 +316,17 @@ impl ForesterBuilder {
             }
         };
 
-        let bb =
-            if let Some(bb_load_dump) = bb_load {
-                BlackBoard::load(&get_pb(&PathBuf::from(bb_load_dump), &root)?)?
-            } else { BlackBoard::default() };
+        let bb = if let Some(bb_load_dump) = bb_load {
+            BlackBoard::load(&get_pb(&PathBuf::from(bb_load_dump), &root)?)?
+        } else {
+            BlackBoard::default()
+        };
 
         let mut env = if let Some(e) = env {
             e
         } else {
             RtEnv::try_new()?
         };
-
 
         let bb = Arc::new(Mutex::new(bb));
         let tracer = Arc::new(Mutex::new(tr));
@@ -414,32 +402,30 @@ impl CommonForesterBuilder {
 
     /// Add a daemon with a name
     /// The name is used to stop the daemon
-    pub fn register_named_daemon(&mut self, name: DaemonName, daemon: Daemon)
-    {
+    pub fn register_named_daemon(&mut self, name: DaemonName, daemon: Daemon) {
         self.daemons.push(DaemonTaskCfg::Named(name, daemon));
     }
 
-
     /// Add an sync action according to the name.
     pub fn register_sync_action<A>(&mut self, name: &str, action: A)
-        where
-            A: Impl + 'static,
+    where
+        A: Impl + 'static,
     {
         self.actions
             .insert(name.to_string(), Action::Sync(Box::new(action)));
     }
     /// Add an sync action according to the name.
     pub fn register_async_action<A>(&mut self, name: &str, action: A)
-        where
-            A: ImplAsync + 'static,
+    where
+        A: ImplAsync + 'static,
     {
         self.actions
             .insert(name.to_string(), Action::Async(Arc::new(action)));
     }
     /// Add an action according to the name but with a promise the action remote.
     pub fn register_remote_action<A>(&mut self, name: &str, action: A)
-        where
-            A: ImplRemote + 'static,
+    where
+        A: ImplRemote + 'static,
     {
         self.actions
             .insert(name.to_string(), Action::Remote(Box::new(action)));

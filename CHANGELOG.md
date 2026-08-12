@@ -47,3 +47,7 @@
 * **`0.2.8`**
   * add daemons
  
+* **`0.5.1`**
+  * migrate deps to the latest versions.
+  * fix tests
+ 

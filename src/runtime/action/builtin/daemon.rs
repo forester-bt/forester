@@ -5,7 +5,6 @@ use crate::runtime::{RuntimeError, TickResult};
 
 use crate::tracer::Event;
 
-
 fn daemon_name(args: RtArgs, ctx: &TreeContextRef) -> Result<String, RuntimeError> {
     args.first()
         .ok_or(RuntimeError::fail(
@@ -37,12 +36,12 @@ pub struct CheckDaemonAction;
 impl Impl for CheckDaemonAction {
     fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
         let daemon_name = daemon_name(args, &ctx)?;
-        ctx
-            .env()
-            .lock()?
-            .daemon_is_running(&daemon_name)
-            .map(|r| {
-                if r { TickResult::success() } else { TickResult::failure_empty() }
-            })
+        ctx.env().lock()?.daemon_is_running(&daemon_name).map(|r| {
+            if r {
+                TickResult::success()
+            } else {
+                TickResult::failure_empty()
+            }
+        })
     }
 }

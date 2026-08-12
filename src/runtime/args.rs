@@ -14,7 +14,7 @@ use itertools::Itertools;
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::fmt::{format, Display, Formatter};
+use std::fmt::{Display, Formatter};
 
 /// Just a Key class for the arguments that represents the key in BB
 pub type RtAKey = String;

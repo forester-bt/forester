@@ -179,10 +179,8 @@ mod tests {
     use crate::runtime::args::*;
     use crate::runtime::rtree::builder::*;
     use crate::runtime::rtree::rnode::RNodeName;
-    
-    
+
     use crate::{action, arg, args, decorator, flow, node_name, rt_num};
-    
 
     #[test]
     fn smoke() {

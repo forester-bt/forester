@@ -3,7 +3,6 @@ use crate::tree::parser::Parser;
 
 use parsit::test::parser_test::*;
 
-
 #[test]
 fn import() {
     let parser = Parser::new(

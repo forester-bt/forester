@@ -76,7 +76,7 @@ impl Impl for StoreTick {
 
         let k = v.clone().cast(ctx.clone()).str()?;
         match k {
-            None => Ok(TickResult::failure(format!("the {v} is not a string", ))),
+            None => Ok(TickResult::failure(format!("the {v} is not a string",))),
             Some(key) => ctx
                 .bb()
                 .lock()?
@@ -114,12 +114,14 @@ pub struct TestBool;
 
 impl Impl for TestBool {
     fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
-
         let actual = args
             .find_or_ith("key".to_string(), 0)
             .ok_or(RuntimeError::fail("the key is expected ".to_string()))?
-            .cast(ctx.clone()).bool()?
-            .ok_or(RuntimeError::fail("the key is expected to be a bool".to_string()))?;
+            .cast(ctx.clone())
+            .bool()?
+            .ok_or(RuntimeError::fail(
+                "the key is expected to be a bool".to_string(),
+            ))?;
 
         if actual {
             Ok(TickResult::success())
@@ -135,15 +137,15 @@ impl Impl for TestBool {
 /// ## Note:
 /// The action accepts a default parameter that will be used initially.
 pub struct GenerateData<T>
-    where
-        T: Fn(RtValue) -> RtValue,
+where
+    T: Fn(RtValue) -> RtValue,
 {
     generator: T,
 }
 
 impl<T> GenerateData<T>
-    where
-        T: Fn(RtValue) -> RtValue,
+where
+    T: Fn(RtValue) -> RtValue,
 {
     pub fn new(generator: T) -> Self {
         Self { generator }
@@ -151,8 +153,8 @@ impl<T> GenerateData<T>
 }
 
 impl<T> Impl for GenerateData<T>
-    where
-        T: Fn(RtValue) -> RtValue + Send + Sync,
+where
+    T: Fn(RtValue) -> RtValue + Send + Sync,
 {
     fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
         let key = args
@@ -177,28 +179,24 @@ impl<T> Impl for GenerateData<T>
     }
 }
 
-
 pub struct Less;
 
 impl Impl for Less {
     fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
-        let err = |v:&str|
-            RuntimeError::fail(v.to_string());
+        let err = |v: &str| RuntimeError::fail(v.to_string());
 
-        let lhs =
-            args
-                .find_or_ith("lhs".to_string(), 0)
-                .ok_or(err("lhs should be presented"))?
-                .cast(ctx.clone())
-                .int()?
-                .ok_or(err("the type of lhs is expected as int"))?;
-        let rhs =
-            args
-                .find_or_ith("rhs".to_string(), 1)
-                .ok_or(err("rhs should be presented"))?
-                .cast(ctx.clone())
-                .int()?
-                .ok_or(err("the type of rhs is expected as int"))?;
+        let lhs = args
+            .find_or_ith("lhs".to_string(), 0)
+            .ok_or(err("lhs should be presented"))?
+            .cast(ctx.clone())
+            .int()?
+            .ok_or(err("the type of lhs is expected as int"))?;
+        let rhs = args
+            .find_or_ith("rhs".to_string(), 1)
+            .ok_or(err("rhs should be presented"))?
+            .cast(ctx.clone())
+            .int()?
+            .ok_or(err("the type of rhs is expected as int"))?;
 
         if lhs < rhs {
             Ok(TickResult::success())
@@ -226,7 +224,7 @@ impl Impl for StoreData {
         let value = args
             .find_or_ith("value".to_string(), 1)
             .ok_or(RuntimeError::fail("the value is expected".to_string()))
-            .and_then(|v|v.with_ptr(ctx.clone()))?;
+            .and_then(|v| v.with_ptr(ctx.clone()))?;
 
         ctx.bb().lock()?.put(key, value)?;
         Ok(TickResult::Success)
@@ -239,14 +237,13 @@ mod tests {
     use crate::runtime::action::Impl;
     use crate::runtime::args::{RtArgs, RtArgument, RtValue};
     use crate::runtime::blackboard::{BBValue, BlackBoard};
-    use crate::runtime::context::{TreeContextRef};
+    use crate::runtime::context::TreeContextRef;
     use crate::runtime::trimmer::TrimmingQueue;
     use crate::runtime::{RuntimeError, TickResult};
     use crate::tracer::Tracer;
-    
-    
-    use std::sync::{Arc, Mutex};
+
     use crate::runtime::env::RtEnv;
+    use std::sync::{Arc, Mutex};
 
     #[test]
     fn lock_unlock() {

@@ -19,15 +19,14 @@ impl From<TreeContext> for DaemonContext {
         DaemonContext {
             bb: value.bb(),
             tracer: value.tracer(),
-
         }
     }
-}impl From<TreeContextRef> for DaemonContext {
+}
+impl From<TreeContextRef> for DaemonContext {
     fn from(value: TreeContextRef) -> Self {
         DaemonContext {
             bb: value.bb(),
             tracer: value.tracer(),
-
         }
     }
 }

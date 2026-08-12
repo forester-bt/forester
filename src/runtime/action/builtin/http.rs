@@ -61,7 +61,7 @@ mod tests {
     use crate::runtime::trimmer::TrimmingQueue;
     use crate::runtime::TickResult;
     use crate::tracer::Tracer;
-    
+
     use std::sync::{Arc, Mutex};
     use wiremock::matchers::{method, path};
     use wiremock::{Mock, MockServer, ResponseTemplate};
@@ -98,7 +98,7 @@ mod tests {
                 Arc::new(Mutex::new(Tracer::Noop)),
                 1,
                 Arc::new(Mutex::new(TrimmingQueue::default())),
-                Arc::new(Mutex::new(RtEnv::try_new().unwrap()))
+                Arc::new(Mutex::new(RtEnv::try_new().unwrap())),
             ),
         );
 

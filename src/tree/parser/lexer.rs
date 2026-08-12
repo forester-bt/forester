@@ -82,7 +82,7 @@ pub enum Token {
     Import,
 
     #[regex(r"(?s)/\*[^*/]*\*/", logos::skip)]
-    #[regex(r"//[^\r\n]*", logos::skip)]
+    #[regex(r"//[^\r\n]*", logos::skip, allow_greedy = true)]
     Comment,
 
     #[regex(r"[ \t\r\n\u000C\f]+", logos::skip)]

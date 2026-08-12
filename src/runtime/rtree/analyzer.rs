@@ -29,8 +29,8 @@ impl<'a> RtTreeAnalyzer<'a> {
 
     /// Returns the node_id by filter
     pub fn find_id_by<F>(&self, filter: F) -> Option<RNodeId>
-        where
-            F: Fn(&RNode) -> bool,
+    where
+        F: Fn(&RNode) -> bool,
     {
         self.tree
             .iter()
@@ -38,17 +38,15 @@ impl<'a> RtTreeAnalyzer<'a> {
     }
     /// Returns the node by filter
     pub fn find_node_by<F>(&self, filter: F) -> Option<(RNodeId, &RNode)>
-        where
-            F: Fn(&RNode) -> bool,
+    where
+        F: Fn(&RNode) -> bool,
     {
-        self.tree
-            .iter()
-            .find(|(_id, node)| filter(node))
+        self.tree.iter().find(|(_id, node)| filter(node))
     }
     /// Returns the node by filter
     pub fn find_map_by<F, T>(&self, filter_map: F) -> Option<(RNodeId, T)>
-        where
-            F: Fn(&RNode) -> Option<T>,
+    where
+        F: Fn(&RNode) -> Option<T>,
     {
         self.tree
             .iter()

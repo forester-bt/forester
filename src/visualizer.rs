@@ -1,9 +1,8 @@
 mod statements;
 
-use crate::{runtime_tree_default};
 use crate::runtime::rtree::rnode::{RNode, RNodeId};
 use crate::runtime::rtree::RuntimeTree;
-
+use crate::runtime_tree_default;
 
 use crate::tree::TreeError;
 use crate::visualizer::statements::ToStmt;
@@ -83,8 +82,8 @@ impl Visualizer {
             &mut PrinterContext::default(),
             vec![Format::Svg.into(), CommandArg::Output(p.to_string())],
         )
-            .map_err(|e| TreeError::VisualizationError(e.to_string()))
-            .map(|r| String::from_utf8_lossy(&r).to_string())
+        .map_err(|e| TreeError::VisualizationError(e.to_string()))
+        .map(|r| String::from_utf8_lossy(&r).to_string())
     }
 }
 
@@ -93,6 +92,7 @@ mod tests {
     use crate::runtime::rtree::RuntimeTree;
     use crate::tree::project::Project;
     use crate::visualizer::Visualizer;
+    use pretty_assertions::{assert_eq, assert_ne};
 
     #[test]
     fn smoke() {
@@ -111,9 +111,9 @@ mod tests {
         }
         
         "#
-                .to_string(),
+            .to_string(),
         )
-            .unwrap();
+        .unwrap();
         let tree = RuntimeTree::build(p).unwrap().tree;
 
         let result = Visualizer::dot(&tree).unwrap();
@@ -122,18 +122,18 @@ mod tests {
             result,
             r#"strict digraph  {
   1[label="(1) root
-main ",shape=rect,color=black]
+main " shape=rect color=black]
   1 -> 2
-  2[label="(2) sequence",shape=rect,color=darkred]
+  2[label="(2) sequence" shape=rect color=darkred]
   2 -> 3
   2 -> 4
   3[label="(3) fallback
-one (a=a1(<>))",shape=rect,color=blue]
+one (a=a1(<>))" shape=rect color=blue]
   3 -> 5
   3 -> 6
-  4[label="(4) a1 ",shape=component,color=green]
-  5[label="(5) a1 ",shape=component,color=green]
-  6[label="(6) a1 ",shape=component,color=green]
+  4[label="(4) a1 " shape=component color=green]
+  5[label="(5) a1 " shape=component color=green]
+  6[label="(6) a1 " shape=component color=green]
 }"#
         );
     }

@@ -1,15 +1,14 @@
-
-use std::fs::File;
-use std::io::{LineWriter};
-use std::path::{PathBuf};
-use quick_xml::events::{BytesEnd, BytesStart, Event};
-use quick_xml::Writer;
-use crate::converter::{Converter};
+use crate::converter::Converter;
+use crate::runtime::args::{RtArgument, RtValue};
+use crate::runtime::builder::ros_nav::find_ros_action;
+use crate::runtime::rtree::rnode::{DecoratorType, FlowType, RNode, RNodeId};
 use crate::runtime::rtree::RuntimeTree;
 use crate::runtime::{RtOk, RtResult, RuntimeError};
-use crate::runtime::args::{RtArgument, RtValue};
-use crate::runtime::builder::ros_nav::{find_ros_action};
-use crate::runtime::rtree::rnode::{DecoratorType, FlowType, RNode, RNodeId};
+use quick_xml::events::{BytesEnd, BytesStart, Event};
+use quick_xml::Writer;
+use std::fs::File;
+use std::io::LineWriter;
+use std::path::PathBuf;
 
 enum State {
     Ready,
@@ -18,7 +17,7 @@ enum State {
 
 pub struct ToRosNavConverter<'a> {
     tree: &'a RuntimeTree,
-    xml: PathBuf
+    xml: PathBuf,
 }
 
 impl<'a> Converter for ToRosNavConverter<'a> {
@@ -47,7 +46,6 @@ impl<'a> Converter for ToRosNavConverter<'a> {
             }
         }
 
-
         Ok(())
     }
 }
@@ -57,11 +55,15 @@ impl<'a> ToRosNavConverter<'a> {
         Self { tree, xml }
     }
     /// Write the terminal node into the specific format. The terminal node is the node that has no children by contract (actions)
-    fn write_terminal(&self, w: &mut  Writer<LineWriter<File>>, _id: RNodeId, node: &RNode) -> RtOk {
-        let action = node.name()
+    fn write_terminal(&self, w: &mut Writer<LineWriter<File>>, _id: RNodeId, node: &RNode) -> RtOk {
+        let action = node
+            .name()
             .and_then(|n| n.name().ok())
             .and_then(|name| find_ros_action(name))
-            .ok_or(RuntimeError::WrongArgument(format!(r#"ros analogue not found for node {:?}. Check the import "ros::nav2""#, node)))?;
+            .ok_or(RuntimeError::WrongArgument(format!(
+                r#"ros analogue not found for node {:?}. Check the import "ros::nav2""#,
+                node
+            )))?;
 
         let n = action.name.as_str();
         let mut e = BytesStart::new(n);
@@ -71,7 +73,12 @@ impl<'a> ToRosNavConverter<'a> {
     }
     // Write the opening for an interior node into the specific format.
     /// The interior node is the node that has children by contract (flows)
-    fn write_interior_start(&self, w: &mut  Writer<LineWriter<File>>, _id: RNodeId, node: &RNode) -> RtOk {
+    fn write_interior_start(
+        &self,
+        w: &mut Writer<LineWriter<File>>,
+        _id: RNodeId,
+        node: &RNode,
+    ) -> RtOk {
         match node {
             RNode::Flow(FlowType::Root, n, _, _) => {
                 let mut root = BytesStart::new("root");
@@ -117,20 +124,30 @@ impl<'a> ToRosNavConverter<'a> {
             }
             RNode::Decorator(DecoratorType::Retry, args, _) => {
                 let mut e = BytesStart::new("RecoveryNode");
-                let a = args.0.first()
-                    .ok_or(RuntimeError::WrongArgument(format!(r#"decorator {:?} does not have arguments"#, node)))?;
+                let a = args.0.first().ok_or(RuntimeError::WrongArgument(format!(
+                    r#"decorator {:?} does not have arguments"#,
+                    node
+                )))?;
                 e.push_attribute(("number_of_retries", a.clone().val().to_string().as_str()));
                 w.write_event(Event::Start(e))?;
             }
             node => {
                 File::create(&self.xml)?;
-                return Err(RuntimeError::IOError(format!(r#"export to xml error: The node {:?} does not have analogue in nav2 "#, node)));
+                return Err(RuntimeError::IOError(format!(
+                    r#"export to xml error: The node {:?} does not have analogue in nav2 "#,
+                    node
+                )));
             }
         }
         Ok(())
     }
     /// Write the closing for an interior node into the specific format.
-    fn write_interior_end(&self, w: &mut  Writer<LineWriter<File>>, _id: RNodeId, node: &RNode) -> RtOk {
+    fn write_interior_end(
+        &self,
+        w: &mut Writer<LineWriter<File>>,
+        _id: RNodeId,
+        node: &RNode,
+    ) -> RtOk {
         match node {
             RNode::Flow(FlowType::Root, _, _, _) => {
                 w.write_event(Event::End(BytesEnd::new("BehaviorTree")))?;
@@ -166,18 +183,17 @@ impl<'a> ToRosNavConverter<'a> {
     }
 
     fn writer(&self) -> RtResult<Writer<LineWriter<File>>> {
-        Ok(Writer::new_with_indent(LineWriter::new(File::create(&self.xml)?), b' ', 2))
+        Ok(Writer::new_with_indent(
+            LineWriter::new(File::create(&self.xml)?),
+            b' ',
+            2,
+        ))
     }
 }
 
-
-
-
-
-
 fn handle_attrs(attrs: Vec<RtArgument>, e: &mut BytesStart) -> RtOk {
     for RtArgument { name, value } in attrs {
-       match value {
+        match value {
             RtValue::Pointer(v) => {
                 e.push_attribute((name.as_str(), format!(r#"{{{}}}"#, v.to_string()).as_str()));
             }
@@ -189,5 +205,3 @@ fn handle_attrs(attrs: Vec<RtArgument>, e: &mut BytesStart) -> RtOk {
     }
     Ok(())
 }
-
-

@@ -13,16 +13,16 @@ use crate::runtime::rtree::transform::{StackItem, Transformer};
 use crate::runtime::{RtOk, RtResult, RuntimeError};
 use crate::tree::parser::ast::call::Call;
 
+use crate::converter::to_nav::ToRosNavConverter;
+use crate::converter::Converter;
 use crate::runtime::rtree::analyzer::RtTreeAnalyzer;
 use crate::runtime::rtree::iter::RtTreeBfsIter;
 use crate::tree::project::imports::ImportMap;
 use crate::tree::project::{FileName, Project};
 use crate::tree::{cerr, TreeError};
+use log::debug;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::path::PathBuf;
-use crate::converter::Converter;
-use crate::converter::to_nav::ToRosNavConverter;
-use log::debug;
 
 /// The auxiliary structure that encapsulates the runtime tree
 /// and some additional information about actions
@@ -138,7 +138,7 @@ impl RuntimeTree {
                 Call::HoInvocation(key) => {
                     debug!(target:"tree[construct]", "found ho invocation with id {id} in parent {parent_id}");
                     let (p_id, _parent_args, _parent_params) =
-                    builder.get_chain_skip_lambda(&parent_id)?.get_tree();
+                        builder.get_chain_skip_lambda(&parent_id)?.get_tree();
                     let call = builder.find_ho_call(&parent_id, &key)?;
                     if call.is_lambda() || call.is_decorator() {
                         builder.push_front(id, call, p_id, file_name.clone());
@@ -187,14 +187,23 @@ impl RuntimeTree {
                             )?;
                             builder.add_chain(id, parent_id, upd_args, tree.params.clone());
                             if tree.tpe.is_action() {
-                                r_tree.nodes.insert(id, RNode::action(name, curr_file.name.clone(), rt_args));
+                                r_tree.nodes.insert(
+                                    id,
+                                    RNode::action(name, curr_file.name.clone(), rt_args),
+                                );
                                 actions.insert(tree.name.clone());
                             } else {
                                 let children =
                                     builder.push_vec(tree.calls.clone(), id, file_name.clone());
                                 r_tree.nodes.insert(
                                     id,
-                                    RNode::flow(tree.tpe.try_into()?, name, curr_file.name.clone(), rt_args, children),
+                                    RNode::flow(
+                                        tree.tpe.try_into()?,
+                                        name,
+                                        curr_file.name.clone(),
+                                        rt_args,
+                                        children,
+                                    ),
                                 );
                             }
                         }
@@ -220,7 +229,12 @@ impl RuntimeTree {
                                     actions.insert(tree.name.clone());
                                     r_tree.nodes.insert(
                                         id,
-                                        RNode::action_alias(tree.name.clone(), file.clone(), name, rt_args),
+                                        RNode::action_alias(
+                                            tree.name.clone(),
+                                            file.clone(),
+                                            name,
+                                            rt_args,
+                                        ),
                                     );
                                 } else {
                                     r_tree.nodes.insert(
@@ -243,7 +257,13 @@ impl RuntimeTree {
                             } else {
                                 r_tree.nodes.insert(
                                     id,
-                                    RNode::flow(tree.tpe.try_into()?, name, file.clone(), rt_args, children),
+                                    RNode::flow(
+                                        tree.tpe.try_into()?,
+                                        name,
+                                        file.clone(),
+                                        rt_args,
+                                        children,
+                                    ),
                                 );
                             };
                         }
@@ -283,11 +303,10 @@ mod tests {
     use crate::runtime::rtree::rnode::RNode::{Flow, Leaf};
     use crate::runtime::rtree::rnode::RNodeName::{Lambda, Name};
     use crate::runtime::rtree::RuntimeTree;
-    use crate::tree::project::Project;
-    use std::collections::{HashSet};
-    use itertools::Itertools;
     use crate::tests::turn_on_logs;
-
+    use crate::tree::project::Project;
+    use itertools::Itertools;
+    use std::collections::HashSet;
 
     #[test]
     fn smoke() {
@@ -302,9 +321,9 @@ mod tests {
                 }
             }        
         "#
-                .to_string(),
+            .to_string(),
         )
-            .unwrap();
+        .unwrap();
 
         let st_tree = RuntimeTree::build(project).unwrap();
 
@@ -325,12 +344,26 @@ mod tests {
             vec![
                 (
                     &1usize,
-                    &Flow(Root, Name("main".to_string(), "_".to_string()), RtArgs(vec![]), vec![2])
+                    &Flow(
+                        Root,
+                        Name("main".to_string(), "_".to_string()),
+                        RtArgs(vec![]),
+                        vec![2]
+                    )
                 ),
                 (&2usize, &Flow(Fallback, Lambda, RtArgs(vec![]), vec![3])),
                 (&3usize, &Flow(Sequence, Lambda, RtArgs(vec![]), vec![4, 5])),
-                (&4usize, &Leaf(Name("action".to_string(), "_".to_string()), RtArgs(vec![]))),
-                (&5usize, &Leaf(Name("success".to_string(), "std::actions".to_string()), RtArgs(vec![]))),
+                (
+                    &4usize,
+                    &Leaf(Name("action".to_string(), "_".to_string()), RtArgs(vec![]))
+                ),
+                (
+                    &5usize,
+                    &Leaf(
+                        Name("success".to_string(), "std::actions".to_string()),
+                        RtArgs(vec![])
+                    )
+                ),
             ]
         );
     }
@@ -343,9 +376,9 @@ mod tests {
           root main f(t = retry(1) action())
           sequence f(t:tree) t(..)
         "#
-                .to_string(),
+            .to_string(),
         )
-            .unwrap();
+        .unwrap();
 
         let st_tree = RuntimeTree::build(project).unwrap().tree;
 
@@ -368,9 +401,9 @@ mod tests {
             consumer(a1)
         }
         "#
-                .to_string(),
+            .to_string(),
         )
-            .unwrap();
+        .unwrap();
 
         let st_tree = RuntimeTree::build(project).unwrap().tree;
 
@@ -392,9 +425,7 @@ mod tests {
                     &Flow(
                         Sequence,
                         Name("test".to_string(), "_".to_string()),
-                        RtArgs(vec![RtArgument::new(
-                            "a".to_string(),
-                            RtValue::int(1))]),
+                        RtArgs(vec![RtArgument::new("a".to_string(), RtValue::int(1))]),
                         vec![3],
                     )
                 ),
@@ -403,9 +434,7 @@ mod tests {
                     &Flow(
                         Sequence,
                         Name("test2".to_string(), "_".to_string()),
-                        RtArgs(vec![RtArgument::new(
-                            "a1".to_string(),
-                            RtValue::int(1))]),
+                        RtArgs(vec![RtArgument::new("a1".to_string(), RtValue::int(1))]),
                         vec![4],
                     )
                 ),
@@ -413,9 +442,7 @@ mod tests {
                     &4usize,
                     &Leaf(
                         Name("consumer".to_string(), "_".to_string()),
-                        RtArgs(vec![RtArgument::new(
-                            "arg".to_string(),
-                            RtValue::int(1))]),
+                        RtArgs(vec![RtArgument::new("arg".to_string(), RtValue::int(1))]),
                     )
                 ),
             ]
@@ -437,13 +464,19 @@ mod tests {
             consumer(b1,a1)
         }
         "#
-                .to_string(),
+            .to_string(),
         )
-            .unwrap();
+        .unwrap();
 
         let st_tree = RuntimeTree::build(project).unwrap().tree;
 
-        let item = st_tree.nodes.iter().find(|(id, _)| **id == 4).unwrap().1.args();
+        let item = st_tree
+            .nodes
+            .iter()
+            .find(|(id, _)| **id == 4)
+            .unwrap()
+            .1
+            .args();
         assert_eq!(
             item,
             RtArgs(vec![
@@ -452,5 +485,4 @@ mod tests {
             ])
         );
     }
-
 }

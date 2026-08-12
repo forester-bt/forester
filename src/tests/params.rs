@@ -1,12 +1,9 @@
 use crate::runtime::action::{Impl, Tick};
-use crate::runtime::args::{RtArgs};
+use crate::runtime::args::RtArgs;
 use crate::runtime::context::TreeContextRef;
-use crate::runtime::{TickResult};
+use crate::runtime::TickResult;
 
 use crate::tests::{fb, turn_on_logs};
-
-
-
 
 #[test]
 fn fail_types() {
@@ -34,9 +31,20 @@ fn any_type() {
     assert_eq!(result, Ok(TickResult::success()));
 
     let bb = f.bb.lock().unwrap();
-    let a = bb.get("a".to_string()).unwrap().unwrap().clone().as_int().unwrap();
-    let b = bb.get("b".to_string()).unwrap().unwrap().clone().as_string().unwrap();
+    let a = bb
+        .get("a".to_string())
+        .unwrap()
+        .unwrap()
+        .clone()
+        .as_int()
+        .unwrap();
+    let b = bb
+        .get("b".to_string())
+        .unwrap()
+        .unwrap()
+        .clone()
+        .as_string()
+        .unwrap();
     assert_eq!(a, 1);
     assert_eq!(b, "2".to_string());
 }
-

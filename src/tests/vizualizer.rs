@@ -3,9 +3,6 @@ use crate::tests::test_folder;
 use crate::tree::project::Project;
 use crate::visualizer::Visualizer;
 
-
-
-
 #[test]
 #[ignore]
 fn manual() {

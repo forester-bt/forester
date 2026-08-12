@@ -1,12 +1,12 @@
-use std::net::TcpStream;
-use serde::{Deserialize, Serialize, Serializer};
-use serde::ser::SerializeStruct;
-use tungstenite::{connect, Message, WebSocket};
-use tungstenite::stream::MaybeTlsStream;
-use url::Url;
 use crate::runtime::action::Tick;
 use crate::runtime::args::RtValue;
 use crate::runtime::{RtResult, RuntimeError, TickResult};
+use serde::ser::SerializeStruct;
+use serde::{Deserialize, Serialize, Serializer};
+use std::net::TcpStream;
+use tungstenite::stream::MaybeTlsStream;
+use tungstenite::{connect, Message, WebSocket};
+use url::Url;
 
 type Topic = String;
 type Type = String;
@@ -22,7 +22,6 @@ pub struct SubscribeCfg {
     compression: Option<String>,
 }
 
-
 impl SubscribeCfg {
     pub fn from(v: RtValue) -> RtResult<SubscribeCfg> {
         let mut cfg = SubscribeCfg::default();
@@ -30,31 +29,43 @@ impl SubscribeCfg {
             for (k, v) in map {
                 match k.as_str() {
                     "tp" => {
-                        cfg.tp = Some(v.as_string().ok_or(RuntimeError::fail("the type is not string".to_string()))?);
+                        cfg.tp = Some(
+                            v.as_string()
+                                .ok_or(RuntimeError::fail("the type is not string".to_string()))?,
+                        );
                     }
                     "throttle_rate" => {
-                        cfg.throttle_rate = Some(v.as_int().map(|v| v as i32)
-                            .ok_or(RuntimeError::fail("the throttle_rate is not int".to_string()))?);
+                        cfg.throttle_rate = Some(v.as_int().map(|v| v as i32).ok_or(
+                            RuntimeError::fail("the throttle_rate is not int".to_string()),
+                        )?);
                     }
                     "queue_length" => {
-                        cfg.queue_length = Some(v.as_int().map(|v| v as i32)
-                            .ok_or(RuntimeError::fail("the queue_length is not int".to_string()))?);
+                        cfg.queue_length = Some(v.as_int().map(|v| v as i32).ok_or(
+                            RuntimeError::fail("the queue_length is not int".to_string()),
+                        )?);
                     }
                     "fragment_size" => {
-                        cfg.fragment_size = Some(v.as_int().map(|v| v as i32)
-                            .ok_or(RuntimeError::fail("the fragment_size is not int".to_string()))?);
+                        cfg.fragment_size = Some(v.as_int().map(|v| v as i32).ok_or(
+                            RuntimeError::fail("the fragment_size is not int".to_string()),
+                        )?);
                     }
                     "compression" => {
-                        cfg.compression = Some(v.as_string()
-                            .ok_or(RuntimeError::fail("the compression is not string".to_string()))?);
+                        cfg.compression = Some(v.as_string().ok_or(RuntimeError::fail(
+                            "the compression is not string".to_string(),
+                        ))?);
                     }
                     _ => {
-                        return Err(RuntimeError::fail(format!("the key {} is not supported", k)));
+                        return Err(RuntimeError::fail(format!(
+                            "the key {} is not supported",
+                            k
+                        )));
                     }
                 }
             }
         } else {
-            return Err(RuntimeError::fail("the source_cfg is not object".to_owned()));
+            return Err(RuntimeError::fail(
+                "the source_cfg is not object".to_owned(),
+            ));
         }
 
         Ok(cfg)
@@ -78,26 +89,38 @@ impl SubscribeCfg {
             count += 1;
         }
 
-
         count
     }
-    pub fn new(tp: Option<String>, throttle_rate: Option<i32>, queue_length: Option<i32>, fragment_size: Option<i32>, compression: Option<String>) -> Self {
-        Self { tp, throttle_rate, queue_length, fragment_size, compression }
+    pub fn new(
+        tp: Option<String>,
+        throttle_rate: Option<i32>,
+        queue_length: Option<i32>,
+        fragment_size: Option<i32>,
+        compression: Option<String>,
+    ) -> Self {
+        Self {
+            tp,
+            throttle_rate,
+            queue_length,
+            fragment_size,
+            compression,
+        }
     }
 }
 
 #[derive(Deserialize)]
-pub enum RosCommand
-{
+pub enum RosCommand {
     Publish(Topic, RtValue),
     Advertise(Topic, Type),
     Unsubscribe(Topic),
     Subscribe(Topic, SubscribeCfg),
-
 }
 
 impl Serialize for RosCommand {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
         match self {
             RosCommand::Publish(t, v) => {
                 let mut cmd = serializer.serialize_struct("Command", 3)?;
@@ -161,11 +184,9 @@ impl RosCommand {
     }
 }
 
-
 pub fn publish(topic: Topic, mes: RtValue, url: String) -> Tick {
     debug!(target: "ws-publish" ,"params: topic: {topic}, mes: {mes}, url: {url}");
-    let (mut socket, response) =
-        connect(Url::parse(url.as_str())?)?;
+    let (mut socket, response) = connect(Url::parse(url.as_str())?)?;
     debug!(target: "ws" ,"Connected to the server {url}");
     debug!(target: "ws" ,"Response HTTP code: {}", response.status());
     let js = serde_json::to_string_pretty(&RosCommand::publish(topic, mes))?;
@@ -176,8 +197,7 @@ pub fn publish(topic: Topic, mes: RtValue, url: String) -> Tick {
 
 pub fn advertise(topic: Topic, tp: Type, url: String) -> Tick {
     debug!(target: "ws-advertise" ,"params: topic: {topic}, type: {tp}, url: {url}");
-    let (mut socket, response) =
-        connect(Url::parse(url.as_str()).unwrap())?;
+    let (mut socket, response) = connect(Url::parse(url.as_str()).unwrap())?;
     debug!(target: "ws" ,"Connected to the server {url}");
     debug!(target: "ws" ,"Response HTTP code: {}", response.status());
     let js = serde_json::to_string_pretty(&RosCommand::advertise(topic, tp))?;
@@ -190,8 +210,7 @@ pub fn unsubscribe(topic: Topic, url: String) -> Tick {
     debug!(target: "ws-unsubscribe" ,"params: topic: {topic}, url: {url}");
 
     // send the response to unsubscribe
-    let (mut socket, response) =
-        connect(Url::parse(url.as_str()).unwrap())?;
+    let (mut socket, response) = connect(Url::parse(url.as_str()).unwrap())?;
     debug!(target: "ws" ,"Connected to the server {url}");
     debug!(target: "ws" ,"Response HTTP code: {}", response.status());
     let js = serde_json::to_string_pretty(&RosCommand::unsubscribe(topic))?;
@@ -202,8 +221,7 @@ pub fn unsubscribe(topic: Topic, url: String) -> Tick {
 
 pub fn subscribe(topic: Topic, cfg: SubscribeCfg, url: String) -> RtResult<WS> {
     debug!(target: "ws-subscribe" ,"params: topic: {topic}, cfg:{:?} url: {url}",cfg);
-    let (mut socket, response) =
-        connect(Url::parse(url.as_str()).unwrap())?;
+    let (mut socket, response) = connect(Url::parse(url.as_str()).unwrap())?;
     debug!(target: "ws" ,"Connected to the server {url}");
     debug!(target: "ws" ,"Response HTTP code: {}", response.status());
     let js = serde_json::to_string_pretty(&RosCommand::subscribe(topic, cfg))?;
@@ -212,21 +230,20 @@ pub fn subscribe(topic: Topic, cfg: SubscribeCfg, url: String) -> RtResult<WS> {
     Ok(socket)
 }
 
-
 #[cfg(test)]
 mod tests {
-    use std::collections::HashMap;
     use crate::runtime::args::RtValue;
-    use crate::runtime::ros::client::{publish};
+    use crate::runtime::ros::client::publish;
+    use std::collections::HashMap;
 
     #[test]
     #[ignore]
     fn smoke() {
-        let value = RtValue::Object(HashMap::from_iter(vec![("a".to_string(), RtValue::int(10))]));
+        let value = RtValue::Object(HashMap::from_iter(vec![(
+            "a".to_string(),
+            RtValue::int(10),
+        )]));
         publish("test".to_owned(), value, "ws://localhost:9090".to_string())
             .expect("TODO: panic message");
     }
 }
-
-
-

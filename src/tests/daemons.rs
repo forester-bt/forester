@@ -1,14 +1,14 @@
+use crate::runtime::action::{Impl, Tick};
+use crate::runtime::args::{RtArgs, RtValue};
+use crate::runtime::context::TreeContextRef;
+use crate::runtime::env::daemon::context::DaemonContext;
+use crate::runtime::env::daemon::{AsyncDaemonFn, Daemon, DaemonFn, StopFlag};
+use crate::runtime::{blackboard, TickResult};
+use crate::tests::{fb, turn_on_logs};
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::atomic::Ordering::Relaxed;
 use tokio_util::sync::CancellationToken;
-use crate::runtime::action::{Impl, Tick};
-use crate::runtime::args::{RtArgs, RtValue};
-use crate::runtime::context::TreeContextRef;
-use crate::runtime::env::daemon::{AsyncDaemonFn, Daemon, DaemonFn, StopFlag};
-use crate::runtime::env::daemon::context::DaemonContext;
-use crate::runtime::{blackboard, TickResult};
-use crate::tests::{fb, turn_on_logs};
 
 struct Test;
 
@@ -46,9 +46,11 @@ fn smoke() {
     let bb = forester.bb.lock().unwrap();
     let v = bb.get("test".to_string()).unwrap().unwrap();
 
-    assert_eq!(v.clone().as_vec(|v| v.as_int().unwrap()).unwrap(), vec![1, 1, 1, 1]);
+    assert_eq!(
+        v.clone().as_vec(|v| v.as_int().unwrap()).unwrap(),
+        vec![1, 1, 1, 1]
+    );
 }
-
 
 struct TestAction;
 
@@ -57,11 +59,12 @@ impl Impl for TestAction {
         std::thread::sleep(std::time::Duration::from_millis(100));
         let arc = ctx.bb();
         let mut bb = arc.lock()?;
-        let val =
-            bb.get("test".to_string())
-                .expect("no errors")
-                .cloned().and_then(|v| v.as_int())
-                .unwrap_or(0);
+        let val = bb
+            .get("test".to_string())
+            .expect("no errors")
+            .cloned()
+            .and_then(|v| v.as_int())
+            .unwrap_or(0);
 
         bb.put("test".to_string(), RtValue::int(val + 1))?;
 
@@ -81,8 +84,11 @@ impl DaemonFn for DaemonSync {
         while !signal.load(Relaxed) {
             std::thread::sleep(std::time::Duration::from_millis(50));
             let mut bb = ctx.bb.lock().unwrap();
-            let v = bb.get("test".to_string()).expect("no errors")
-                .cloned().unwrap_or(RtValue::int(0));
+            let v = bb
+                .get("test".to_string())
+                .expect("no errors")
+                .cloned()
+                .unwrap_or(RtValue::int(0));
 
             bb.put("test_daemon".to_string(), v).unwrap();
         }
@@ -109,21 +115,25 @@ fn built_in() {
 }
 
 impl AsyncDaemonFn for DaemonSync {
-    fn prepare(&mut self, ctx: DaemonContext, signal: CancellationToken) -> Pin<Box<dyn Future<Output=()> + Send>> {
+    fn prepare(
+        &mut self,
+        ctx: DaemonContext,
+        signal: CancellationToken,
+    ) -> Pin<Box<dyn Future<Output = ()> + Send>> {
         Box::pin(async move {
             loop {
                 tokio::select! {
-                _ = signal.cancelled() => {
-                    return;
-                }
-                _ = tokio::time::sleep(std::time::Duration::from_millis(10)) => {
-                    let mut bb = ctx.bb.lock().unwrap();
-                    let v = bb.get("test".to_string()).expect("no errors")
-                        .cloned().unwrap_or(RtValue::int(0));
+                    _ = signal.cancelled() => {
+                        return;
+                    }
+                    _ = tokio::time::sleep(std::time::Duration::from_millis(10)) => {
+                        let mut bb = ctx.bb.lock().unwrap();
+                        let v = bb.get("test".to_string()).expect("no errors")
+                            .cloned().unwrap_or(RtValue::int(0));
 
-                    bb.put("test_daemon".to_string(), v).unwrap();
+                        bb.put("test_daemon".to_string(), v).unwrap();
+                    }
                 }
-            }
             }
         })
     }

@@ -1,9 +1,9 @@
 use std::sync::atomic::Ordering::Relaxed;
 
+use crate::runtime::env::daemon::{DaemonName, StopFlag};
+use crate::runtime::RtOk;
 use tokio::task::JoinHandle;
 use tokio_util::sync::CancellationToken;
-use crate::runtime::env::daemon::{DaemonName, StopFlag};
-use crate::runtime::{RtOk};
 
 pub enum DaemonTask {
     Unnamed(JoinHandle<()>, DaemonStopSignal),
@@ -44,8 +44,7 @@ impl DaemonTask {
     }
     pub fn stop(&mut self) -> RtOk {
         match self {
-            DaemonTask::Unnamed(_, t) |
-            DaemonTask::Named(_, _, t) => t.stop(),
+            DaemonTask::Unnamed(_, t) | DaemonTask::Named(_, _, t) => t.stop(),
         }
     }
 }

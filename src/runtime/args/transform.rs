@@ -83,20 +83,19 @@ pub fn to_rt_args(
     let mut rt_args: Vec<RtArgument> = vec![];
     match args.get_type()? {
         // we can't traverse the parameters if some of them are skipped
-        ArgumentsType::Unnamed if args.args.len() != params.params.len() => {
-            Err(cerr(format!(
-                "the call {} doesn't have the same number of arguments and parameters",
-                name
-            )))
-        }
+        ArgumentsType::Unnamed if args.args.len() != params.params.len() => Err(cerr(format!(
+            "the call {} doesn't have the same number of arguments and parameters",
+            name
+        ))),
         // find by the index according to the parameters
         ArgumentsType::Unnamed => {
             let mut upd_args = vec![];
             for (a, p) in args.args.into_iter().zip(params.params) {
                 // if the that is a pointer we need to check parent also.
                 let rhs = a.value().clone();
-                let (rt_arg, upd_rhs) = RtArgument::try_from(rhs, p, p_args.clone(), p_params.clone())
-                    .map_err(|r| r.modify(|s| format!("tree: {}, {}", name, s)))?;
+                let (rt_arg, upd_rhs) =
+                    RtArgument::try_from(rhs, p, p_args.clone(), p_params.clone())
+                        .map_err(|r| r.modify(|s| format!("tree: {}, {}", name, s)))?;
                 rt_args.push(rt_arg);
                 upd_args.push(Argument::Unassigned(upd_rhs));
             }
