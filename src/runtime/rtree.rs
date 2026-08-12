@@ -47,7 +47,7 @@ impl RuntimeTree {
     pub fn iter(&self) -> RtTreeBfsIter<'_> {
         RtTreeBfsIter {
             queue: VecDeque::from(vec![self.root]),
-            tree: &self,
+            tree: self,
         }
     }
     /// Returns the analyzer for the runtime tree
@@ -292,7 +292,7 @@ impl RuntimeTree {
 
     /// Converts the runtime tree into the ROS navigation xml file
     pub fn to_ros_nav(&self, xml: PathBuf) -> RtOk {
-        ToRosNavConverter::new(&self, xml).convert()
+        ToRosNavConverter::new(self, xml).convert()
     }
 }
 
@@ -303,7 +303,7 @@ mod tests {
     use crate::runtime::rtree::rnode::RNode::{Flow, Leaf};
     use crate::runtime::rtree::rnode::RNodeName::{Lambda, Name};
     use crate::runtime::rtree::RuntimeTree;
-    use crate::tests::turn_on_logs;
+    
     use crate::tree::project::Project;
     use itertools::Itertools;
     use std::collections::HashSet;

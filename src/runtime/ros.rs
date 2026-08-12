@@ -30,7 +30,7 @@ impl Impl for OneTimeSender {
                 let topic = param_as_str("topic", 0, &args, ctx.clone())?;
                 let mes = args
                     .find_or_ith("value".to_string(), 1)
-                    .ok_or(RuntimeError::fail(format!("the value is not found")))?;
+                    .ok_or(RuntimeError::fail("the value is not found".to_string()))?;
                 let url = param_as_str("url", 2, &args, ctx)?;
                 client::publish(topic, mes, url)
             }
@@ -138,14 +138,12 @@ pub struct TargetCfg {
 
 impl TargetCfg {
     pub fn from(v: RtValue) -> RtResult<TargetCfg> {
-        let elems = v.as_map(|(k, v)| (k, v)).ok_or(RuntimeError::fail(format!(
-            "the target_cfg should be an object"
-        )))?;
+        let elems = v.as_map(|(k, v)| (k, v)).ok_or(RuntimeError::fail("the target_cfg should be an object".to_string()))?;
 
         let tp = elems
             .get("tp")
             .and_then(|v| v.clone().as_string())
-            .ok_or(RuntimeError::fail(format!("the tp is not found")))?;
+            .ok_or(RuntimeError::fail("the tp is not found".to_string()))?;
 
         let buf_size = elems
             .get("buf_size")
@@ -154,7 +152,7 @@ impl TargetCfg {
         let dst = elems
             .get("dst")
             .and_then(|v| v.clone().as_string())
-            .ok_or(RuntimeError::fail(format!("the dst should be a string")))?;
+            .ok_or(RuntimeError::fail("the dst should be a string".to_string()))?;
 
         Ok(TargetCfg { tp, buf_size, dst })
     }
@@ -179,5 +177,5 @@ where
 {
     args.find_or_ith(key.to_string(), i)
         .ok_or(RuntimeError::fail(format!("the {key} is not found")))
-        .and_then(|v| m(v))
+        .and_then(m)
 }

@@ -25,7 +25,7 @@ impl Impl for Locked {
             if v {
                 TickResult::success()
             } else {
-                TickResult::failure(format!("the key is not locked"))
+                TickResult::failure("the key is not locked".to_string())
             }
         })
     }

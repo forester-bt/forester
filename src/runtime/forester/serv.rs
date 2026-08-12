@@ -104,7 +104,7 @@ pub fn start(
         });
         if let Err(e) = serv_with_shutdown.await {
             debug!(target:"http_server", "server error: {}", e);
-            Err(RuntimeError::IOError(format!("{}", e.to_string())))
+            Err(RuntimeError::IOError(format!("{}", e)))
         } else {
             Ok(())
         }

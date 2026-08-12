@@ -64,7 +64,7 @@ impl Visualizer {
         output: Option<&String>,
     ) -> Result<String, TreeError> {
         let (rts, output_pb) = runtime_tree_default(root, file, tree, output, "svg".to_string())?;
-        debug!(target:"visualizer","visualize a given project to a file {:?}", &output_pb);
+        debug!(target:"visualizer","visualize a given project to a file {:?}", output_pb);
         Visualizer::rt_tree_svg_to_file(&rts.tree, output_pb)
     }
     pub fn rt_tree_svg_to_file(
@@ -74,7 +74,7 @@ impl Visualizer {
         let g = Visualizer::build_graph(runtime_tree)?;
         let p = path.to_str().ok_or(TreeError::VisualizationError(format!(
             "{:?} is not applicable",
-            &path
+            path
         )))?;
 
         exec(
@@ -92,7 +92,7 @@ mod tests {
     use crate::runtime::rtree::RuntimeTree;
     use crate::tree::project::Project;
     use crate::visualizer::Visualizer;
-    use pretty_assertions::{assert_eq, assert_ne};
+    use pretty_assertions::assert_eq;
 
     #[test]
     fn smoke() {

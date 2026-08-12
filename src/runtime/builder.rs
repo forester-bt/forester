@@ -383,6 +383,12 @@ pub struct CommonForesterBuilder {
     port: ServerPort,
 }
 
+impl Default for CommonForesterBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CommonForesterBuilder {
     pub fn new() -> Self {
         Self {
@@ -453,16 +459,13 @@ impl CommonForesterBuilder {
 
 /// The struct defines the information of the server.
 #[derive(Debug, Clone)]
+#[derive(Default)]
 pub enum ServerPort {
+    #[default]
     None,
     Static(u16),
 }
 
-impl Default for ServerPort {
-    fn default() -> Self {
-        ServerPort::None
-    }
-}
 
 impl ServerPort {
     fn is_some(&self) -> bool {

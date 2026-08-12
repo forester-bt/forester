@@ -88,7 +88,7 @@ impl TrimmingQueue {
 
     /// add group of tasks in the queue
     pub fn push_all(&mut self, tasks: Vec<TrimTask>) {
-        self.tasks.extend(tasks.into_iter());
+        self.tasks.extend(tasks);
     }
 
     /// pull out the tasks from the queue

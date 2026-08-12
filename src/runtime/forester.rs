@@ -81,7 +81,7 @@ impl Forester {
                 self.bb.clone(),
                 self.tracer.clone(),
                 &self.tree,
-                &ctx.state(),
+                ctx.state(),
                 self.keeper.actions(),
             );
             match t.process(snapshot.clone())? {
@@ -109,7 +109,7 @@ impl Forester {
                                 debug!(target:"trim","The node {nid} is replaced. The previous node {:?}, the new node {new}", old);
                                 self.tracer.lock()?.trace(
                                     ctx.curr_ts(),
-                                    Event::Trim(nid.clone(), format!("{:?} >>> {new}", old)),
+                                    Event::Trim(nid, format!("{:?} >>> {new}", old)),
                                 )?;
                             }
                             for (an, action) in actions {
@@ -181,7 +181,7 @@ impl Forester {
                             RNodeState::Running(run_with(tick_args, 0, len))
                         };
 
-                        debug!(target:"flow[ready]", "tick:{}, {tpe}. Switch to the new_state:{}",ctx.curr_ts(),&new_state);
+                        debug!(target:"flow[ready]", "tick:{}, {tpe}. Switch to the new_state:{}",ctx.curr_ts(),new_state);
                         ctx.new_state(id, new_state)?;
                     }
                     // the flow can arrive here in 2 possible cases:
@@ -222,12 +222,12 @@ impl Forester {
                                         &mut ctx,
                                     )? {
                                         FlowDecision::PopNode(ns) => {
-                                            debug!(target:"flow[run]", "tick:{}, {tpe}. Go up with the new state: {}",ctx.curr_ts(),&ns);
+                                            debug!(target:"flow[run]", "tick:{}, {tpe}. Go up with the new state: {}",ctx.curr_ts(),ns);
                                             ctx.new_state(id, ns)?;
                                             ctx.pop()?;
                                         }
                                         FlowDecision::Stay(ns) => {
-                                            debug!(target:"flow[run]", "tick:{}, {tpe}. stay with the new state: {}",ctx.curr_ts(),&ns);
+                                            debug!(target:"flow[run]", "tick:{}, {tpe}. stay with the new state: {}",ctx.curr_ts(),ns);
                                             ctx.new_state(id, ns)?;
                                         }
                                         FlowDecision::Halt(new_state, halting_child_cursor) => {
@@ -267,12 +267,12 @@ impl Forester {
 
                                 match decision {
                                     FlowDecision::PopNode(ns) => {
-                                        debug!(target:"flow[run]", "tick:{}, {tpe}. The '{}' is finished as {}, the new state: {}. Pop the node.",ctx.curr_ts(),child,s, &ns);
+                                        debug!(target:"flow[run]", "tick:{}, {tpe}. The '{}' is finished as {}, the new state: {}. Pop the node.",ctx.curr_ts(),child,s, ns);
                                         ctx.new_state(id, ns)?;
                                         ctx.pop()?;
                                     }
                                     FlowDecision::Stay(ns) => {
-                                        debug!(target:"flow[run]", "tick:{}, {tpe}. The '{}' is finished as {}, the new state: {}. Stay at this node. ",ctx.curr_ts(),child,s, &ns);
+                                        debug!(target:"flow[run]", "tick:{}, {tpe}. The '{}' is finished as {}, the new state: {}. Stay at this node. ",ctx.curr_ts(),child,s, ns);
                                         ctx.new_state(id, ns)?;
                                     }
                                     FlowDecision::Halt(new_state, halting_child_cursor) => {
@@ -281,7 +281,7 @@ impl Forester {
                                         ctx.new_state(id, new_state.clone())?;
                                         // Force the state of the child to be halting, so it will interrupt itself on the next tick.
                                         let halting_child_id = children[halting_child_cursor];
-                                        debug!(target:"flow[run]", "tick:{}, {tpe}. The '{}' is finished as {}, the new state: {}. Halting child '{}'. ",ctx.curr_ts(),child,s, &new_state, &halting_child_id);
+                                        debug!(target:"flow[run]", "tick:{}, {tpe}. The '{}' is finished as {}, the new state: {}. Halting child '{}'. ",ctx.curr_ts(),child,s, new_state, halting_child_id);
                                         ctx.force_to_halting_state(halting_child_id)?;
                                         ctx.push(halting_child_id)?;
                                     }
@@ -323,7 +323,7 @@ impl Forester {
                             }
                             _ => decorator::prepare(tpe, init_args.clone(), tick_args, &mut ctx)?,
                         };
-                        debug!(target:"decorator[ready]", "tick:{}, the new_state: {}",ctx.curr_ts(),&new_state);
+                        debug!(target:"decorator[ready]", "tick:{}, the new_state: {}",ctx.curr_ts(),new_state);
                         ctx.new_state(id, new_state)?;
                     }
                     // the flow can arrive here in 2 possible cases:
@@ -334,7 +334,7 @@ impl Forester {
                         // we are about to kick off the child.
                         // Just pass the control to the child
                         RNodeState::Ready(..) => {
-                            debug!(target:"decorator[run]", "tick:{}, The decorator({init_args}) has the '{}' ready, push it on the stack",ctx.curr_ts(),&child);
+                            debug!(target:"decorator[run]", "tick:{}, The decorator({init_args}) has the '{}' ready, push it on the stack",ctx.curr_ts(),child);
                             ctx.push(*child)?;
                         }
                         // child is already running and since the flow is here in the parent,
@@ -346,7 +346,7 @@ impl Forester {
                             debug!(target:"decorator[run]", "tick:{}, {tpe}. Running decorator",ctx.curr_ts());
                             let new_state =
                                 decorator::monitor(tpe, init_args.clone(), tick_args, &mut ctx)?;
-                            debug!(target:"decorator[run]", "tick:{},The '{}' is running, the new state: {} ",ctx.curr_ts(),child, &new_state);
+                            debug!(target:"decorator[run]", "tick:{},The '{}' is running, the new state: {} ",ctx.curr_ts(),child, new_state);
                             ctx.new_state(id, new_state)?;
                             ctx.pop()?;
                         }
@@ -369,7 +369,7 @@ impl Forester {
                                 s.to_tick_result()?,
                                 &mut ctx,
                             )?;
-                            debug!(target:"decorator[run]", "tick:{},The '{}' is finished, the new state: {} ",ctx.curr_ts(),child, &new_state);
+                            debug!(target:"decorator[run]", "tick:{},The '{}' is finished, the new state: {} ",ctx.curr_ts(),child, new_state);
                             ctx.new_state(id, new_state)?;
                             ctx.pop()?;
                         }
@@ -418,7 +418,7 @@ impl Forester {
                                 &self.serv,
                             ))?;
                             let new_state = RNodeState::from(args.clone(), res);
-                            debug!(target:"leaf", "tick:{}, the new state: {}",ctx.curr_ts(),&new_state);
+                            debug!(target:"leaf", "tick:{}, the new state: {}",ctx.curr_ts(),new_state);
                             ctx.new_state(id, new_state)?;
                         }
                         ctx.pop()?;

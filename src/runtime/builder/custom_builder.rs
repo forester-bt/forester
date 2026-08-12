@@ -9,6 +9,12 @@ pub struct CustomForesterBuilder {
     rtb: RtTreeBuilder,
 }
 
+impl Default for CustomForesterBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CustomForesterBuilder {
     pub fn new() -> Self {
         Self {

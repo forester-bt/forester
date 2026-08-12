@@ -182,7 +182,7 @@ impl<T> From<PoisonError<MutexGuard<'_, T>>> for RuntimeError {
 
 impl From<quick_xml::Error> for RuntimeError {
     fn from(value: quick_xml::Error) -> Self {
-        RuntimeError::IOError(format!("export to xml error: {}", value.to_string()))
+        RuntimeError::IOError(format!("export to xml error: {}", value))
     }
 }
 
@@ -190,27 +190,27 @@ impl From<AttrError> for RuntimeError {
     fn from(value: AttrError) -> Self {
         RuntimeError::IOError(format!(
             "export attributes from xml,  error: {}",
-            value.to_string()
+            value
         ))
     }
 }
 
 impl From<FromUtf8Error> for RuntimeError {
     fn from(value: FromUtf8Error) -> Self {
-        RuntimeError::IOError(format!("export attributes,  error: {}", value.to_string()))
+        RuntimeError::IOError(format!("export attributes,  error: {}", value))
     }
 }
 
 impl From<ParseBoolError> for RuntimeError {
     fn from(value: ParseBoolError) -> Self {
-        RuntimeError::IOError(format!("export attributes,  error: {}", value.to_string()))
+        RuntimeError::IOError(format!("export attributes,  error: {}", value))
     }
 }
 impl From<tungstenite::Error> for RuntimeError {
     fn from(value: tungstenite::Error) -> Self {
         RuntimeError::IOError(format!(
             "web socket connection,  error: {}",
-            value.to_string()
+            value
         ))
     }
 }
@@ -218,7 +218,7 @@ impl From<url::ParseError> for RuntimeError {
     fn from(value: url::ParseError) -> Self {
         RuntimeError::IOError(format!(
             "web socket url parse error,  error: {}",
-            value.to_string()
+            value
         ))
     }
 }

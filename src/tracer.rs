@@ -12,7 +12,7 @@ use std::path::PathBuf;
 #[cfg(windows)]
 pub const LINE_ENDING: &str = "\r\n";
 #[cfg(not(windows))]
-pub const LINE_ENDING: &'static str = "\n";
+pub const LINE_ENDING: &str = "\n";
 
 /// The structure that keep trace of execution and store it either in memory ot in a file.
 /// The tracer uses printable representation with the space indentation.
@@ -260,7 +260,7 @@ impl Display for Event {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             Event::NextTick => {
-                f.write_str(format!("next tick").as_str())?;
+                f.write_str("next tick".to_string().as_str())?;
             }
             Event::NewState(id, s) => {
                 f.write_str(format!("{} : {}", id, s).as_str())?;

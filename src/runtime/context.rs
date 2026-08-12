@@ -240,7 +240,7 @@ impl TreeContext {
     }
     pub(crate) fn state_in_ts(&self, id: &RNodeId) -> RNodeState {
         let actual_state = self.state_last_set(id);
-        if self.is_curr_ts(&id) {
+        if self.is_curr_ts(id) {
             actual_state
         } else {
             RNodeState::Ready(actual_state.args())

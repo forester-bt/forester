@@ -55,7 +55,7 @@ impl ImplRemote for RemoteHttpAction {
             serv_url: format!("{}:{}", serv_url, ctx.port),
         };
 
-        debug!(target:"remote_action", "remote request {:?} to {}",&request, &self.url.clone());
+        debug!(target:"remote_action", "remote request {:?} to {}",request, self.url.clone());
 
         let resp = to_fail(
             Client::new()

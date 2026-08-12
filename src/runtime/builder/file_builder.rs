@@ -9,6 +9,12 @@ pub struct FileForesterBuilder {
     pub(super) root: Option<PathBuf>,
 }
 
+impl Default for FileForesterBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl FileForesterBuilder {
     pub fn new() -> Self {
         Self {

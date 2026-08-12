@@ -13,7 +13,7 @@ use crate::tree::parser::ast::arg::MesType;
 #[cfg(windows)]
 const LINE_ENDING: &'static str = "\r\n";
 #[cfg(not(windows))]
-const LINE_ENDING: &'static str = "\n";
+const LINE_ENDING: &str = "\n";
 
 /// The struct is used to convert the xml file from the nav2 format into the runtime tree.
 /// #Notes
@@ -30,7 +30,7 @@ impl FromNav2 {
         Self { xml }
     }
     pub fn read_file(xml: &PathBuf) -> RtResult<Self> {
-        Ok(read_file(xml).map(|r| Self::new(r))?)
+        read_file(xml).map(Self::new)
     }
 
     pub fn reader(&self) -> Reader<&[u8]> {
@@ -102,7 +102,7 @@ fn convert_arg(
     param: &RosParam,
 ) -> Result<RtValue, RuntimeError> {
     match param.tpe() {
-        MesType::Num => Ok(RtValue::float(parse_float(&action, v_str)?)),
+        MesType::Num => Ok(RtValue::float(parse_float(action, v_str)?)),
         MesType::String => Ok(RtValue::str(v_str)),
         MesType::Bool => Ok(RtValue::Bool(v_str.parse::<bool>()?)),
         e => Err(RuntimeError::WrongArgument(format!(

@@ -76,7 +76,7 @@ impl RtEnv {
                 let signal = Arc::new(AtomicBool::new(false));
                 let ret_signal = DaemonStopSignal::Sync(signal.clone());
                 let jh = self.runtime.spawn(async move {
-                    f.perform(ctx.into(), signal);
+                    f.perform(ctx, signal);
                 });
 
                 (jh, ret_signal)
@@ -84,7 +84,7 @@ impl RtEnv {
             Daemon::Async(mut f) => {
                 let token = CancellationToken::new();
                 let token_rv = token.clone();
-                let handle = self.runtime.spawn(f.prepare(ctx.into(), token_rv));
+                let handle = self.runtime.spawn(f.prepare(ctx, token_rv));
                 (handle, DaemonStopSignal::Async(token))
             }
         })

@@ -112,10 +112,10 @@ impl Tree {
             calls,
         }
     }
-    pub fn to_inv(&self) -> Invocation {
+    pub fn to_inv(&self) -> Invocation<'_> {
         self.into()
     }
-    pub fn to_inv_args(&self, args: Arguments) -> Invocation {
+    pub fn to_inv_args(&self, args: Arguments) -> Invocation<'_> {
         Invocation::new(self, args)
     }
 }

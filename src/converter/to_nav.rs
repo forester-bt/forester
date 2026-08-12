@@ -195,11 +195,11 @@ fn handle_attrs(attrs: Vec<RtArgument>, e: &mut BytesStart) -> RtOk {
     for RtArgument { name, value } in attrs {
         match value {
             RtValue::Pointer(v) => {
-                e.push_attribute((name.as_str(), format!(r#"{{{}}}"#, v.to_string()).as_str()));
+                e.push_attribute((name.as_str(), format!(r#"{{{}}}"#, v).as_str()));
             }
             RtValue::Call(_) => {}
             _ => {
-                e.push_attribute((name.as_str(), format!("{}", value.to_string()).as_str()));
+                e.push_attribute((name.as_str(), format!("{}", value).as_str()));
             }
         };
     }

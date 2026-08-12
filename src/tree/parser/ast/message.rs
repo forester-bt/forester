@@ -23,9 +23,9 @@ pub enum Bool {
     False,
 }
 
-impl Into<bool> for Bool {
-    fn into(self) -> bool {
-        match self {
+impl From<Bool> for bool {
+    fn from(val: Bool) -> Self {
+        match val {
             Bool::True => true,
             Bool::False => false,
         }

@@ -41,6 +41,12 @@ pub struct RtTreeBuilder {
     pub actions: HashSet<String>,
 }
 
+impl Default for RtTreeBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl RtTreeBuilder {
     /// Builds the runtime tree from the builder
     /// Returns the runtime tree and the set of action names
@@ -96,7 +102,7 @@ impl RtTreeBuilder {
     /// Generate a new id and adds the node to the builder , sets it as root and returns its id
     pub fn add_as_root(&mut self, node_b: RtNodeBuilder) -> RNodeId {
         let id = self.add(node_b);
-        self.root = Some(id.clone());
+        self.root = Some(id);
         id
     }
 
@@ -132,7 +138,7 @@ impl RtTreeBuilder {
     }
     /// Sets the node with the given id as root
     pub fn set_as_root(&mut self, node_b: RtNodeBuilder, id: RNodeId) {
-        self.set(node_b, id.clone());
+        self.set(node_b, id);
         self.root = Some(id)
     }
 }

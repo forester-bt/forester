@@ -64,7 +64,7 @@ impl<'a> Project {
         debug!(
             target:"ast",
             "built project with root: {:?}, main file: {} and root definition: {} ",
-            &root, main_file, main_call
+            root, main_file, main_call
         );
         let mut project = Project {
             root: root.clone(),
@@ -101,7 +101,7 @@ impl<'a> Project {
         debug!(
            target:"ast",
             "built project with root: {:?}, main file: {} and root definition: {} ",
-            &root, main_file, main_call
+            root, main_file, main_call
         );
         project.main = (main_file, main_call);
         Ok(project)
@@ -179,7 +179,7 @@ fn file_to_str(root: PathBuf, file: FileName) -> Result<String, TreeError> {
     if file.contains("::") {
         let parts: Vec<_> = file.split("::").collect();
         if parts.len() != 2 {
-            return Err(TreeError::IOError(format!("invalid file name: {}", file)));
+            Err(TreeError::IOError(format!("invalid file name: {}", file)))
         } else {
             match parts.as_slice() {
                 ["std", "actions"] => Ok(builtin::builtin_actions_file()),

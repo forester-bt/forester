@@ -102,9 +102,9 @@ impl TryFrom<RNodeState> for TickResultFin {
     }
 }
 
-impl Into<TickResult> for TickResultFin {
-    fn into(self) -> TickResult {
-        match self {
+impl From<TickResultFin> for TickResult {
+    fn from(val: TickResultFin) -> Self {
+        match val {
             TickResultFin::Failure(v) => TickResult::Failure(v),
             TickResultFin::Success => TickResult::Success,
         }
@@ -424,7 +424,7 @@ fn find_pos(children: &Vec<i64>, low: i64, high: i64) -> Option<usize> {
             next_idx = Some(cursor);
             break;
         }
-        cursor = cursor + 1;
+        cursor += 1;
     }
     next_idx
 }

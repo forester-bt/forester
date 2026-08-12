@@ -16,8 +16,7 @@ pub(crate) fn action_impl(action: &ActionName) -> RtResult<Action> {
 }
 
 pub fn ros_actions_file() -> String {
-    format!(
-        r#"// Ros2 Core specific actions and decorators.
+    r#"// Ros2 Core specific actions and decorators.
 // The actions are accessible using the import 'import "ros::core"'
 
 // Publish message to the topic
@@ -46,6 +45,5 @@ impl subscribe(
     url:string
 );
 
-"#
-    )
+"#.to_string()
 }

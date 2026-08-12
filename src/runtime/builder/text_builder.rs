@@ -6,6 +6,12 @@ pub struct TextForesterBuilder {
     text: Option<String>,
 }
 
+impl Default for TextForesterBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TextForesterBuilder {
     pub fn new() -> Self {
         Self { text: None }
