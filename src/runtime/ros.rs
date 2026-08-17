@@ -138,7 +138,9 @@ pub struct TargetCfg {
 
 impl TargetCfg {
     pub fn from(v: RtValue) -> RtResult<TargetCfg> {
-        let elems = v.as_map(|(k, v)| (k, v)).ok_or(RuntimeError::fail("the target_cfg should be an object".to_string()))?;
+        let elems = v.as_map(|(k, v)| (k, v)).ok_or(RuntimeError::fail(
+            "the target_cfg should be an object".to_string(),
+        ))?;
 
         let tp = elems
             .get("tp")

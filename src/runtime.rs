@@ -188,10 +188,7 @@ impl From<quick_xml::Error> for RuntimeError {
 
 impl From<AttrError> for RuntimeError {
     fn from(value: AttrError) -> Self {
-        RuntimeError::IOError(format!(
-            "export attributes from xml,  error: {}",
-            value
-        ))
+        RuntimeError::IOError(format!("export attributes from xml,  error: {}", value))
     }
 }
 
@@ -208,17 +205,11 @@ impl From<ParseBoolError> for RuntimeError {
 }
 impl From<tungstenite::Error> for RuntimeError {
     fn from(value: tungstenite::Error) -> Self {
-        RuntimeError::IOError(format!(
-            "web socket connection,  error: {}",
-            value
-        ))
+        RuntimeError::IOError(format!("web socket connection,  error: {}", value))
     }
 }
 impl From<url::ParseError> for RuntimeError {
     fn from(value: url::ParseError) -> Self {
-        RuntimeError::IOError(format!(
-            "web socket url parse error,  error: {}",
-            value
-        ))
+        RuntimeError::IOError(format!("web socket url parse error,  error: {}", value))
     }
 }

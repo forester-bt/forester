@@ -28,7 +28,7 @@ fn smoke() {
     fb.root(root.clone());
 
     let mut forester = fb.build().unwrap();
-    forester.add_trim_task(TrimTask::rt_tree(Test));
+    let _ = forester.add_trim_task(TrimTask::rt_tree(Test));
     let result = forester.run_until(Some(100)).unwrap();
     assert_eq!(result, TickResult::Success);
 }

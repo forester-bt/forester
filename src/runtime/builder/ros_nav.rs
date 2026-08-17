@@ -18,8 +18,7 @@ pub(super) fn action_impl(action: &ActionName) -> RtResult<Action> {
 }
 
 pub fn ros_actions_file() -> String {
-    let actions = ros_actions().values().map(|v| v.to_string())
-        .join("\n\n");
+    let actions = ros_actions().values().map(|v| v.to_string()).join("\n\n");
     format!(
         r#"// Ros specific actions and decorators.
 // The actions are accessible using the import 'import "ros::nav2"'

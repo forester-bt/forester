@@ -303,7 +303,7 @@ mod tests {
     use crate::runtime::rtree::rnode::RNode::{Flow, Leaf};
     use crate::runtime::rtree::rnode::RNodeName::{Lambda, Name};
     use crate::runtime::rtree::RuntimeTree;
-    
+
     use crate::tree::project::Project;
     use itertools::Itertools;
     use std::collections::HashSet;

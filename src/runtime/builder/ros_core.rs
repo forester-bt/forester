@@ -45,5 +45,6 @@ impl subscribe(
     url:string
 );
 
-"#.to_string()
+"#
+    .to_string()
 }

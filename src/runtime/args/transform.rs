@@ -140,7 +140,8 @@ pub fn find_arg_value(
             .iter()
             .position(|p| p.name.as_str() == key)
             .and_then(|idx| args.args.get(idx))
-            .map(Argument::value).cloned()
+            .map(Argument::value)
+            .cloned()
             .ok_or(cerr(format!("the argument can not be found {key}"))),
         ArgumentsType::Named => args
             .args
