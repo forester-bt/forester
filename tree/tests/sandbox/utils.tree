@@ -1,0 +1,2 @@
+impl login(creds:object);
+impl logout();
