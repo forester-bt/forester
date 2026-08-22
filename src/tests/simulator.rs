@@ -12,7 +12,6 @@ use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::routing::{get, post};
 use axum::{Json, Router, ServiceExt};
-use forester_http::client::ForesterHttpClient;
 
 use serde_json::json;
 use std::collections::HashMap;
@@ -160,58 +159,6 @@ fn smoke() {
     let mut sim = sb.build().unwrap();
     let result = sim.run().unwrap();
     assert_eq!(result, TickResult::Success);
-}
-
-#[ignore]
-#[test]
-fn smoke_remote() {
-    let env = RtEnv::try_new().unwrap();
-    let _ = env.runtime.spawn(async move {
-        async fn handler(Json(req): Json<RemoteActionRequest>) -> impl IntoResponse {
-            let url = req.clone().serv_url;
-
-            let client = ForesterHttpClient::new(url);
-            let _ = client.put("tt".to_string(), json!("OK")).await;
-
-            (StatusCode::OK, Json::from(TickResult::Success))
-        }
-
-        let routing = Router::new()
-            .route("/", get(|| async { "OK" }))
-            .route("/action", post(handler))
-            .into_make_service();
-
-        let listener = tokio::net::TcpListener::bind(SocketAddr::from(([127, 0, 0, 1], 10000)))
-            .await
-            .unwrap();
-
-        axum::serve(listener, routing).await.unwrap();
-    });
-
-    turn_on_logs();
-    let mut sb = SimulatorBuilder::new();
-
-    let root = test_folder("simulator/smoke_rem");
-
-    sb.root(root.clone());
-    sb.profile(PathBuf::from("sim.yaml"));
-
-    let mut fb = ForesterBuilder::from_fs();
-    fb.rt_env(env);
-    fb.main_file("main.tree".to_string());
-    fb.root(root);
-
-    sb.forester_builder(fb);
-
-    let mut sim = sb.build().unwrap();
-    sim.run().unwrap();
-
-    let bb = sim.forester.bb.lock().unwrap();
-    let option = bb.get("tt".to_string()).unwrap();
-    assert_eq!(
-        option.and_then(|v| v.clone().as_string()),
-        Some("OK".to_string())
-    );
 }
 
 #[test]

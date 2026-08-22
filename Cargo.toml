@@ -35,5 +35,4 @@ utoipa = { version = "5.5.0", features = ["axum_extras"] }
 
 [dev-dependencies]
 wiremock = "0.6.5"
-forester-http = "0.1.0"
 pretty_assertions = "1.4.1"
