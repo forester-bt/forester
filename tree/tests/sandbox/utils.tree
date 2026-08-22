@@ -1,2 +1,7 @@
-impl login(creds:object);
+impl login(creds: object);
 impl logout();
+
+sequence test_server(creds: object) {
+    login(creds)
+    logout()
+}

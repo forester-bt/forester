@@ -16,7 +16,6 @@ use serde::{Deserialize, Serialize};
 /// ```
 ///
 /// use std::path::PathBuf;
-/// use std::time::Duration;
 /// use forester_rs::runtime::action::builtin::remote::RemoteHttpAction;
 /// use forester_rs::runtime::builder::ForesterBuilder;
 ///
@@ -24,15 +23,11 @@ use serde::{Deserialize, Serialize};
 ///      let mut fb = ForesterBuilder::from_fs();
 ///      fb.main_file("main.tree".to_string());
 ///      fb.root(root);
-///      
+///
 ///      let action = RemoteHttpAction::new("http://localhost:10000".to_string());
-///      let action_with_url = RemoteHttpAction::new_with(
-///             "http://localhost:10001".to_string(),
-///             "http://127.0.0.1".to_string());
 ///
 ///      fb.register_remote_action("a", action);
-///      fb.register_remote_action("b", action_with_url);
-///     
+///
 ///      let mut f = fb.build().unwrap();
 /// }
 /// ```
@@ -40,19 +35,14 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone)]
 pub struct RemoteHttpAction {
     url: String,
-    serv_ip: Option<String>,
 }
 
 impl ImplRemote for RemoteHttpAction {
     fn tick(&self, args: RtArgs, ctx: TreeRemoteContextRef) -> Tick {
-        let serv_url = self
-            .serv_ip
-            .clone()
-            .unwrap_or("http://localhost".to_string());
         let request = RemoteActionRequest {
             tick: ctx.curr_ts,
             args: args.0,
-            serv_url: format!("{}:{}", serv_url, ctx.port),
+            serv_url: ctx.serv_url,
         };
 
         debug!(target:"remote_action", "remote request {:?} to {}",request, self.url.clone());
@@ -79,19 +69,8 @@ impl RemoteHttpAction {
     /// use forester_rs::runtime::action::builtin::remote::RemoteHttpAction;
     /// let action = RemoteHttpAction::new("http://localhost:10000".to_string());
     /// ```
-    ///
-    /// #Notes
-    /// The server ip is not set, the default is localhost
     pub fn new(url: String) -> Self {
-        Self { url, serv_ip: None }
-    }
-
-    /// Create a new remote action with the url and the server ip
-    pub fn new_with(url: String, serv_ip: String) -> Self {
-        Self {
-            url,
-            serv_ip: Some(serv_ip),
-        }
+        Self { url }
     }
 }
 
@@ -144,7 +123,11 @@ mod tests {
         let _bb = Arc::new(Mutex::new(BlackBoard::default()));
         let r = action.tick(
             RtArgs(vec![]),
-            TreeRemoteContextRef::new(1, port, Arc::new(Mutex::new(env))),
+            TreeRemoteContextRef::new(
+                1,
+                format!("http://localhost:{port}"),
+                Arc::new(Mutex::new(env)),
+            ),
         );
 
         assert_eq!(r, Ok(TickResult::success()));

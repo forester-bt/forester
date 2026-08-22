@@ -1,7 +1,6 @@
 mod routes;
 
 use crate::runtime::blackboard::BlackBoard;
-use crate::runtime::builder::ServerPort;
 use crate::tracer::Tracer;
 use axum::routing::{get, post};
 use axum::Router;
@@ -11,7 +10,7 @@ use crate::runtime::{RtOk, RtResult, RuntimeError};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use serde::{Deserialize, Serialize};
-use std::net::SocketAddr;
+use std::net::{IpAddr, SocketAddr};
 use std::sync::{Arc, Mutex};
 
 use crate::runtime::env::RtEnv;
@@ -36,7 +35,7 @@ pub struct HttpServ {
 /// It is used to stop the server and get the status of the server.
 pub struct ServInfo {
     pub status: JoinHandle<RtOk>,
-    pub serv_port: u16,
+    pub url: String,
     pub stop_cmd: StopCmd,
 }
 
@@ -48,6 +47,34 @@ impl ServInfo {
 
 pub type StopCmd = Sender<()>;
 
+/// The configuration of the http server.
+/// The server can be deployed to any host and port.
+///
+/// #Notes
+/// If the port is `0` the server selects a random available port.
+#[derive(Debug, Clone, PartialEq)]
+pub struct HttpServConfig {
+    /// The host the server binds to. Must be a valid IP address (e.g. `127.0.0.1` or `0.0.0.0`).
+    pub host: String,
+    /// The port the server binds to. `0` selects a random available port.
+    pub port: u16,
+}
+
+impl Default for HttpServConfig {
+    fn default() -> Self {
+        Self {
+            host: "127.0.0.1".to_string(),
+            port: 0,
+        }
+    }
+}
+
+impl HttpServConfig {
+    pub fn new(host: String, port: u16) -> Self {
+        Self { host, port }
+    }
+}
+
 impl HttpServ {
     fn new(bb: Arc<Mutex<BlackBoard>>, tracer: Arc<Mutex<Tracer>>) -> Self {
         Self { bb, tracer }
@@ -58,7 +85,7 @@ impl HttpServ {
 ///
 /// # Parameters
 /// - `rt` - the runtime for the server. Typically can be obtained from Forester instance
-/// - `port` - the port for the server. If it is not specified, the port is selected dynamically.
+/// - `config` - the host and the port for the server. If the port is `0`, the port is selected dynamically.
 /// - `bb` - the blackboard that is used to store the data
 /// - `tracer` - the tracer that is used to store the trace events
 ///
@@ -66,39 +93,32 @@ impl HttpServ {
 /// the information of the server
 pub fn start(
     rt: Arc<Mutex<RtEnv>>,
-    port: ServerPort,
+    config: HttpServConfig,
     bb: Arc<Mutex<BlackBoard>>,
     tracer: Arc<Mutex<Tracer>>,
 ) -> RtResult<ServInfo> {
     let (tx, rx) = tokio::sync::oneshot::channel::<()>();
-    let loc_port = if let ServerPort::Static(p) = port.clone() {
-        p
-    } else {
-        0
-    };
     let rt = rt.lock()?;
+
+    let ip: IpAddr = config.host.parse().map_err(|_| {
+        RuntimeError::Unexpected(format!(
+            "the host '{}' is not a valid IP address",
+            config.host
+        ))
+    })?;
+    let addr = SocketAddr::from((ip, config.port));
+
+    let listener = rt
+        .runtime
+        .block_on(tokio::net::TcpListener::bind(addr))
+        .map_err(|e| RuntimeError::IOError(format!("{:?}", e)))?;
+
+    let url = format!("http://{}:{}", config.host, listener.local_addr()?.port());
+
+    debug!(target:"http_server", " the server is deployed to {} ", url);
+
     let handle: JoinHandle<RtOk> = rt.runtime.spawn(async move {
-        let addr = match port {
-            ServerPort::Static(port) => SocketAddr::from(([127, 0, 0, 1], port)),
-            ServerPort::None => {
-                return Err(RuntimeError::Unexpected(
-                    "the port for http server is not selected.".to_string(),
-                ));
-            }
-        };
-
-        let listener = match tokio::net::TcpListener::bind(addr).await {
-            Ok(listener) => listener,
-            Err(e) => {
-                debug!(target:"http_server", "server error: {:?}", e);
-                return Err(RuntimeError::IOError(format!("{:?}", e)));
-            }
-        };
-
-        debug!(target:"http_server", " the server is deployed to {} ", listener.local_addr().unwrap().port());
-
-        let service = routing(HttpServ::new(bb, tracer))
-            .into_make_service();
+        let service = routing(HttpServ::new(bb, tracer)).into_make_service();
         let serv_with_shutdown = axum::serve(listener, service).with_graceful_shutdown(async {
             rx.await.ok();
         });
@@ -112,7 +132,7 @@ pub fn start(
 
     Ok(ServInfo {
         status: handle,
-        serv_port: loc_port,
+        url,
         stop_cmd: tx,
     })
 }

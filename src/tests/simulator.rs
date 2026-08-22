@@ -114,7 +114,10 @@ fn file() {
                 bb: Default::default(),
                 graph: None,
                 max_ticks: None,
-                http: Some(HttpServ { port: 8080 }),
+                http: Some(HttpServ {
+                    host: "127.0.0.1".to_string(),
+                    port: 8080,
+                }),
             },
             actions: vec![
                 Action {

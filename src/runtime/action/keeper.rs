@@ -107,7 +107,7 @@ impl ActionKeeper {
             Action::Sync(action) => action.tick(args, ctx),
             Action::Remote(action) => action.tick(
                 args,
-                TreeRemoteContextRef::new(ctx.current_tick(), get_port(http_serv)?, env),
+                TreeRemoteContextRef::new(ctx.current_tick(), get_url(http_serv)?, env),
             ),
             Action::Async(ref mut action) => {
                 let mut env = env.lock()?;
@@ -154,12 +154,11 @@ impl ActionKeeper {
     }
 }
 
-fn get_port(http_serv: &Option<ServInfo>) -> Result<u16, RuntimeError> {
+fn get_url(http_serv: &Option<ServInfo>) -> Result<String, RuntimeError> {
     http_serv
         .as_ref()
-        .map(|v| v.serv_port)
-        .filter(|p| *p > 0)
+        .map(|v| v.url.clone())
         .ok_or(RuntimeError::fail(
-            "the http server port is not found or incorrect".to_string(),
+            "the http server url is not found".to_string(),
         ))
 }

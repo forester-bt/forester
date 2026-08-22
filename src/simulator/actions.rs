@@ -41,13 +41,7 @@ impl SimAction {
                     RuntimeError::WrongArgument("the url is not specified".to_string())
                 })?;
 
-                let action = if let Some(serv) = params.get("server").cloned() {
-                    RemoteHttpAction::new_with(url, serv)
-                } else {
-                    RemoteHttpAction::new(url)
-                };
-
-                Ok(SimAction::Remote(action))
+                Ok(SimAction::Remote(RemoteHttpAction::new(url)))
             }
             e => Err(RuntimeError::WrongArgument(format!(
                 "the {e} is not recognized as a simulation stub."

@@ -128,7 +128,7 @@ impl SimulatorBuilder {
         }
 
         if let Some(http) = profile.config.http {
-            fb.http_serv(http.port);
+            fb.http_serv(http.host, http.port);
         }
 
         for action in profile.actions.iter() {

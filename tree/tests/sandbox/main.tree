@@ -1,0 +1,10 @@
+// import "std::actions"
+import "utils.tree" {login => login_to_the_system}
+
+root main sequence {
+    login_to_the_system()
+    test_server(creds = {})
+    logout()
+}
+// with alias imports cease to work
+// selectionRange error

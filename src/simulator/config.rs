@@ -53,9 +53,17 @@ pub struct SimProfileConfig {
 /// The http server configuration
 /// It is used to communicate with the remote actions.
 /// The server is used to receive the requests from the remote actions and to send the responses.
-#[derive(Debug, Default, PartialEq, Clone, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct HttpServ {
+    /// The host the server binds to. Defaults to `127.0.0.1`.
+    #[serde(default = "default_host")]
+    pub host: String,
+    /// The port the server binds to. `0` selects a random available port.
     pub port: u16,
+}
+
+fn default_host() -> String {
+    "127.0.0.1".to_string()
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Serialize, Deserialize)]

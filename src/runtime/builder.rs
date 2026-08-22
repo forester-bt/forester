@@ -15,6 +15,7 @@ use crate::runtime::builder::file_builder::FileForesterBuilder;
 use crate::runtime::builder::text_builder::TextForesterBuilder;
 use crate::runtime::env::RtEnv;
 
+use crate::runtime::forester::serv::HttpServConfig;
 use crate::runtime::forester::{serv, Forester};
 use crate::runtime::rtree::builder::RtNodeBuilder;
 use crate::runtime::rtree::rnode::RNodeId;
@@ -215,9 +216,10 @@ impl ForesterBuilder {
     {
         self.cfb().register_remote_action(name, action);
     }
-    /// setup the port for the server
-    pub fn http_serv(&mut self, port: u16) {
-        self.cfb().http_serv(port)
+    /// setup the host and port for the server.
+    /// If the port is `0`, the server selects a random available port.
+    pub fn http_serv(&mut self, host: String, port: u16) {
+        self.cfb().http_serv(host, port)
     }
 
     /// Tracer that will be used to save the tracing information.
@@ -247,7 +249,7 @@ impl ForesterBuilder {
     {
         self.error()?;
 
-        let (tree, actions, action_names, daemons, tr, env, bb_load, root, port) = match self {
+        let (tree, actions, action_names, daemons, tr, env, bb_load, root, serv_cfg) = match self {
             ForesterBuilder::Files { delegate, cfb, .. } => {
                 let root = delegate.root.clone();
                 let project = delegate.build()?;
@@ -273,7 +275,7 @@ impl ForesterBuilder {
                     cfb.env,
                     cfb.bb_load,
                     root,
-                    cfb.port,
+                    cfb.serv,
                 )
             }
             ForesterBuilder::Text { delegate, cfb, .. } => {
@@ -297,7 +299,7 @@ impl ForesterBuilder {
                     cfb.env,
                     cfb.bb_load,
                     None,
-                    cfb.port,
+                    cfb.serv,
                 )
             }
             ForesterBuilder::Code { delegate, cfb, .. } => {
@@ -311,7 +313,7 @@ impl ForesterBuilder {
                     cfb.env,
                     cfb.bb_load,
                     None,
-                    cfb.port,
+                    cfb.serv,
                 )
             }
         };
@@ -344,8 +346,8 @@ impl ForesterBuilder {
         }
 
         let env = Arc::new(Mutex::new(env));
-        let serv = if port.is_some() {
-            Some(serv::start(env.clone(), port, bb.clone(), tracer.clone())?)
+        let serv = if let Some(cfg) = serv_cfg {
+            Some(serv::start(env.clone(), cfg, bb.clone(), tracer.clone())?)
         } else {
             None
         };
@@ -380,7 +382,7 @@ pub struct CommonForesterBuilder {
     bb_load: Option<String>,
     actions: HashMap<ActionName, Action>,
     daemons: Vec<DaemonTaskCfg>,
-    port: ServerPort,
+    serv: Option<HttpServConfig>,
 }
 
 impl Default for CommonForesterBuilder {
@@ -397,7 +399,7 @@ impl CommonForesterBuilder {
             bb_load: None,
             actions: HashMap::new(),
             daemons: Vec::new(),
-            port: ServerPort::None,
+            serv: None,
         }
     }
 
@@ -436,9 +438,10 @@ impl CommonForesterBuilder {
         self.actions
             .insert(name.to_string(), Action::Remote(Box::new(action)));
     }
-    /// setup the port for the server
-    pub fn http_serv(&mut self, port: u16) {
-        self.port = ServerPort::Static(port)
+    /// setup the host and port for the server.
+    /// If the port is `0`, the server selects a random available port.
+    pub fn http_serv(&mut self, host: String, port: u16) {
+        self.serv = Some(HttpServConfig::new(host, port))
     }
 
     /// Tracer that will be used to save the tracing information.
@@ -454,31 +457,6 @@ impl CommonForesterBuilder {
     /// By default, creates the default tokio Runtime multi thread
     pub fn rt_env(&mut self, env: RtEnv) {
         self.env = Some(env);
-    }
-}
-
-/// The struct defines the information of the server.
-#[derive(Debug, Clone)]
-#[derive(Default)]
-pub enum ServerPort {
-    #[default]
-    None,
-    Static(u16),
-}
-
-
-impl ServerPort {
-    fn is_some(&self) -> bool {
-        match self {
-            ServerPort::None => false,
-            _ => true,
-        }
-    }
-    fn get(&self) -> u16 {
-        match self {
-            ServerPort::None => 0,
-            ServerPort::Static(v) => *v,
-        }
     }
 }
 

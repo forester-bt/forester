@@ -2,10 +2,9 @@ use crate::runtime::action::builtin::remote::RemoteHttpAction;
 use crate::runtime::action::{Impl, ImplRemote};
 use crate::runtime::args::{RtArgs, RtArgument, RtValue};
 use crate::runtime::blackboard::BlackBoard;
-use crate::runtime::builder::ServerPort;
 use crate::runtime::context::TreeRemoteContextRef;
 use crate::runtime::env::RtEnv;
-use crate::runtime::forester::serv::start;
+use crate::runtime::forester::serv::{start, HttpServConfig};
 use crate::runtime::TickResult;
 use crate::tests::{fb, turn_on_logs};
 use crate::tracer::Tracer;
@@ -25,7 +24,7 @@ fn smoke_serv() {
 
     let info = start(
         rt.clone(),
-        ServerPort::Static(20000),
+        HttpServConfig::new("127.0.0.1".to_string(), 20000),
         bb.clone(),
         tr.clone(),
     )
@@ -73,7 +72,11 @@ fn remote_smoke() {
                 RtValue::Array(vec![RtValue::int(1), RtValue::int(2)]),
             ),
         ]),
-        TreeRemoteContextRef::new(1, 9999, Arc::new(Mutex::new(env))),
+        TreeRemoteContextRef::new(
+            1,
+            "http://localhost:9999".to_string(),
+            Arc::new(Mutex::new(env)),
+        ),
     );
 
     assert_eq!(result, Ok(TickResult::success()));
@@ -103,7 +106,7 @@ fn remote_in_tree() {
 
     let action = RemoteHttpAction::new(format!("http://localhost:{}/action", port));
     builder.register_remote_action("action", action);
-    builder.http_serv(9999);
+    builder.http_serv("127.0.0.1".to_string(), 9999);
     let mut f = builder.build().unwrap();
 
     let result = f.run();

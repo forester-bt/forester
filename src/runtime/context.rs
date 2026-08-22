@@ -21,17 +21,21 @@ pub type TracerRef = Arc<Mutex<Tracer>>;
 /// the information to the remote action it does not have the actual copy of the blackboard and tracer.
 ///
 /// #Note
-/// The port defines the port of the http server
+/// The `serv_url` defines the url of the http server
 /// that is used to send the information to the remote action(current http server).
 pub struct TreeRemoteContextRef {
     pub curr_ts: Timestamp,
-    pub port: u16,
+    pub serv_url: String,
     pub env: RtEnvRef,
 }
 
 impl TreeRemoteContextRef {
-    pub fn new(curr_ts: Timestamp, port: u16, env: RtEnvRef) -> Self {
-        Self { curr_ts, port, env }
+    pub fn new(curr_ts: Timestamp, serv_url: String, env: RtEnvRef) -> Self {
+        Self {
+            curr_ts,
+            serv_url,
+            env,
+        }
     }
 }
 
