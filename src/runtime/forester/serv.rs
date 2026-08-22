@@ -16,6 +16,7 @@ use std::sync::{Arc, Mutex};
 use crate::runtime::env::RtEnv;
 use tokio::sync::oneshot::Sender;
 use tokio::task::JoinHandle;
+use utoipa::OpenApi;
 
 /// The struct defines the http server that can be used to interface the remote actions.
 /// By default, the server is deployed to the localhost.
@@ -139,6 +140,7 @@ pub fn start(
 fn routing(delegate: HttpServ) -> Router {
     Router::new()
         .route("/", get(|| async { "OK" }))
+        .route("/openapi.json", get(openapi_json))
         .route("/tracer/custom", post(trace))
         .route("/tracer/print", get(print_trace))
         .route("/bb/:key/lock", get(bb_lock))
@@ -150,6 +152,39 @@ fn routing(delegate: HttpServ) -> Router {
         .route("/bb/:key", get(bb_get))
         .with_state(delegate)
 }
+
+/// Serves the OpenAPI specification of the server as JSON.
+async fn openapi_json() -> axum::Json<utoipa::openapi::OpenApi> {
+    axum::Json(ApiDoc::openapi())
+}
+
+/// The OpenAPI documentation of the Forester HTTP server.
+///
+/// It describes the endpoints that expose the blackboard and the tracer
+/// to the remote actions. The specification can be obtained with
+/// [`ApiDoc::openapi`] and is also served at `/openapi.json`.
+#[derive(utoipa::OpenApi)]
+#[openapi(
+    info(
+        title = "Forester HTTP API",
+        version = env!("CARGO_PKG_VERSION"),
+        license(name = "Apache-2.0"),
+        description = "The HTTP server of the Forester behavior tree runtime. It exposes the blackboard and the tracer to the remote actions.",
+    ),
+    paths(
+        bb_lock,
+        bb_unlock,
+        bb_is_locked,
+        bb_contains,
+        bb_get,
+        bb_take,
+        bb_put,
+        trace,
+        print_trace,
+    ),
+    components(schemas(CustomEvent))
+)]
+pub struct ApiDoc;
 
 fn err_handler<R>(r: RtResult<R>) -> Response
 where
@@ -165,8 +200,11 @@ where
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+/// A custom event to record in the tracer.
+#[derive(Debug, Deserialize, Serialize, utoipa::ToSchema)]
 pub(crate) struct CustomEvent {
+    /// The text of the event.
     text: String,
+    /// The tick the event belongs to.
     tick: usize,
 }

@@ -1,6 +1,19 @@
 use crate::runtime::args::{RtValue, RtValueNumber};
 use serde::de::{Error, MapAccess, SeqAccess, Visitor};
 
+impl utoipa::PartialSchema for RtValue {
+    fn schema() -> utoipa::openapi::RefOr<utoipa::openapi::schema::Schema> {
+        utoipa::openapi::schema::Object::builder()
+            .schema_type(utoipa::openapi::schema::SchemaType::AnyValue)
+            .description(Some(
+                "A free-form value stored in the blackboard: string, number, boolean, array or object.",
+            ))
+            .into()
+    }
+}
+
+impl utoipa::ToSchema for RtValue {}
+
 use serde::ser::{Error as seError, SerializeMap, SerializeSeq};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::collections::HashMap;

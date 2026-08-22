@@ -113,3 +113,25 @@ fn remote_in_tree() {
 
     assert_eq!(result, Ok(TickResult::success()));
 }
+
+#[test]
+fn openapi_spec() {
+    use utoipa::OpenApi;
+
+    let doc = crate::runtime::forester::serv::ApiDoc::openapi();
+    let json = serde_json::to_value(&doc).unwrap();
+
+    let paths = json["paths"].as_object().unwrap();
+    for path in [
+        "/bb/{key}",
+        "/bb/{key}/lock",
+        "/bb/{key}/unlock",
+        "/bb/{key}/locked",
+        "/bb/{key}/contains",
+        "/bb/{key}/take",
+        "/tracer/custom",
+        "/tracer/print",
+    ] {
+        assert!(paths.contains_key(path), "missing path {path}");
+    }
+}
