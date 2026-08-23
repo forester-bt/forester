@@ -1,0 +1,326 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Forester HTTP API",
+    "description": "The HTTP server of the Forester behavior tree runtime. It exposes the blackboard and the tracer to the remote actions.",
+    "contact": {
+      "name": "BorisZhguchev",
+      "email": "zhguchev@hotmail.com"
+    },
+    "license": {
+      "name": "Apache-2.0"
+    },
+    "version": "0.6.0"
+  },
+  "paths": {
+    "/bb/{key}": {
+      "get": {
+        "tags": [],
+        "summary": "Get a value from the blackboard.",
+        "description": "Returns the value stored under the key, or `null` if the key is absent.",
+        "operationId": "bb_get",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "description": "The blackboard key to read",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The value stored under the key, or null if absent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RtValue"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "post": {
+        "tags": [],
+        "summary": "Store a value in the blackboard.",
+        "description": "The body is a free-form JSON value (`string`, `number`, `boolean`, `array`\nor `object`) that is stored under the key.",
+        "operationId": "bb_put",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "description": "The blackboard key to write",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RtValue"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The value was stored"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/bb/{key}/contains": {
+      "get": {
+        "tags": [],
+        "summary": "Check whether a blackboard key exists.",
+        "operationId": "bb_contains",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "description": "The blackboard key to check",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Whether the key exists",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/bb/{key}/lock": {
+      "get": {
+        "tags": [],
+        "summary": "Lock a blackboard key.",
+        "description": "Locks the key so that it cannot be taken by other remote actions.",
+        "operationId": "bb_lock",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "description": "The blackboard key to lock",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The key was locked"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/bb/{key}/locked": {
+      "get": {
+        "tags": [],
+        "summary": "Check whether a blackboard key is locked.",
+        "operationId": "bb_is_locked",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "description": "The blackboard key to check",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Whether the key is locked",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/bb/{key}/take": {
+      "get": {
+        "tags": [],
+        "summary": "Take a value from the blackboard.",
+        "description": "Returns the value stored under the key and removes it from the blackboard.",
+        "operationId": "bb_take",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "description": "The blackboard key to take",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The taken value, or null if absent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RtValue"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/bb/{key}/unlock": {
+      "get": {
+        "tags": [],
+        "summary": "Unlock a blackboard key.",
+        "operationId": "bb_unlock",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "description": "The blackboard key to unlock",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The key was unlocked"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/tracer/custom": {
+      "post": {
+        "tags": [],
+        "summary": "Record a custom event in the tracer.",
+        "operationId": "trace",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomEvent"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The event was recorded"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/tracer/print": {
+      "get": {
+        "tags": [],
+        "summary": "Print the tracer content.",
+        "operationId": "print_trace",
+        "responses": {
+          "200": {
+            "description": "The tracer content as a string",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CustomEvent": {
+        "type": "object",
+        "description": "A custom event to record in the tracer.",
+        "required": [
+          "text",
+          "tick"
+        ],
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "The text of the event."
+          },
+          "tick": {
+            "type": "integer",
+            "description": "The tick the event belongs to.",
+            "minimum": 0
+          }
+        }
+      },
+      "RtValue": {
+        "description": "A free-form value stored in the blackboard: string, number, boolean, array or object."
+      }
+    }
+  }
+}
