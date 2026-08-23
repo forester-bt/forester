@@ -189,7 +189,7 @@ impl task(config: object);
     );
     sb.forester_builder(fb);
 
-    let buf = test_folder("simulator/smoke/gen");
+    let buf = test_folder("simulator/smoke");
     let gen = buf.as_path().to_str().unwrap();
 
     let sim = test_folder("simulator/smoke/sim_absolute.yaml"); // <_Absolute_path_>
