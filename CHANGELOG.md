@@ -50,4 +50,7 @@
 * **`0.5.1`**
   * migrate deps to the latest versions.
   * fix tests
- 
+
+* **`0.6.0`**
+  * Change the contract for the http serv
+  * Change the contract for th remote actions 
