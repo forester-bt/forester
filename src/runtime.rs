@@ -22,7 +22,7 @@ pub type RtResult<T> = Result<T, RuntimeError>;
 pub type RtOk = Result<(), RuntimeError>;
 
 /// The result that the node returns
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, utoipa::ToSchema)]
 pub enum TickResult {
     Success,
     Failure(String),

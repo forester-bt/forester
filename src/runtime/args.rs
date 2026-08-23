@@ -297,7 +297,7 @@ impl Display for RtArgs {
 
 /// The structure that represents the pair of the argument name and the value.
 /// It is used in bb to store the arguments of the tree.
-#[derive(Debug, PartialEq, Clone, Deserialize, Serialize)]
+#[derive(Debug, PartialEq, Clone, Deserialize, Serialize, utoipa::ToSchema)]
 pub struct RtArgument {
     pub name: RtAKey,
     pub value: RtValue,

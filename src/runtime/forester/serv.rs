@@ -1,6 +1,9 @@
 mod routes;
 
+use crate::runtime::action::builtin::remote::RemoteActionRequest;
+use crate::runtime::args::RtArgument;
 use crate::runtime::blackboard::BlackBoard;
+use crate::runtime::TickResult;
 use crate::tracer::Tracer;
 use axum::routing::{get, post};
 use axum::Router;
@@ -182,7 +185,7 @@ async fn openapi_json() -> axum::Json<utoipa::openapi::OpenApi> {
         trace,
         print_trace,
     ),
-    components(schemas(CustomEvent))
+    components(schemas(CustomEvent, RemoteActionRequest, RtArgument, TickResult))
 )]
 pub struct ApiDoc;
 

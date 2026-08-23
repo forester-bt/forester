@@ -75,7 +75,7 @@ impl RemoteHttpAction {
 }
 
 /// The struct defines the remote action request that can be executed on the remote server.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct RemoteActionRequest {
     /// The tick of the request
     pub tick: usize,

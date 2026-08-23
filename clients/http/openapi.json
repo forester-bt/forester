@@ -318,8 +318,82 @@
           }
         }
       },
+      "RemoteActionRequest": {
+        "type": "object",
+        "description": "The struct defines the remote action request that can be executed on the remote server.",
+        "required": [
+          "tick",
+          "args",
+          "serv_url"
+        ],
+        "properties": {
+          "args": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RtArgument"
+            },
+            "description": "The arguments of the request"
+          },
+          "serv_url": {
+            "type": "string",
+            "description": "The server url to get access to the blackboard and the tracer"
+          },
+          "tick": {
+            "type": "integer",
+            "description": "The tick of the request",
+            "minimum": 0
+          }
+        }
+      },
+      "RtArgument": {
+        "type": "object",
+        "description": "The structure that represents the pair of the argument name and the value.\nIt is used in bb to store the arguments of the tree.",
+        "required": [
+          "name",
+          "value"
+        ],
+        "properties": {
+          "name": {
+            "$ref": "#/components/schemas/String"
+          },
+          "value": {
+            "$ref": "#/components/schemas/RtValue"
+          }
+        }
+      },
       "RtValue": {
         "description": "A free-form value stored in the blackboard: string, number, boolean, array or object."
+      },
+      "String": {
+        "type": "string"
+      },
+      "TickResult": {
+        "oneOf": [
+          {
+            "type": "string",
+            "enum": [
+              "Success"
+            ]
+          },
+          {
+            "type": "object",
+            "required": [
+              "Failure"
+            ],
+            "properties": {
+              "Failure": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "type": "string",
+            "enum": [
+              "Running"
+            ]
+          }
+        ],
+        "description": "The result that the node returns"
       }
     }
   }

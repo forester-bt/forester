@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "forester-client-http"
-version = "0.6.0"
+version = "0.6.1"
 description = "Python HTTP client for the Forester behavior tree runtime."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -36,7 +36,7 @@ Repository = "https://github.com/besok/forester"
 Documentation = "https://github.com/besok/forester"
 
 [tool.setuptools]
-packages = ["forester_client_http"]
+packages = ["forester_client_http", "forester_client_http.ra"]
 
 [tool.setuptools.package-data]
 forester_client_http = ["py.typed"]

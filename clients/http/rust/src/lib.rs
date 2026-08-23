@@ -29,7 +29,9 @@
 mod client;
 mod error;
 mod models;
+pub mod ra;
 
 pub use client::ForesterClient;
 pub use error::{Error, Result};
 pub use models::{CustomEvent, RtValue};
+pub use ra::{RemoteActionRequest, RtArgument, TickResult};
