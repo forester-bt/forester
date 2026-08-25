@@ -17,6 +17,7 @@ pub mod simulator;
 pub mod tracer;
 pub mod tree;
 pub mod visualizer;
+pub mod runner;
 
 use crate::runtime::RuntimeError;
 use crate::tree::project::Project;
