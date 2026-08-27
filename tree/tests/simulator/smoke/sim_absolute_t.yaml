@@ -1,8 +1,8 @@
 config:
-  trace: /home/borisz/projects/forester/tree/tests/simulator/smoke/main.log
-  graph: /home/borisz/projects/forester/tree/tests/simulator/smoke/main.svg
+  trace: /Users/boris.zhguchev/Projects/forester/tree/tests/simulator/smoke/main.log
+  graph: /Users/boris.zhguchev/Projects/forester/tree/tests/simulator/smoke/main.svg
   bb:
-    dump: /home/borisz/projects/forester/tree/tests/simulator/smoke/bb.json
+    dump: /Users/boris.zhguchev/Projects/forester/tree/tests/simulator/smoke/bb.json
   max_ticks: 10
 
 actions:

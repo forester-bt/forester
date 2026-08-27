@@ -54,3 +54,7 @@
 * **`0.6.0`**
   * Change the contract for the http serv
   * Change the contract for th remote actions 
+
+* **`0.7.0`**
+  * Introduced Runner.
+  * Fix some bugs
