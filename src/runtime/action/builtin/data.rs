@@ -231,6 +231,22 @@ impl Impl for StoreData {
     }
 }
 
+pub struct Trace;
+
+impl Impl for Trace {
+    fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
+        let trace = args.first().ok_or(RuntimeError::fail(
+            "the trace expectes a string value to place".to_string(),
+        ))?;
+        let trace = trace.cast(ctx.clone()).str()?.ok_or(RuntimeError::fail(
+            "The argument is supposed to be a string".to_string(),
+        ))?;
+        ctx.trace(trace)?;
+
+        Ok(TickResult::Success)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::runtime::action::builtin::data::LockUnlockBBKey;

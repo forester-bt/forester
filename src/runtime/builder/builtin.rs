@@ -1,6 +1,6 @@
 use crate::runtime::action::builtin::daemon::{CheckDaemonAction, StopDaemonAction};
 use crate::runtime::action::builtin::data::{
-    CheckEq, Less, LockUnlockBBKey, Locked, StoreData, StoreTick, TestBool,
+    CheckEq, Less, LockUnlockBBKey, Locked, StoreData, StoreTick, TestBool, Trace,
 };
 use crate::runtime::action::builtin::http::HttpGet;
 use crate::runtime::action::builtin::ReturnResult;
@@ -26,6 +26,7 @@ pub(super) fn pick_action(action: &ActionName, file: &FileName) -> RtResult<Acti
 
 fn action_impl(action: &ActionName) -> RtResult<Action> {
     match action.as_str() {
+        "trace" => Ok(Action::sync(Trace)),
         "fail_empty" => Ok(Action::sync(ReturnResult::fail_empty())),
         "fail" => Ok(Action::sync(ReturnResult::fail_empty())),
         "success" => Ok(Action::sync(ReturnResult::success())),
@@ -60,6 +61,10 @@ pub fn builtin_actions_file() -> String {
 // Fails execution, returning Result::Failure
 impl fail(reason:string);
 impl fail_empty();
+
+// Leaves a tracer log with given value
+impl trace(value:string);
+
 
 // Success execution, returning Result::Success
 impl success();
