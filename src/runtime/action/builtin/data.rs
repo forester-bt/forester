@@ -236,12 +236,10 @@ pub struct Trace;
 impl Impl for Trace {
     fn tick(&self, args: RtArgs, ctx: TreeContextRef) -> Tick {
         let trace = args.first().ok_or(RuntimeError::fail(
-            "the trace expectes a string value to place".to_string(),
+            "the trace expects a string value to place".to_string(),
         ))?;
-        let trace = trace.cast(ctx.clone()).str()?.ok_or(RuntimeError::fail(
-            "The argument is supposed to be a string".to_string(),
-        ))?;
-        ctx.trace(trace)?;
+
+        ctx.trace(trace.to_string_with_ptr(ctx.clone())?)?;
 
         Ok(TickResult::Success)
     }

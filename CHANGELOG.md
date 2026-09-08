@@ -58,3 +58,6 @@
 * **`0.7.0`**
   * Introduced Runner.
   * Fix some bugs
+
+* **`0.7.1`**
+  * Add new built in function trace

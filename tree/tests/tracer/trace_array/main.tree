@@ -1,0 +1,6 @@
+import "std::actions"
+
+root main sequence {
+    trace(["a","b"])
+    success()
+}

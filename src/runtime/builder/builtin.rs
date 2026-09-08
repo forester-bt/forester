@@ -63,7 +63,7 @@ impl fail(reason:string);
 impl fail_empty();
 
 // Leaves a tracer log with given value
-impl trace(value:string);
+impl trace(value:any);
 
 
 // Success execution, returning Result::Success

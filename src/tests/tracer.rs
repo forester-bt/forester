@@ -186,6 +186,56 @@ fn smoke() {
 }
 
 #[test]
+fn trace() {
+    let mut fb = fb("tracer/trace");
+    fb.tracer(Tracer::default());
+
+    let mut f = fb.build().unwrap();
+    let result = f.run();
+    assert_eq!(result, Ok(TickResult::success()));
+
+    let trace = f.tracer.lock().unwrap().to_string();
+    assert_eq!(
+        trace,
+        r#"[1]  1 : Running(cursor=0,len=1)
+[1]    2 : Running(cursor=0,len=2)
+[1]      custom: hello
+[1]      3 : Success(value=hello)
+[1]    2 : Running(cursor=1,len=2)
+[1]      4 : Success()
+[1]    2 : Success(cursor=1,len=2)
+[1]  1 : Success(cursor=0,len=1)
+"#
+        .replace("\n", tracer::LINE_ENDING)
+    )
+}
+
+#[test]
+fn trace_array() {
+    let mut fb = fb("tracer/trace_array");
+    fb.tracer(Tracer::default());
+
+    let mut f = fb.build().unwrap();
+    let result = f.run();
+    assert_eq!(result, Ok(TickResult::success()));
+
+    let trace = f.tracer.lock().unwrap().to_string();
+    assert_eq!(
+        trace,
+        r#"[1]  1 : Running(cursor=0,len=1)
+[1]    2 : Running(cursor=0,len=2)
+[1]      custom: [a,b]
+[1]      3 : Success(value=[a,b])
+[1]    2 : Running(cursor=1,len=2)
+[1]      4 : Success()
+[1]    2 : Success(cursor=1,len=2)
+[1]  1 : Success(cursor=0,len=1)
+"#
+        .replace("\n", tracer::LINE_ENDING)
+    )
+}
+
+#[test]
 fn custom_state() {
     let mut fb = fb("tracer/custom");
     fb.tracer(Tracer::default());

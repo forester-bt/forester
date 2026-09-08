@@ -14,7 +14,7 @@ use itertools::Itertools;
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::fmt::{Display, Formatter};
+use std::fmt::{Display, Formatter, format};
 
 /// Just a Key class for the arguments that represents the key in BB
 pub type RtAKey = String;
@@ -190,6 +190,11 @@ impl RtValue {
         }
     }
 
+    pub fn to_string_with_ptr(self, ctx: TreeContextRef) -> RtResult<String>{
+        Ok(format!("{}", self.with_ptr(ctx.clone())?))
+    }
+
+     
     /// tries to resolve the pointer to the value in BlackBoard,
     /// or if it is already a scalar value, then returns it
     pub fn with_ptr(self, ctx: TreeContextRef) -> RtResult<RtValue> {
