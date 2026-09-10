@@ -44,11 +44,13 @@ fn file() {
                     name: "name".to_string(),
                     stub: "success".to_string(),
                     params: HashMap::from_iter(vec![("delay".to_string(), "10".to_string())]),
+                    bb: HashMap::default(),
                 },
                 Action {
                     name: "name2".to_string(),
                     stub: "failure".to_string(),
                     params: HashMap::from_iter(vec![("delay".to_string(), "0".to_string())]),
+                    bb: HashMap::default(),
                 },
             ]
         },
@@ -66,11 +68,13 @@ fn file() {
                     name: "name".to_string(),
                     stub: "success".to_string(),
                     params: HashMap::from_iter(vec![("delay".to_string(), "10".to_string())]),
+                    bb: HashMap::default(),
                 },
                 Action {
                     name: "name2".to_string(),
                     stub: "failure".to_string(),
                     params: HashMap::from_iter(vec![("delay".to_string(), "0".to_string())]),
+                    bb: HashMap::default(),
                 },
             ]
         },
@@ -87,6 +91,7 @@ fn file() {
                 name: "name2".to_string(),
                 stub: "failure".to_string(),
                 params: HashMap::default(),
+                bb: HashMap::default(),
             },]
         },
         profile
@@ -122,6 +127,7 @@ fn file() {
                 Action {
                     name: "name1".to_string(),
                     stub: "remote".to_string(),
+                    bb: HashMap::default(),
                     params: HashMap::from_iter(vec![
                         ("url".to_string(), "localhost:10000".to_string()),
                         ("server".to_string(), "http://localhost:8080".to_string()),
@@ -130,6 +136,7 @@ fn file() {
                 Action {
                     name: "name2".to_string(),
                     stub: "remote".to_string(),
+                    bb: HashMap::default(),
                     params: HashMap::from_iter(vec![(
                         "url".to_string(),
                         "localhost:10001".to_string()

@@ -132,7 +132,8 @@ impl SimulatorBuilder {
         }
 
         for action in profile.actions.iter() {
-            let sim_action = SimAction::create(action.stub.as_str(), action.params.clone())?;
+            let sim_action =
+                SimAction::create(action.stub.as_str(), action.params.clone(), action.bb.clone())?;
             let name = action.name.as_str();
 
             if sim_action.is_remote() {
@@ -142,8 +143,12 @@ impl SimulatorBuilder {
             }
         }
 
-        let forester =
-            fb.build_with(|| ActionImpl::Present(RtAction::sync(SimAction::Success(0))))?;
+        let forester = fb.build_with(|| {
+            ActionImpl::Present(RtAction::sync(SimAction::Success(
+                0,
+                std::collections::HashMap::default(),
+            )))
+        })?;
         Ok(Simulator::new(self.root.take(), pr, forester))
     }
 }

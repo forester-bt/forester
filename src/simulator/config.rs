@@ -1,4 +1,5 @@
 use crate::read_file;
+use crate::runtime::args::RtValue;
 use crate::runtime::RtResult;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -78,4 +79,54 @@ pub struct Action {
     pub stub: String,
     #[serde(default)]
     pub params: HashMap<String, String>,
+    /// The key-value pairs to write to the blackboard on every tick of the action.
+    /// Values accept strings, integers, floats, arrays and objects.
+    #[serde(default)]
+    pub bb: HashMap<String, RtValue>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::runtime::args::RtValueNumber;
+
+    #[test]
+    fn parse_bb_section() {
+        let profile = SimProfile::parse(
+            r#"
+actions:
+  - name: sleep
+    stub: success
+    bb:
+      a: 10
+      b: "a"
+      c: 1.5
+      d: [1, 2, 3]
+      e:
+        x: 1
+        y: "z"
+"#,
+        )
+        .unwrap();
+
+        let bb = &profile.actions[0].bb;
+        assert_eq!(bb["a"], RtValue::Number(RtValueNumber::Int(10)));
+        assert_eq!(bb["b"], RtValue::String("a".to_string()));
+        assert_eq!(bb["c"], RtValue::Number(RtValueNumber::Float(1.5)));
+        assert_eq!(
+            bb["d"],
+            RtValue::Array(vec![
+                RtValue::Number(RtValueNumber::Int(1)),
+                RtValue::Number(RtValueNumber::Int(2)),
+                RtValue::Number(RtValueNumber::Int(3)),
+            ])
+        );
+        assert_eq!(
+            bb["e"],
+            RtValue::Object(HashMap::from_iter(vec![
+                ("x".to_string(), RtValue::Number(RtValueNumber::Int(1))),
+                ("y".to_string(), RtValue::String("z".to_string())),
+            ]))
+        );
+    }
 }

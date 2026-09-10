@@ -75,9 +75,9 @@ fn naive() {
     fb.main_file("main.tree".to_string());
     fb.root(root.clone());
 
-    fb.register_sync_action("pick", SimAction::Random(100));
-    fb.register_sync_action("validate", SimAction::Success(100));
-    fb.register_sync_action("place", SimAction::Success(100));
+    fb.register_sync_action("pick", SimAction::Random(100, Default::default()));
+    fb.register_sync_action("validate", SimAction::Success(100, Default::default()));
+    fb.register_sync_action("place", SimAction::Success(100, Default::default()));
 
     let mut forester = fb.build().unwrap();
     for (n, i) in forester.tree.iter() {
