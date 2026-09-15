@@ -5,7 +5,7 @@ use crate::{
     runner::config::{RemoteAction, RunProfile, RunUntil, ServerAPI},
     runtime::{
         action::builtin::remote::RemoteHttpAction, action::Tick, builder::ForesterBuilder,
-        forester::Forester, RtResult, RuntimeError,
+        forester::Forester, RtResult,
     },
     tracer::{Tracer, TracerConfig},
 };
@@ -27,7 +27,8 @@ use std::path::PathBuf;
 /// fn smoke() {
 ///     let profile = RunProfile::from_file("runner/smoke/profile.yaml").unwrap();
 ///     let mut runner = Runner::build(
-///         PathBuf::from("runner/smoke/main.tree"),
+///         PathBuf::from("runner/smoke"),
+///         "main.tree".to_string(),
 ///         "main".to_string(),
 ///         profile,
 ///     )
@@ -47,10 +48,10 @@ pub struct Runner {
 }
 
 impl Runner {
-    /// Builds the runner from the main tree file and the profile.
+    /// Builds the runner from the project root, the main tree file and the profile.
     ///
-    /// The `main_file` path is split into the root folder (the parent directory)
-    /// and the file name that are passed to [`ForesterBuilder`];
+    /// `root` is the root folder of the project: the `main_file` is resolved against it,
+    /// as well as the relative paths in the profile (`tracer.to_file`, `bb.load`, `bb.dump`).
     /// `main` is the name of the root tree in that file.
     ///
     /// From the profile:
@@ -58,23 +59,10 @@ impl Runner {
     /// - `bb.load` loads the initial blackboard data from the file before the start;
     /// - `api` starts the http server for the remote actions;
     /// - `actions` registers the remote actions by name.
-    pub fn build(main_file: PathBuf, main: String, profile: RunProfile) -> RtResult<Self> {
-        let file = main_file
-            .file_name()
-            .and_then(|f| f.to_str())
-            .map(|f| f.to_string())
-            .ok_or(RuntimeError::IOError(format!(
-                "the path {} does not point to a file",
-                main_file.display()
-            )))?;
-        let root = main_file
-            .parent()
-            .map(|p| p.to_path_buf())
-            .unwrap_or_default();
-
+    pub fn build(root: PathBuf, main_file: String, main: String, profile: RunProfile) -> RtResult<Self> {
         let mut fb = ForesterBuilder::from_fs();
         fb.root(root.clone());
-        fb.main_file(file);
+        fb.main_file(main_file);
         fb.main_tree(main);
 
         if let Some(tracer_cfg) = &profile.tracer_config {

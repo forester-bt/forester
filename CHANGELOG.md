@@ -63,3 +63,5 @@
   * Add new built in function trace
 * **`0.7.2`**
   * Add an ability for stub to write to bb
+* **`0.7.3`**
+  * Update runner to accept absolute path
